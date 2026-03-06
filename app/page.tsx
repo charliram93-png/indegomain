@@ -3,28 +3,28 @@ import Image from "next/image"
 export default function Home() {
   return (
     <main
-      className="flex min-h-screen flex-col items-center justify-center text-white text-center px-6"
+      className="h-screen flex flex-col items-center justify-center text-white text-center px-6 overflow-hidden"
       style={{
         backgroundColor: "#32331F",
         fontFamily: "Inter, sans-serif",
         fontWeight: "600",
       }}
     >
+      {/* Logo arriba */}
+      <div className="absolute top-6 left-6">
+        <Image
+          src="https://res.cloudinary.com/dij60ghdf/image/upload/v1772753917/Logo_White_xhx1kd.webp"
+          width={70}
+          height={70}
+          alt="Logo"
+        />
+      </div>
 
-      {/* LOGO esquina */}
-      <Image
-        src="https://res.cloudinary.com/dij60ghdf/image/upload/v1772753917/Logo_White_xhx1kd.webp"
-        width={80}
-        height={80}
-        alt="Logo"
-        className="fixed top-4 left-4"
-      />
-
-      <div className="space-y-10 max-w-md">
+      <div className="space-y-8 max-w-xs">
 
         <Image
           src="https://res.cloudinary.com/dij60ghdf/image/upload/f_auto,q_auto/v1772755253/LogoHev_White_db30dd.png"
-          width={500}
+          width={400}
           height={200}
           alt="logo"
           className="w-full h-auto"
@@ -32,29 +32,29 @@ export default function Home() {
 
         <Image
           src="https://res.cloudinary.com/dij60ghdf/image/upload/f_auto,q_auto/v1772755266/LogoKids_White_ril01y.png"
-          width={500}
+          width={400}
           height={200}
           alt="logo"
           className="w-full h-auto"
         />
 
-        <div className="pt-8">
-          <h1 className="text-2xl md:text-4xl tracking-widest">
+        <div className="pt-6">
+          <h1 className="text-xl md:text-3xl tracking-widest">
             UNDER CONSTRUCTION
           </h1>
 
-          <p className="text-sm md:text-lg mt-4">
+          <p className="text-sm mt-3">
             DROP #1
           </p>
 
-          <p className="text-sm md:text-lg">
+          <p className="text-sm">
             COMING SOON
           </p>
         </div>
 
         <Image
           src="https://res.cloudinary.com/dij60ghdf/image/upload/f_auto,q_auto/v1772755261/Indg_Cd_White_zqimyq.png"
-          width={120}
+          width={110}
           height={40}
           alt="logo"
           className="mx-auto"
