@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
   openGraph: {
     title: "Indego Studio",
-    description: "Under Construction - Drop #1",
+    description: "Under Construction",
     url: "https://indegostudio.com",
     siteName: "Indego Studio",
     images: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Indego Studio",
-    description: "Under Construction - Drop #1",
+    description: "Under Construction",
     images: ["https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png"], 
   },
 };
