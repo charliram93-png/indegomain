@@ -14,7 +14,7 @@ export default function ProductCard({ product, onClick }: Props) {
     <motion.div
       layoutId={product.slug}
       onClick={onClick}
-      className="cursor-pointer group flex flex-col items-center p-12 " // 'group' permite que el hover afecte a los hijos
+      className="cursor-pointer group flex flex-col items-center p-4 md:p-14 " // 'group' permite que el hover afecte a los hijos
     >
       {/* CONTENEDOR DE IMAGEN (El marco para el zoom) */}
       <div className="relative w-full overflow-hidden select-none rounded-sm">
