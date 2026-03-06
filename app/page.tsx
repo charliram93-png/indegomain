@@ -3,7 +3,7 @@ import Image from "next/image"
 export default function Home() {
   return (
     <main
-      className="h-screen flex flex-col items-center justify-center text-white text-center px-6 overflow-hidden"
+      className="h-screen overflow-hidden flex flex-col items-center justify-center text-white"
       style={{
         backgroundColor: "#32331F",
         fontFamily: "Inter, sans-serif",
