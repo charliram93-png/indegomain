@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 
 export default function Home() {
   return (
@@ -12,13 +13,20 @@ export default function Home() {
     >
       {/* LOGO ESQUINA */}
       <div className="absolute top-6 left-6 z-10">
-        <Image
-          src="https://res.cloudinary.com/dij60ghdf/image/upload/v1772753917/Logo_White_xhx1kd.webp"
-          width={60}
-          height={60}
-          alt="Logo"
-          className="w-10 h-10 md:w-16 md:h-16 opacity-80"
-        />
+        <Link 
+          href="https://indegostudio.com" 
+          target="_blank" // Opcional: abre en pestaña nueva
+          rel="noopener noreferrer" // Seguridad para enlaces externos
+          className="transition-opacity hover:opacity-100 opacity-80"
+        >
+          <Image
+            src="https://res.cloudinary.com/dij60ghdf/image/upload/v1772753917/Logo_White_xhx1kd.webp"
+            width={60}
+            height={60}
+            alt="Logo Indego Studio"
+            className="w-10 h-10 md:w-16 md:h-16"
+          />
+        </Link>
       </div>
 
       {/* CONTENEDOR CENTRAL */}
