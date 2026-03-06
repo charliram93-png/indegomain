@@ -4,7 +4,7 @@ import Link from "next/link"
 export default function Home() {
   return (
     <main
-      className="relative flex h-[100dvh] w-full flex-col items-center justify-center text-white text-center px-6 overflow-hidden"
+      className="relative flex h-dvh w-full flex-col items-center justify-center text-white text-center px-6 overflow-hidden"
       style={{
         backgroundColor: "#32331F",
         fontFamily: "Inter, sans-serif",
@@ -33,7 +33,7 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center w-full max-w-md gap-6 md:gap-10">
         
         {/* 1. SECCIÓN SUPERIOR: LOGOS */}
-        <div className="w-full max-w-[260px] md:max-w-sm space-y-3">
+        <div className="w-full max-w-65 md:max-w-sm space-y-3">
           <Image
             src="https://res.cloudinary.com/dij60ghdf/image/upload/f_auto,q_auto/v1772755253/LogoHev_White_db30dd.png"
             width={500}
