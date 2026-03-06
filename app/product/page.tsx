@@ -51,7 +51,7 @@ export default function Catalog() {
       <Navbar />
       
       <main 
-        className="min-h-screen p-6 md:p-12 pt-24" // pt-24 para que el contenido no quede bajo el Navbar
+        className="min-h-screen p-4 md:p-12 pt-24" // pt-24 para que el contenido no quede bajo el Navbar
         style={{
           backgroundColor: "#E2E5D5",
           fontFamily: "Inter, sans-serif",

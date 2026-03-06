@@ -5,7 +5,7 @@ import Link from "next/link";
 const Footer: React.FC = () => {
   return (
     /* bg-transparent asegura que no haya fondo negro ni blanco */
-    <footer className="w-full mt-auto py-12 px-6 bg-transparent">
+    <footer className="w-full mt-auto py-12 px-6 bg-[#E2E5D5]">
       <div className="flex flex-col items-center justify-center gap-4">
         
         {/* ENLACES CENTRALES */}
