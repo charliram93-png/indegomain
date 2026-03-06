@@ -15,6 +15,30 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Indego Studio",
   description: "Under Construction",
+
+  openGraph: {
+    title: "Indego Studio",
+    description: "Under Construction - Drop #1",
+    url: "https://indegostudio.com",
+    siteName: "Indego Studio",
+    images: [
+      {
+        url: "https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png", 
+        width: 299,
+        height: 299, 
+        alt: "Indego Studio - Previsualización",
+      },
+    ],
+    locale: "es_MX",
+    type: "website",
+  },
+  
+  twitter: {
+    card: "summary_large_image",
+    title: "Indego Studio",
+    description: "Under Construction - Drop #1",
+    images: ["https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png"], 
+  },
 };
 
 export default function RootLayout({
