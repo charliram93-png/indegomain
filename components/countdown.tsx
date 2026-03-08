@@ -41,7 +41,7 @@ export default function Countdown() {
   const format = (n: number) => String(n).padStart(2, "0")
 
   return (
-    <div className={`${inter.className} text-4xl md:text-5xl`}>
+    <div className={`${inter.className} text-4xl md:text-4xl`}>
   {format(timeLeft.days)}:{format(timeLeft.hours)}:{format(timeLeft.minutes)}:{format(timeLeft.seconds)}
 </div>
   )

@@ -7,7 +7,7 @@ export default function Home() {
     <main
       className="relative flex h-dvh w-full flex-col items-center justify-center text-white text-center px-6 overflow-hidden"
       style={{
-        backgroundColor: "#D6D8C2",
+        backgroundColor: "#32331F",
         fontFamily: "Inter, sans-serif",
         fontWeight: "600",
       }}
