@@ -1,34 +1,35 @@
 "use client"
 
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n/context";
 
 const Footer: React.FC = () => {
+  const { t } = useI18n();
   return (
-    /* bg-transparent asegura que no haya fondo negro ni blanco */
-    <footer className="w-full mt-auto py-12 px-6 bg-[#E2E5D5]">
+    <footer className="w-full mt-auto py-12 px-6 bg-background">
       <div className="flex flex-col items-center justify-center gap-4">
-        
+
         {/* ENLACES CENTRALES */}
-        <div className="flex items-center gap-8 text-[#32331F] font-medium text-[10px] md:text-[11px] tracking-[0.2em] uppercase">
-          <Link 
-            href="/terms" 
+        <div className="flex items-center gap-8 text-foreground font-medium text-[10px] md:text-[11px] tracking-[0.2em] uppercase">
+          <Link
+            href="/terms"
             className="hover:opacity-40 transition-opacity"
           >
-            Terms
+            {t.footer.terms}
           </Link>
-          
-          <Link 
-            href="https://linktr.ee/INDEGOSTUDIO" 
-            target="_blank" 
+
+          <Link
+            href="https://linktr.ee/INDEGOSTUDIO"
+            target="_blank"
             className="hover:opacity-40 transition-opacity"
           >
-            Linktree
+            {t.footer.linktree}
           </Link>
         </div>
 
         {/* COPYRIGHT O MARCA */}
-        <p className="text-[#32331F] opacity-30 text-[9px] uppercase">
-          © 2026 INDEGO STUDIO
+        <p className="text-foreground opacity-30 text-[9px] uppercase">
+          {t.footer.rights}
         </p>
       </div>
     </footer>

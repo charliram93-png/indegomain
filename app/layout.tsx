@@ -1,24 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { ThemeProvider } from "@/components/themeProvider";
+import { I18nProvider } from "@/lib/i18n/context";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Indego Studio",
-  description: "Under Construction",
+  title: "Indego Studio — Drop #1",
+  description: "Indego Studio · Drop #1. Próximamente.",
 
   openGraph: {
-    title: "Indego Studio",
-    description: "Under Construction",
+    title: "Indego Studio — Drop #1",
+    description: "Indego Studio · Drop #1. Próximamente.",
     url: "https://indegostudio.com",
     siteName: "Indego Studio",
     images: [
@@ -35,8 +34,8 @@ export const metadata: Metadata = {
   
   twitter: {
     card: "summary_large_image",
-    title: "Indego Studio",
-    description: "Under Construction",
+    title: "Indego Studio — Drop #1",
+    description: "Indego Studio · Drop #1. Próximamente.",
     images: ["https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png"], 
   },
 };
@@ -47,11 +46,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} antialiased`}>
+        <ThemeProvider>
+          <I18nProvider>{children}</I18nProvider>
+        </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

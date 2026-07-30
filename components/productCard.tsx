@@ -2,47 +2,77 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Product } from "@/types/products";
+import { Product, isSoldOut } from "@/types/products";
+import { useI18n } from "@/lib/i18n/context";
 
 type Props = {
   product: Product;
+  index: number;
   onClick: () => void;
 };
 
-export default function ProductCard({ product, onClick }: Props) {
+/**
+ * Fila editorial del catálogo: imagen (cuadro con número) de un lado y el
+ * nombre en grande del otro, alternando por índice. Al hacer clic abre el modal.
+ */
+export default function ProductCard({ product, index, onClick }: Props) {
+  const { t, lang } = useI18n();
+  const soldOut = isSoldOut(product);
+  const number = String(index + 1).padStart(2, "0");
+  const reversed = index % 2 === 1;
+
   return (
     <motion.div
-      layoutId={product.slug}
-      onClick={onClick}
-      className="cursor-pointer group flex flex-col items-center p-4 md:p-14 " // 'group' permite que el hover afecte a los hijos
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="grid items-center gap-6 md:grid-cols-2 md:gap-16"
     >
-      {/* CONTENEDOR DE IMAGEN (El marco para el zoom) */}
-      <div className="relative w-full overflow-hidden select-none rounded-sm">
-        <Image
-          src={product.image}
-          alt={product.name}
-          width={500}
-          height={500}
-          /* - select-none: Evita el sombreado azul (estilo Yeezy).
-             - transition-transform duration-700: Zoom suave y lento.
-             - group-hover:scale-[1.04]: Zoom del 4% al pasar el mouse.
-             - pointer-events-none: Evita que la imagen sea "arrastrable".
-          */
-          className="w-full h-auto object-contain select-none pointer-events-none transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-        />
-      </div>
-
-      {/* TEXTO DEL PRODUCTO */}
-      <p 
-        className="mt-3 text-sm text-center uppercase tracking-tight" 
-        style={{ 
-          color: "#32331F",
-          fontFamily: "Inter, sans-serif",
-         
-        }}
+      {/* IMAGEN (cuadro con número) */}
+      <button
+        onClick={onClick}
+        aria-label={product.name}
+        className={`group relative block w-full overflow-hidden rounded-sm bg-surface ${
+          reversed ? "md:order-2" : ""
+        }`}
       >
-        {product.name}
-      </p>
+        <div className="relative aspect-square w-full">
+          <span className="pointer-events-none absolute left-4 top-2 text-7xl font-bold leading-none opacity-10 md:text-9xl">
+            {number}
+          </span>
+          <Image
+            src={product.images[0]}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className={`select-none object-contain p-8 pointer-events-none transition-transform duration-500 ease-out group-hover:scale-[1.04] ${
+              soldOut ? "opacity-50 grayscale" : ""
+            }`}
+          />
+          {soldOut && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="bg-foreground px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] text-background">
+                {t.product.soldOut}
+              </span>
+            </div>
+          )}
+        </div>
+      </button>
+
+      {/* NOMBRE EN GRANDE */}
+      <div className={`flex flex-col ${reversed ? "md:order-1" : ""}`}>
+        <button onClick={onClick} className="text-left">
+          <h2 className="text-5xl font-bold uppercase leading-none tracking-tighter transition-opacity hover:opacity-60 md:text-7xl">
+            {product.name}
+          </h2>
+        </button>
+        {product.description && (
+          <p className="mt-5 max-w-xs text-sm leading-relaxed opacity-50">
+            {product.description[lang]}
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 }

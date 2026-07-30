@@ -1,83 +1,54 @@
 "use client";
 
 import { useState } from "react";
-import ProductCard from "@/components/productCard";
-import ProductModal from "@/components/productModal";
-import { Product } from "@/types/products";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
+import CartDrawer from "@/components/cartDrawer";
+import ProductCard from "@/components/productCard";
+import ProductModal from "@/components/productModal";
+import { PRODUCTS } from "@/config/products";
+import { DROP_NAME } from "@/config/drop";
+import { useI18n } from "@/lib/i18n/context";
 
 export default function Catalog() {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  const products: Product[] = [
-    {
-      slug: "idg - 01",
-      name: "IDG - 01",
-      image: "https://res.cloudinary.com/dij60ghdf/image/upload/v1772813593/pngtree-black-oversized-fit-t-shirt-mockup-png-image_6740829_makeyn.png",
-      price: "$1200 MXN",
-    },
-    {
-      slug: "idg - 02",
-      name: "IDG - 02",
-      image: "https://res.cloudinary.com/dij60ghdf/image/upload/v1772813593/pngtree-black-oversized-fit-t-shirt-mockup-png-image_6740829_makeyn.png",
-      price: "$1200 MXN",
-    },
-    {
-      slug: "idg - 03",
-      name: "IDG - 03",
-      image: "https://res.cloudinary.com/dij60ghdf/image/upload/v1772813593/pngtree-black-oversized-fit-t-shirt-mockup-png-image_6740829_makeyn.png",
-      price: "$1200 MXN",
-    },
-    {
-      slug: "idg - 04",
-      name: "IDG - 04",
-      image: "https://res.cloudinary.com/dij60ghdf/image/upload/v1772813593/pngtree-black-oversized-fit-t-shirt-mockup-png-image_6740829_makeyn.png",
-      price: "$1200 MXN",
-    },
-    {
-      slug: "idg - 05",
-      name: "IDG - 05",
-      image: "https://res.cloudinary.com/dij60ghdf/image/upload/v1772813593/pngtree-black-oversized-fit-t-shirt-mockup-png-image_6740829_makeyn.png",
-      price: "$1200 MXN",
-    },
-  ];
+  const { t } = useI18n();
+  const [selected, setSelected] = useState<number | null>(null);
 
   return (
-    /* FRAGMENTO (<>): Es necesario para envolver múltiples elementos 
-       sin añadir un nodo extra al DOM. Arregla el error ts(2657).
-    */
     <>
       <Navbar />
-      
-      <main 
-        className="min-h-screen p-6 md:p-12 pt-24" // pt-24 para que el contenido no quede bajo el Navbar
-        style={{
-          backgroundColor: "#E2E5D5",
-          fontFamily: "Inter, sans-serif",
-          fontWeight: "600",
-        }}
-      >
-        {/* GRID DE PRODUCTOS:
-           - grid-cols-2: 2 columnas en móvil.
-           - md:grid-cols-3: 3 columnas exactas en escritorio (lo que pediste).
-        */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-          {products.map((product) => (
+
+      <main className="min-h-screen bg-background px-6 pt-32 md:px-12">
+        {/* Encabezado editorial */}
+        <header className="mx-auto mb-10 max-w-5xl text-center md:mb-14">
+          <p className="text-[11px] font-bold tracking-[0.4em] opacity-40">
+            {DROP_NAME}
+          </p>
+          <h1 className="mt-3 text-4xl font-bold uppercase tracking-tighter md:text-6xl">
+            {t.catalog.title}
+          </h1>
+        </header>
+
+        {/* Filas editoriales alternadas (espaciado compacto) */}
+        <div className="mx-auto max-w-6xl space-y-16 pb-24 md:space-y-24">
+          {PRODUCTS.map((product, i) => (
             <ProductCard
               key={product.slug}
               product={product}
-              onClick={() => setSelectedProduct(product)}
+              index={i}
+              onClick={() => setSelected(i)}
             />
           ))}
         </div>
-
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-        />
       </main>
 
+      <ProductModal
+        product={selected !== null ? PRODUCTS[selected] : null}
+        index={selected ?? 0}
+        onClose={() => setSelected(null)}
+      />
+
+      <CartDrawer />
       <Footer />
     </>
   );

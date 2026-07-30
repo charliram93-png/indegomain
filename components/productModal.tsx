@@ -2,151 +2,214 @@
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Product } from "@/types/products";
+import { Product, isSoldOut } from "@/types/products";
 import { X, Plus, Minus } from "lucide-react";
 import { useState } from "react";
+import { useCart } from "@/store/cart";
+import { formatMXN } from "@/lib/format";
+import { useI18n } from "@/lib/i18n/context";
 
 type Props = {
   product: Product | null;
+  index: number;
   onClose: () => void;
 };
 
-export default function ProductModal({ product, onClose }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [selectedSize, setSelectedSize] = useState<string>("M");
-  const [quantity, setQuantity] = useState<number>(1);
+export default function ProductModal({ product, index, onClose }: Props) {
+  const { addItem, openCart } = useCart();
+  const { t, lang } = useI18n();
 
-  const sizes = ["S", "M", "L", "XL"];
+  const [activeImage, setActiveImage] = useState(0);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
 
-  const handleCheckout = async () => {
-    if (!product) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `${product.name} - Talla ${selectedSize}`,
-          price: product.price,
-          image: product.image,
-          quantity: quantity,
-        }),
-      });
+  const soldOut = product ? isSoldOut(product) : false;
 
-      const session = await response.json();
+  // Talla activa derivada (sin efectos).
+  const firstAvailable = product?.sizes.find((s) => s.stock > 0)?.size ?? null;
+  const selectedValid = product?.sizes.some(
+    (s) => s.size === selectedSize && s.stock > 0
+  );
+  const activeSize = selectedValid ? selectedSize : firstAvailable;
+  const maxQty = product?.sizes.find((s) => s.size === activeSize)?.stock ?? 0;
+  const qty = Math.min(quantity, Math.max(1, maxQty));
 
-      // Redirección moderna: Stripe ahora prefiere usar la URL generada en el server
-      if (session.url) {
-        window.location.assign(session.url);
-      } else {
-        throw new Error("No se pudo obtener la URL de pago de Stripe");
-      }
+  const number = String(index + 1).padStart(2, "0");
+  // Imagen segura (por si se cambió de producto con una miniatura activa alta).
+  const mainImage = product
+    ? product.images[activeImage] ?? product.images[0]
+    : "";
 
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Error de conexión";
-      console.error(errorMessage);
-      alert(errorMessage);
-      setLoading(false);
-    }
+  const handleAddToCart = () => {
+    if (!product || !activeSize || maxQty <= 0) return;
+    addItem(product, activeSize, Math.min(qty, maxQty));
+    onClose();
+    setTimeout(() => openCart(), 150);
+    setQuantity(1);
+    setActiveImage(0);
   };
+
+  const cycleImage = () => {
+    if (!product) return;
+    setActiveImage((i) => (i + 1) % product.images.length);
+  };
+
+  const hasGallery = !!product && product.images.length > 1;
 
   return (
     <AnimatePresence>
       {product && (
         <motion.div
-          className="fixed inset-0 bg-[#E2E5D5]/40 backdrop-blur-xl z-50 flex items-center justify-center p-6 md:p-12"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/15 p-4 backdrop-blur-sm md:p-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
-          <button 
-            onClick={onClose} 
-            className="absolute top-8 left-8 p-2 text-[#32331F] hover:opacity-40 transition-opacity z-[60]"
-          >
-            <X size={24} strokeWidth={1.5} />
-          </button>
-
           <motion.div
-            layoutId={product.slug}
-            className="max-w-6xl w-full grid md:grid-cols-2 gap-10 items-center bg-transparent"
+            initial={{ opacity: 0, scale: 0.97, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 12 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="relative grid max-h-[92vh] w-full max-w-6xl items-center gap-8 overflow-y-auto rounded-xl border border-foreground/15 bg-surface/50 p-6 shadow-2xl backdrop-blur-2xl md:grid-cols-2 md:gap-10 md:p-10"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* IMAGEN */}
-            <div className="relative select-none flex justify-center items-center">
-              <Image
-                src={product.image}
-                alt={product.name}
-                width={700}
-                height={700}
-                priority
-                className="object-contain w-full h-auto select-none pointer-events-none drop-shadow-2xl"
-              />
+            <button
+              onClick={onClose}
+              aria-label={t.product.close}
+              className="absolute right-4 top-4 z-10 p-2 text-foreground transition-opacity hover:opacity-40"
+            >
+              <X size={22} strokeWidth={1.5} />
+            </button>
+
+            {/* IMAGEN + GALERÍA (puntos) */}
+            <div>
+              <button
+                type="button"
+                onClick={hasGallery ? cycleImage : undefined}
+                aria-label={hasGallery ? t.product.changeView : product.name}
+                className={`relative flex h-[38vh] w-full items-center justify-center md:h-auto md:aspect-square ${
+                  hasGallery ? "cursor-pointer" : "cursor-default"
+                }`}
+              >
+                <span className="pointer-events-none absolute left-2 top-0 text-7xl font-bold leading-none opacity-10 md:text-9xl">
+                  {number}
+                </span>
+                <Image
+                  src={mainImage}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                  className={`select-none object-contain p-4 pointer-events-none drop-shadow-2xl ${
+                    soldOut ? "opacity-50 grayscale" : ""
+                  }`}
+                />
+              </button>
+
+              {hasGallery && (
+                <div className="mt-4 flex justify-center gap-2.5">
+                  {product.images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImage(i)}
+                      aria-label={`${t.product.changeView} ${i + 1}`}
+                      className={`h-2 w-2 rounded-full transition-all ${
+                        activeImage === i
+                          ? "scale-110 bg-foreground"
+                          : "bg-foreground/30 hover:bg-foreground/60"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* INFO Y CONTROLES */}
-            <div className="flex flex-col justify-center text-center md:text-left space-y-8">
+            <div className="flex flex-col justify-center space-y-6 text-foreground">
               <div>
-                <h1 
-                  className="text-4xl md:text-7xl font-bold uppercase tracking-tighter leading-none"
-                  style={{ color: "#32331F", fontFamily: "Inter, sans-serif" }}
-                >
+                <h1 className="text-4xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
                   {product.name}
                 </h1>
-                <p className="mt-2 text-xl font-medium opacity-70 text-[#32331F]">
-                  {product.price}
+                <p className="mt-3 text-lg font-medium opacity-70">
+                  {formatMXN(product.price)}
                 </p>
+                {product.description && (
+                  <p className="mt-3 max-w-sm text-sm leading-relaxed opacity-60">
+                    {product.description[lang]}
+                  </p>
+                )}
               </div>
 
-              {/* SELECTOR DE TALLAS */}
-              <div className="flex flex-col items-center md:items-start space-y-3">
-                <span className="text-[10px] uppercase tracking-widest font-bold opacity-50 text-[#32331F]">Select Size</span>
+              {/* TALLAS */}
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">
+                  {t.product.selectSize}
+                </span>
                 <div className="flex gap-2">
-                  {sizes.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`w-12 h-12 border flex items-center justify-center text-xs font-bold transition-all
-                        ${selectedSize === size 
-                          ? "bg-[#32331F] text-[#E2E5D5] border-[#32331F]" 
-                          : "border-[#32331F]/20 text-[#32331F] hover:border-[#32331F]"}`}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                  {product.sizes.map(({ size, stock }) => {
+                    const out = stock <= 0;
+                    const active = activeSize === size;
+                    return (
+                      <button
+                        key={size}
+                        onClick={() => !out && setSelectedSize(size)}
+                        disabled={out}
+                        className={`flex h-12 w-12 items-center justify-center border text-xs font-bold transition-all ${
+                          active
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-foreground/20 text-foreground hover:border-foreground"
+                        } ${
+                          out
+                            ? "cursor-not-allowed opacity-30 line-through hover:border-foreground/20"
+                            : ""
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* SELECTOR DE CANTIDAD */}
-              <div className="flex flex-col items-center md:items-start space-y-3">
-                <span className="text-[10px] uppercase tracking-widest font-bold opacity-50 text-[#32331F]">Quantity</span>
-                <div className="flex items-center border border-[#32331F]/20 h-12 text-[#32331F]">
-                  <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-4 h-full hover:bg-[#32331F]/5 transition-colors"
+              {/* CANTIDAD */}
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">
+                  {t.product.quantity}
+                </span>
+                <div className="flex h-12 w-fit items-center border border-foreground/20">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, qty - 1))}
+                    disabled={soldOut}
+                    aria-label="-"
+                    className="h-full px-4 transition-colors hover:bg-foreground/5 disabled:opacity-30"
                   >
                     <Minus size={14} />
                   </button>
-                  <span className="px-6 font-bold text-sm w-16 text-center">{quantity}</span>
-                  <button 
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-4 h-full hover:bg-[#32331F]/5 transition-colors"
+                  <span className="w-14 text-center text-sm font-bold">{qty}</span>
+                  <button
+                    onClick={() => setQuantity(Math.min(maxQty, qty + 1))}
+                    disabled={soldOut || qty >= maxQty}
+                    aria-label="+"
+                    className="h-full px-4 transition-colors hover:bg-foreground/5 disabled:opacity-30"
                   >
                     <Plus size={14} />
                   </button>
                 </div>
+                {!soldOut && maxQty > 0 && maxQty <= 5 && (
+                  <span className="block text-[10px] uppercase tracking-widest text-foreground/60">
+                    {t.product.lastPieces.replace("{n}", String(maxQty))}
+                  </span>
+                )}
               </div>
-              
-              <div className="pt-4">
-                <button 
-                  onClick={handleCheckout}
-                  disabled={loading}
-                  className="w-full md:w-auto px-20 py-5 bg-[#32331F] text-[#E2E5D5] text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-black transition-all shadow-2xl disabled:opacity-50"
-                >
-                  {loading ? "Connecting to Stripe..." : "Checkout Now"}
-                </button>
-              </div>
+
+              <button
+                onClick={handleAddToCart}
+                disabled={soldOut || !activeSize}
+                className="w-full bg-foreground px-16 py-5 text-[10px] font-bold uppercase tracking-[0.3em] text-background shadow-2xl transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 md:w-fit"
+              >
+                {soldOut ? t.product.soldOut : t.product.addToCart}
+              </button>
             </div>
           </motion.div>
         </motion.div>
