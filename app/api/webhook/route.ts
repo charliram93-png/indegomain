@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-02-25.clover",
-});
-
-// Secreto del webhook (Dashboard de Stripe → Developers → Webhooks).
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+// Cliente de Stripe perezoso: se crea en la 1ª petición, NO al cargar el módulo
+// (así el build sin variables de entorno no truena).
+let stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-02-25.clover",
+    });
+  }
+  return stripe;
+}
 
 /**
  * Registra/cumple una orden pagada. Aquí verás los datos en los logs.
@@ -14,9 +19,10 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
  * enviar correo de confirmación, y descontar stock.
  */
 async function fulfillOrder(session: Stripe.Checkout.Session) {
-  const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
-    limit: 100,
-  });
+  const lineItems = await getStripe().checkout.sessions.listLineItems(
+    session.id,
+    { limit: 100 }
+  );
 
   const order = {
     id: session.id,
@@ -38,6 +44,7 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret || !signature) {
     return NextResponse.json(
@@ -48,7 +55,7 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Firma inválida";
     console.error("Webhook signature error:", msg);

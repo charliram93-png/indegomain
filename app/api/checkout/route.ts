@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-02-25.clover",
-});
+// Cliente de Stripe perezoso: se crea en la 1ª petición, NO al cargar el módulo.
+// Así el build (que no tiene las variables de entorno) no truena.
+let stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-02-25.clover",
+    });
+  }
+  return stripe;
+}
 
 type IncomingItem = {
   name: string;
@@ -44,7 +52,7 @@ export async function POST(request: Request) {
       };
     });
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       // Sin payment_method_types: Stripe usa los métodos habilitados en tu
       // Dashboard (tarjeta por defecto; activa OXXO ahí para aceptarlo).
       line_items,
