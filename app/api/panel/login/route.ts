@@ -5,18 +5,10 @@ export async function POST(request: Request) {
   const { password } = (await request.json()) as { password?: string };
   const expected = process.env.ADMIN_PASSWORD;
 
-  if (!expected) {
-    return NextResponse.json(
-      { error: "Panel no configurado (falta ADMIN_PASSWORD)" },
-      { status: 500 }
-    );
-  }
-
-  if (!password || password !== expected) {
-    return NextResponse.json(
-      { error: "Contraseña incorrecta" },
-      { status: 401 }
-    );
+  // Error genérico y discreto para AMBOS casos (contraseña incorrecta o panel sin
+  // configurar), para no revelar el estado interno a quien intente entrar.
+  if (!expected || !password || password !== expected) {
+    return NextResponse.json({ error: "Acceso denegado" }, { status: 401 });
   }
 
   const token = await sha256(expected);
