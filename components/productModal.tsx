@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product, isSoldOut } from "@/types/products";
 import { X, Plus, Minus } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/context";
@@ -47,6 +47,16 @@ export default function ProductModal({ product, index, onClose }: Props) {
     setQuantity(1);
     setActiveImage(0);
   };
+
+  // Bloquea el scroll del fondo mientras el modal está abierto (evita el
+  // "zoom raro" por el cambio de altura de la barra del navegador en móvil).
+  useEffect(() => {
+    if (!product) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [product]);
 
   const hasGallery = !!product && product.images.length > 1;
   const total = product?.images.length ?? 1;

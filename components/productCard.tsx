@@ -33,8 +33,8 @@ export default function ProductCard({ product, index, onClick }: Props) {
       <button
         onClick={onClick}
         aria-label={product.name}
-        className={`group relative block w-full overflow-hidden rounded-sm bg-surface ${
-          reversed ? "md:order-2" : ""
+        className={`group relative order-2 block w-full overflow-hidden rounded-sm bg-surface ${
+          reversed ? "md:order-2" : "md:order-1"
         }`}
       >
         <div className="relative aspect-square w-full">
@@ -60,8 +60,8 @@ export default function ProductCard({ product, index, onClick }: Props) {
         </div>
       </button>
 
-      {/* NOMBRE EN GRANDE */}
-      <div className={`flex flex-col ${reversed ? "md:order-1" : ""}`}>
+      {/* NOMBRE EN GRANDE (arriba de la imagen en móvil) */}
+      <div className={`order-1 flex flex-col ${reversed ? "md:order-1" : "md:order-2"}`}>
         <button onClick={onClick} className="text-left">
           <h2 className="text-5xl font-bold uppercase leading-none tracking-tighter transition-opacity hover:opacity-60 md:text-7xl">
             {product.name}
