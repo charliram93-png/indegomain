@@ -98,7 +98,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative flex h-dvh w-full flex-col bg-surface/50 p-4 backdrop-blur-2xl md:grid md:h-auto md:max-h-[90vh] md:max-w-6xl md:grid-cols-2 md:items-center md:gap-10 md:overflow-y-auto md:rounded-sm md:border md:border-foreground/15 md:p-10 md:shadow-2xl"
+            className="relative flex h-full w-full flex-col bg-surface/50 p-4 backdrop-blur-2xl md:grid md:h-auto md:max-h-[90vh] md:max-w-6xl md:grid-cols-2 md:items-center md:gap-10 md:overflow-y-auto md:rounded-sm md:border md:border-foreground/15 md:p-10 md:shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Cerrar */}

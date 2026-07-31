@@ -27,7 +27,7 @@ export const PRODUCTS: Product[] = [
     slug: "idg-01",
     name: "IDG - 01",
     images: GALLERY, // demo de galería (frente/espalda)
-    price: 1200,
+    price: 600,
     description: {
       en: "Oversized tee · heavy cotton · limited Drop #1 edition.",
       es: "Playera oversized · algodón pesado · edición limitada Drop #1.",
@@ -43,7 +43,7 @@ export const PRODUCTS: Product[] = [
     slug: "idg-02",
     name: "IDG - 02",
     images: GALLERY, // demo de galería (frente/espalda)
-    price: 1200,
+    price: 600,
     description: {
       en: "Oversized tee · heavy cotton · limited Drop #1 edition.",
       es: "Playera oversized · algodón pesado · edición limitada Drop #1.",
@@ -59,7 +59,7 @@ export const PRODUCTS: Product[] = [
     slug: "idg-03",
     name: "IDG - 03",
     images: GALLERY, // demo de galería (frente/espalda)
-    price: 1200,
+    price: 600,
     description: {
       en: "Oversized tee · heavy cotton · limited Drop #1 edition.",
       es: "Playera oversized · algodón pesado · edición limitada Drop #1.",
