@@ -16,15 +16,17 @@ export default function ThemeColorSync() {
 
   useEffect(() => {
     const color = resolvedTheme === "dark" ? COLORS.dark : COLORS.light;
-    let meta = document.querySelector<HTMLMetaElement>(
-      'meta[name="theme-color"]'
-    );
-    if (!meta) {
-      meta = document.createElement("meta");
-      meta.name = "theme-color";
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute("content", color);
+    // Recrear el <meta> (borrar + insertar) fuerza a Safari/iOS a repintar la
+    // barra al instante; con solo cambiar `content` a veces tarda.
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((m) => m.remove());
+    const meta = document.createElement("meta");
+    meta.name = "theme-color";
+    meta.content = color;
+    document.head.appendChild(meta);
+    // Empuja un repintado.
+    void document.body.offsetHeight;
   }, [resolvedTheme]);
 
   return null;
