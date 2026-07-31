@@ -14,10 +14,10 @@ const MOCK =
   "v1772813593/pngtree-black-oversized-fit-t-shirt-mockup-png-image_6740829_makeyn.png";
 const IMG = `${CLOUD}/${MOCK}`;
 
-// NOTA: estas 2 son la MISMA imagen con transformación de Cloudinary, solo para
-// mostrar el concepto de galería (frente / espalda). Reemplázalas por fotos
-// reales. La primera es la principal.
-const IDG01_GALLERY = [
+// NOTA: cada producto usa la MISMA imagen con transformación de Cloudinary,
+// solo para mostrar el concepto de galería (frente / espalda). Reemplázalas por
+// fotos reales. La primera es la principal.
+const GALLERY = [
   IMG, // frente
   `${CLOUD}/a_hflip/${MOCK}`, // "espalda" (espejo, solo demo)
 ];
@@ -26,7 +26,7 @@ export const PRODUCTS: Product[] = [
   {
     slug: "idg-01",
     name: "IDG - 01",
-    images: IDG01_GALLERY, // demo de galería de varias fotos
+    images: GALLERY, // demo de galería (frente/espalda)
     price: 1200,
     description: {
       en: "Oversized tee · heavy cotton · limited Drop #1 edition.",
@@ -42,7 +42,7 @@ export const PRODUCTS: Product[] = [
   {
     slug: "idg-02",
     name: "IDG - 02",
-    images: [IMG],
+    images: GALLERY, // demo de galería (frente/espalda)
     price: 1200,
     description: {
       en: "Oversized tee · heavy cotton · limited Drop #1 edition.",
@@ -58,7 +58,7 @@ export const PRODUCTS: Product[] = [
   {
     slug: "idg-03",
     name: "IDG - 03",
-    images: [IMG],
+    images: GALLERY, // demo de galería (frente/espalda)
     price: 1200,
     description: {
       en: "Oversized tee · heavy cotton · limited Drop #1 edition.",

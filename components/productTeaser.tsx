@@ -30,7 +30,7 @@ export default function ProductTeaser() {
             strokeWidth={1.25}
             className="text-foreground opacity-25"
           />
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-foreground opacity-50">
+          <p className="text-[11px] font-bold uppercase tracking-[0.03em] text-foreground opacity-50">
             Drop 1.5 · {t.home.comingSoon}
           </p>
         </div>

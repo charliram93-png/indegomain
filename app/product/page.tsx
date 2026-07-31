@@ -22,7 +22,7 @@ export default function Catalog() {
       <main className="flex-1 px-6 pt-32 md:px-12">
         {/* Encabezado editorial */}
         <header className="mx-auto mb-10 max-w-5xl text-center md:mb-14">
-          <p className="text-[11px] font-bold tracking-[0.4em] opacity-40">
+          <p className="text-[11px] font-bold tracking-[0.04em] opacity-40">
             {DROP_NAME}
           </p>
           <h1 className="mt-3 text-4xl font-bold uppercase tracking-tighter md:text-6xl">

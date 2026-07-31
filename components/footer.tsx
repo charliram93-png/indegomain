@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
       <div className="flex flex-col items-center justify-center gap-4">
 
         {/* ENLACES CENTRALES */}
-        <div className="flex items-center gap-8 text-foreground font-medium text-[10px] md:text-[11px] tracking-[0.2em] uppercase">
+        <div className="flex items-center gap-8 text-foreground font-medium text-[10px] md:text-[11px] tracking-[0.03em] uppercase">
           <Link
             href="/terms"
             className="hover:opacity-40 transition-opacity"

@@ -70,7 +70,7 @@ export default function CartDrawer() {
           >
             {/* Encabezado */}
             <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-5">
-              <h2 className="text-xs font-bold uppercase tracking-[0.3em]">
+              <h2 className="text-xs font-bold uppercase tracking-[0.03em]">
                 {t.cart.title}
               </h2>
               <button
@@ -86,7 +86,7 @@ export default function CartDrawer() {
             <div className="flex-1 overflow-y-auto px-6">
               {items.length === 0 ? (
                 <div className="flex h-full items-center justify-center">
-                  <p className="text-[11px] uppercase tracking-[0.2em] opacity-40">
+                  <p className="text-[11px] uppercase tracking-[0.03em] opacity-40">
                     {t.cart.empty}
                   </p>
                 </div>
@@ -109,7 +109,7 @@ export default function CartDrawer() {
                             <p className="text-xs font-bold uppercase tracking-tight">
                               {item.name}
                             </p>
-                            <p className="mt-1 text-[10px] uppercase tracking-widest opacity-50">
+                            <p className="mt-1 text-[10px] uppercase tracking-[0.02em] opacity-50">
                               {t.cart.size} {item.size}
                             </p>
                           </div>
@@ -160,17 +160,17 @@ export default function CartDrawer() {
             {/* Pie / checkout */}
             {items.length > 0 && (
               <div className="border-t border-foreground/10 px-6 py-5">
-                <div className="mb-1 flex items-center justify-between text-sm font-bold uppercase tracking-widest">
+                <div className="mb-1 flex items-center justify-between text-sm font-bold uppercase tracking-[0.02em]">
                   <span>{t.cart.subtotal}</span>
                   <span>{formatMXN(total)}</span>
                 </div>
-                <p className="mb-4 text-[10px] uppercase tracking-widest opacity-40">
+                <p className="mb-4 text-[10px] uppercase tracking-[0.02em] opacity-40">
                   {t.cart.shippingNote}
                 </p>
                 <button
                   onClick={handleCheckout}
                   disabled={loading}
-                  className="w-full bg-foreground py-4 text-[10px] font-bold uppercase tracking-[0.3em] text-background transition-colors hover:opacity-90 disabled:opacity-50"
+                  className="w-full bg-foreground py-4 text-[10px] font-bold uppercase tracking-[0.03em] text-background transition-colors hover:opacity-90 disabled:opacity-50"
                 >
                   {loading ? t.cart.connecting : t.cart.pay}
                 </button>

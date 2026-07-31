@@ -15,7 +15,7 @@ export default function PanelPage() {
       {/* MENÚ LATERAL */}
       <aside className="flex w-full flex-col border-b border-foreground/10 bg-surface/30 p-6 md:h-dvh md:w-72 md:border-b-0 md:border-r md:overflow-y-auto md:sticky md:top-0">
         <div className="mb-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.35em] opacity-40">
+          <p className="text-[10px] font-bold uppercase tracking-[0.08em] opacity-40">
             Indego Studio
           </p>
           <h1 className="mt-1 text-2xl font-bold uppercase tracking-tighter">
@@ -26,7 +26,7 @@ export default function PanelPage() {
         <nav className="flex-1 space-y-6">
           {PANEL_GROUPS.map((group) => (
             <div key={group.title}>
-              <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.3em] opacity-40">
+              <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.06em] opacity-40">
                 {group.title}
               </p>
               <ul className="space-y-0.5">
@@ -69,7 +69,7 @@ export default function PanelPage() {
 
         <button
           onClick={handleLogout}
-          className="mt-8 text-left text-[10px] font-bold uppercase tracking-[0.25em] opacity-50 transition-opacity hover:opacity-100"
+          className="mt-8 text-left text-[10px] font-bold uppercase tracking-[0.05em] opacity-50 transition-opacity hover:opacity-100"
         >
           Cerrar sesión
         </button>
@@ -78,7 +78,7 @@ export default function PanelPage() {
       {/* CONTENIDO */}
       <main className="flex-1 p-8 md:p-14">
         <div className="mx-auto max-w-2xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.35em] opacity-40">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-40">
             Centro de operaciones
           </p>
           <h2 className="mt-2 text-4xl font-bold uppercase tracking-tighter md:text-5xl">
@@ -97,11 +97,11 @@ export default function PanelPage() {
                 key={label}
                 className="border border-foreground/10 bg-surface/30 p-5"
               >
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">
+                <p className="text-[10px] font-bold uppercase tracking-[0.03em] opacity-40">
                   {label}
                 </p>
                 <p className="mt-2 text-2xl font-bold opacity-30">—</p>
-                <p className="mt-1 text-[9px] uppercase tracking-widest opacity-30">
+                <p className="mt-1 text-[9px] uppercase tracking-[0.03em] opacity-30">
                   Próximamente
                 </p>
               </div>

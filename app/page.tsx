@@ -19,10 +19,10 @@ export default function Home() {
   const handleComplete = useCallback(() => setOpen(true), []);
 
   return (
-    <main className="landscape-lock relative flex h-dvh w-full items-center justify-center overflow-hidden bg-black text-white">
+    <main className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-black text-white">
       {/* VIDEO DE FONDO (bucle, sin sonido). El video ya trae el branding/texto. */}
       <video
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-contain md:object-cover"
         autoPlay
         loop
         muted
@@ -37,7 +37,7 @@ export default function Home() {
         {open ? (
           <Link
             href="/product"
-            className="border border-white px-12 py-4 text-[11px] font-bold tracking-[0.3em] transition-colors hover:bg-white hover:text-black"
+            className="border border-white px-12 py-4 text-[11px] font-bold tracking-[0.03em] transition-colors hover:bg-white hover:text-black"
           >
             {t.home.enter}
           </Link>
@@ -47,7 +47,7 @@ export default function Home() {
             {preview && (
               <Link
                 href="/product"
-                className="mt-3 text-[9px] uppercase tracking-[0.3em] text-white/60 transition-opacity hover:text-white"
+                className="mt-3 text-[9px] uppercase tracking-[0.03em] text-white/60 transition-opacity hover:text-white"
               >
                 {t.home.enterPreview}
               </Link>

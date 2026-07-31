@@ -52,7 +52,7 @@ export default function ProductCard({ product, index, onClick }: Props) {
           />
           {soldOut && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="bg-foreground px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] text-background">
+              <span className="bg-foreground px-4 py-2 text-[10px] font-bold uppercase tracking-[0.03em] text-background">
                 {t.product.soldOut}
               </span>
             </div>

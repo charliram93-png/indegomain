@@ -60,29 +60,32 @@ export default function ProductModal({ product, index, onClose }: Props) {
     <AnimatePresence>
       {product && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/15 p-4 backdrop-blur-sm md:items-center md:p-10"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/15 p-4 backdrop-blur-sm md:p-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
-          {/* Cerrar: FIJO en pantalla (siempre visible, aunque se haga scroll) */}
-          <button
-            onClick={onClose}
-            aria-label={t.product.close}
-            className="fixed right-4 top-4 z-[70] rounded-full bg-surface/70 p-2 text-foreground shadow-md backdrop-blur transition-opacity hover:opacity-60"
-          >
-            <X size={22} strokeWidth={1.5} />
-          </button>
-
           <motion.div
             initial={{ opacity: 0, scale: 0.97, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative grid w-full max-w-6xl items-start gap-5 rounded-sm border border-foreground/15 bg-surface/50 p-5 shadow-2xl backdrop-blur-2xl md:grid-cols-2 md:items-center md:gap-10 md:p-10"
+            className="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-sm border border-foreground/15 bg-surface/50 p-5 shadow-2xl backdrop-blur-2xl md:p-10"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Cerrar: en la esquina del modal, sticky (no se corta al hacer scroll) */}
+            <div className="pointer-events-none sticky top-0 z-20 flex justify-end">
+              <button
+                onClick={onClose}
+                aria-label={t.product.close}
+                className="pointer-events-auto -mr-1 -mt-1 p-2 text-foreground transition-opacity hover:opacity-50"
+              >
+                <X size={22} strokeWidth={1.5} />
+              </button>
+            </div>
+
+            <div className="-mt-6 grid gap-5 md:grid-cols-2 md:items-center md:gap-10">
             {/* IMAGEN + GALERÍA (puntos) */}
             <div>
               <button
@@ -144,7 +147,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
 
               {/* TALLAS */}
               <div className="space-y-3">
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">
+                <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.selectSize}
                 </span>
                 <div className="flex gap-2">
@@ -175,7 +178,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
 
               {/* CANTIDAD */}
               <div className="space-y-3">
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">
+                <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.quantity}
                 </span>
                 <div className="flex h-12 w-fit items-center border border-foreground/20">
@@ -198,7 +201,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
                   </button>
                 </div>
                 {!soldOut && maxQty > 0 && maxQty <= 5 && (
-                  <span className="block text-[10px] uppercase tracking-widest text-foreground/60">
+                  <span className="block text-[10px] uppercase tracking-[0.02em] text-foreground/60">
                     {t.product.lastPieces.replace("{n}", String(maxQty))}
                   </span>
                 )}
@@ -207,10 +210,11 @@ export default function ProductModal({ product, index, onClose }: Props) {
               <button
                 onClick={handleAddToCart}
                 disabled={soldOut || !activeSize}
-                className="w-full bg-foreground px-16 py-5 text-[10px] font-bold uppercase tracking-[0.3em] text-background shadow-2xl transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 md:w-fit"
+                className="w-full bg-foreground px-16 py-5 text-[10px] font-bold uppercase tracking-[0.03em] text-background shadow-2xl transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 md:w-fit"
               >
                 {soldOut ? t.product.soldOut : t.product.addToCart}
               </button>
+            </div>
             </div>
           </motion.div>
         </motion.div>

@@ -23,7 +23,7 @@ export default function LangToggle({
     <button
       onClick={toggleLang}
       aria-label="Cambiar idioma / Change language"
-      className={`${color} min-w-8 p-2 text-[11px] font-bold tracking-widest opacity-70 outline-none transition-opacity hover:opacity-100`}
+      className={`${color} min-w-8 p-2 text-[11px] font-bold tracking-[0.02em] opacity-70 outline-none transition-opacity hover:opacity-100`}
     >
       {label || " "}
     </button>

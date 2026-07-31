@@ -18,22 +18,22 @@ export default function TermsPage() {
       <div className="mx-auto max-w-2xl">
         <button
           onClick={() => router.back()}
-          className="text-[10px] uppercase tracking-[0.3em] opacity-50 transition-opacity hover:opacity-100"
+          className="text-[10px] uppercase tracking-[0.03em] opacity-50 transition-opacity hover:opacity-100"
         >
           {t.terms.back}
         </button>
 
-        <h1 className="mt-8 text-3xl font-bold uppercase tracking-tight md:text-4xl">
+        <h1 className="mt-8 text-3xl font-bold uppercase tracking-tighter md:text-4xl">
           {t.terms.title}
         </h1>
-        <p className="mt-2 text-[11px] uppercase tracking-widest opacity-50">
+        <p className="mt-2 text-[11px] uppercase tracking-[0.02em] opacity-50">
           {t.terms.updatedLabel} {t.terms.updated}
         </p>
 
         <div className="mt-10 space-y-8 text-sm leading-relaxed opacity-90">
           {t.terms.sections.map((section) => (
             <section key={section.h}>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.2em]">
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.02em]">
                 {section.h}
               </h2>
               <p>{section.p}</p>
@@ -41,7 +41,7 @@ export default function TermsPage() {
           ))}
         </div>
 
-        <p className="mt-12 text-[9px] uppercase tracking-widest opacity-30">
+        <p className="mt-12 text-[9px] uppercase tracking-[0.02em] opacity-30">
           {t.footer.rights}
         </p>
       </div>

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Saira_Semi_Condensed } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/themeProvider";
 import { I18nProvider } from "@/lib/i18n/context";
 import "./globals.css";
 
-const inter = Inter({
+// PRUEBA: Saira SemiCondensed (condensada). Para volver a Inter Tight, cambia
+// este import/componente por Inter_Tight.
+const inter = Saira_Semi_Condensed({
   variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],

@@ -34,10 +34,10 @@ export default function PanelLogin() {
   return (
     <main className="flex min-h-dvh w-full flex-col items-center justify-center bg-background px-6 text-foreground">
       <form onSubmit={handleSubmit} className="w-full max-w-xs">
-        <p className="mb-8 text-center text-[11px] font-bold uppercase tracking-[0.35em] opacity-50">
+        <p className="mb-8 text-center text-[11px] font-bold uppercase tracking-[0.08em] opacity-50">
           Indego · Panel
         </p>
-        <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest opacity-50">
+        <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.03em] opacity-50">
           Contraseña
         </label>
         <input
@@ -51,7 +51,7 @@ export default function PanelLogin() {
         <button
           type="submit"
           disabled={loading || !password}
-          className="mt-6 w-full bg-foreground py-4 text-[10px] font-bold uppercase tracking-[0.3em] text-background transition-all hover:opacity-90 disabled:opacity-40"
+          className="mt-6 w-full bg-foreground py-4 text-[10px] font-bold uppercase tracking-[0.06em] text-background transition-all hover:opacity-90 disabled:opacity-40"
         >
           {loading ? "Entrando..." : "Entrar"}
         </button>

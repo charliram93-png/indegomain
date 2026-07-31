@@ -16,7 +16,7 @@ export default function SuccessPage() {
 
   return (
     <main className="flex h-dvh w-full flex-col items-center justify-center bg-background px-6 text-center text-foreground">
-      <p className="mb-4 text-[10px] uppercase tracking-[0.35em] opacity-60">
+      <p className="mb-4 text-[10px] uppercase tracking-[0.03em] opacity-60">
         {t.success.tag}
       </p>
       <h1 className="text-3xl font-bold uppercase tracking-tight md:text-5xl">
@@ -27,7 +27,7 @@ export default function SuccessPage() {
       </p>
       <Link
         href="/product"
-        className="mt-10 border border-foreground px-10 py-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-colors hover:bg-foreground hover:text-background"
+        className="mt-10 border border-foreground px-10 py-4 text-[10px] font-bold uppercase tracking-[0.03em] transition-colors hover:bg-foreground hover:text-background"
       >
         {t.success.cta}
       </Link>
