@@ -85,7 +85,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
               </button>
             </div>
 
-            <div className="-mt-6 grid gap-5 md:grid-cols-2 md:items-center md:gap-10">
+            <div className="-mt-6 grid gap-4 md:grid-cols-2 md:items-center md:gap-10">
             {/* IMAGEN + GALERÍA (puntos) */}
             <div>
               <button
@@ -130,23 +130,26 @@ export default function ProductModal({ product, index, onClose }: Props) {
             </div>
 
             {/* INFO Y CONTROLES */}
-            <div className="flex flex-col justify-center space-y-6 text-foreground">
+            <div className="flex flex-col justify-center space-y-5 text-foreground md:space-y-6">
               <div>
-                <h1 className="text-4xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
-                  {product.name}
-                </h1>
-                <p className="mt-3 text-lg font-medium opacity-70">
-                  {formatMXN(product.price)}
-                </p>
+                {/* Nombre y precio en la misma línea */}
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+                  <h1 className="text-4xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
+                    {product.name}
+                  </h1>
+                  <p className="text-lg font-medium opacity-70">
+                    {formatMXN(product.price)}
+                  </p>
+                </div>
                 {product.description && (
-                  <p className="mt-3 max-w-sm text-sm leading-relaxed opacity-60">
+                  <p className="mt-2 max-w-sm text-sm leading-relaxed opacity-60">
                     {product.description[lang]}
                   </p>
                 )}
               </div>
 
               {/* TALLAS */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.selectSize}
                 </span>
@@ -177,7 +180,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
               </div>
 
               {/* CANTIDAD */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.quantity}
                 </span>
