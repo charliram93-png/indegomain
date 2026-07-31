@@ -24,7 +24,7 @@ export default function Home() {
     <main className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-black text-white">
       {/* VIDEO DE FONDO (bucle, sin sonido). El video ya trae el branding/texto. */}
       <video
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-contain md:object-cover"
         autoPlay
         loop
         muted
