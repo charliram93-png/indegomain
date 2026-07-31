@@ -163,8 +163,9 @@ indego/
 - **`page.tsx`** (home) — **Video de fondo en bucle** (Cloudinary) con el
   contador encima (rojo, Helvetica, un poco abajo). El video ya trae el branding.
   Cuando llega a cero (o si ya pasó la fecha), revela el botón **ENTRAR**; si
-  tienes la cookie de preview, muestra "Entrar (preview)". En móvil el video va
-  centrado (`object-contain`) para no cortarse; en escritorio llena (`object-cover`).
+  tienes la cookie de preview, muestra "Entrar (preview)". En móvil vertical el
+  contenido se rota a horizontal, centrado (clase `.landscape-lock` en globals.css,
+  rotación desde el centro), para que el video horizontal llene la pantalla.
 - **`product/page.tsx`** — La tienda. Lee el catálogo de `config/products.ts` y
   pinta las tarjetas. Aquí se montan el Navbar, el CartDrawer y el Footer.
 - **`success/page.tsx`** — A donde Stripe manda al cliente tras pagar. Vacía el

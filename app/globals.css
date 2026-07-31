@@ -55,3 +55,21 @@ body {
   color: var(--color-background);
 }
 
+/*
+  Countdown en horizontal en móvil (vertical): rota el contenido 90° para que el
+  video horizontal llene la pantalla. Rotación desde el CENTRO para que quede
+  siempre centrado (no cargado a un lado). En escritorio no aplica.
+*/
+@media (max-width: 767px) and (orientation: portrait) {
+  .landscape-lock {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100vh;
+    height: 100vw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+    overflow: hidden;
+  }
+}
+
