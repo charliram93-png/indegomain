@@ -19,8 +19,8 @@ export default function ProductTeaser() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="grid items-center gap-6 md:grid-cols-2 md:gap-16"
     >
-      {/* Cuadro único incógnito */}
-      <div>
+      {/* Cuadro único incógnito (derecha en desktop, abajo del título en móvil) */}
+      <div className="order-2 md:order-2">
         <div className="relative flex aspect-square w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-sm bg-surface">
           <span className="pointer-events-none absolute left-4 top-2 text-6xl font-bold leading-none opacity-10 md:text-8xl">
             04–05
@@ -36,8 +36,8 @@ export default function ProductTeaser() {
         </div>
       </div>
 
-      {/* Título */}
-      <div className="flex flex-col">
+      {/* Título (arriba del cuadro en móvil, a la izquierda en desktop) */}
+      <div className="order-1 flex flex-col md:order-1">
         <h2 className="text-5xl font-bold uppercase leading-none tracking-tighter opacity-25 md:text-7xl">
           IDG — ??
         </h2>
