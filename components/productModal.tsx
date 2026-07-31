@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product, isSoldOut } from "@/types/products";
 import { X, Plus, Minus } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useCart } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/context";
@@ -49,18 +49,36 @@ export default function ProductModal({ product, index, onClose }: Props) {
     setActiveImage(0);
   };
 
-  const cycleImage = () => {
-    if (!product) return;
-    setActiveImage((i) => (i + 1) % product.images.length);
-  };
-
   const hasGallery = !!product && product.images.length > 1;
+  const total = product?.images.length ?? 1;
+
+  const nextImage = () => setActiveImage((i) => (i + 1) % total);
+  const prevImage = () => setActiveImage((i) => (i - 1 + total) % total);
+
+  // Swipe en móvil para cambiar de foto.
+  const touchStartX = useRef<number | null>(null);
+  const swiped = useRef(false);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    swiped.current = false;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || !hasGallery) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 40) {
+      swiped.current = true;
+      if (dx < 0) nextImage();
+      else prevImage();
+    }
+    touchStartX.current = null;
+  };
 
   return (
     <AnimatePresence>
       {product && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/15 p-4 backdrop-blur-sm md:p-10"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/15 backdrop-blur-sm md:p-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -71,7 +89,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-sm border border-foreground/15 bg-surface/50 p-5 shadow-2xl backdrop-blur-2xl md:p-10"
+            className="relative h-dvh w-full overflow-y-auto bg-surface/50 p-5 backdrop-blur-2xl md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-sm md:border md:border-foreground/15 md:p-10 md:shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Cerrar: en la esquina del modal, sticky (no se corta al hacer scroll) */}
@@ -90,7 +108,15 @@ export default function ProductModal({ product, index, onClose }: Props) {
             <div>
               <button
                 type="button"
-                onClick={hasGallery ? cycleImage : undefined}
+                onClick={() => {
+                  if (swiped.current) {
+                    swiped.current = false;
+                    return;
+                  }
+                  if (hasGallery) nextImage();
+                }}
+                onTouchStart={onTouchStart}
+                onTouchEnd={onTouchEnd}
                 aria-label={hasGallery ? t.product.changeView : product.name}
                 className={`relative flex h-[30vh] w-full items-center justify-center md:h-auto md:aspect-square ${
                   hasGallery ? "cursor-pointer" : "cursor-default"
@@ -132,15 +158,12 @@ export default function ProductModal({ product, index, onClose }: Props) {
             {/* INFO Y CONTROLES */}
             <div className="flex flex-col justify-center space-y-5 text-foreground md:space-y-6">
               <div>
-                {/* Nombre y precio en la misma línea */}
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-                  <h1 className="text-4xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
-                    {product.name}
-                  </h1>
-                  <p className="text-lg font-medium opacity-70">
-                    {formatMXN(product.price)}
-                  </p>
-                </div>
+                <h1 className="text-4xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
+                  {product.name}
+                </h1>
+                <p className="mt-2 text-lg font-medium opacity-70">
+                  {formatMXN(product.price)}
+                </p>
                 {product.description && (
                   <p className="mt-2 max-w-sm text-sm leading-relaxed opacity-60">
                     {product.description[lang]}
