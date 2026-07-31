@@ -4,20 +4,29 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { useCart } from "@/store/cart";
 import ThemeToggle from "@/components/themeToggle";
 import LangToggle from "@/components/langToggle";
 import { useI18n } from "@/lib/i18n/context";
 
+// TODO: reemplazar por los logos oficiales (negro y blanco) subidos a Cloudinary.
+const LOGO_DARK =
+  "https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png"; // logo negro, para fondo claro
+const LOGO_LIGHT =
+  "https://res.cloudinary.com/dij60ghdf/image/upload/v1772753917/Logo_White_xhx1kd.webp"; // logo blanco, para fondo oscuro
+
 const Navbar: React.FC = () => {
   const { openCart, totalItems } = useCart();
   const { t } = useI18n();
+  const { resolvedTheme } = useTheme();
 
-  // Evita mismatch de hidratación: el contador (de localStorage) solo se
-  // pinta después de montar en el cliente.
+  // Evita mismatch de hidratación: contador y logo temático solo tras montar.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const count = mounted ? totalItems() : 0;
+  const logoSrc =
+    mounted && resolvedTheme === "dark" ? LOGO_LIGHT : LOGO_DARK;
 
   return (
     <nav className="fixed top-0 left-0 z-50 flex h-20 w-full items-center justify-between bg-surface/70 px-6 backdrop-blur-md md:px-12">
@@ -25,7 +34,7 @@ const Navbar: React.FC = () => {
       <div className="flex select-none items-center">
         <Link href="/" className="select-none">
           <Image
-            src="https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png"
+            src={logoSrc}
             width={100}
             height={100}
             alt="Indego Studio"

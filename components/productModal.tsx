@@ -71,7 +71,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative grid max-h-[92vh] w-full max-w-6xl items-center gap-8 overflow-y-auto rounded-xl border border-foreground/15 bg-surface/50 p-6 shadow-2xl backdrop-blur-2xl md:grid-cols-2 md:gap-10 md:p-10"
+            className="relative grid max-h-[92vh] w-full max-w-6xl items-start gap-5 overflow-y-auto rounded-sm border border-foreground/15 bg-surface/50 p-5 shadow-2xl backdrop-blur-2xl md:grid-cols-2 md:items-center md:gap-10 md:p-10"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -88,7 +88,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
                 type="button"
                 onClick={hasGallery ? cycleImage : undefined}
                 aria-label={hasGallery ? t.product.changeView : product.name}
-                className={`relative flex h-[38vh] w-full items-center justify-center md:h-auto md:aspect-square ${
+                className={`relative flex h-[30vh] w-full items-center justify-center md:h-auto md:aspect-square ${
                   hasGallery ? "cursor-pointer" : "cursor-default"
                 }`}
               >

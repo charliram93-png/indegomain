@@ -89,6 +89,7 @@ proyecto → Settings → Environment Variables.
 | `NEXT_PUBLIC_URL` | URL del sitio (ej. `https://indegostudio.com`). Se usa para redirigir tras el pago. |
 | `DROP_ACCESS_KEY` | (Opcional) Clave para entrar a la tienda antes del drop. Default: `indego-preview`. |
 | `STRIPE_WEBHOOK_SECRET` | (Opcional) Secreto del webhook para confirmar pagos. |
+| `ADMIN_PASSWORD` | Contraseña del panel de administración (ruta secreta `/idg-hq-9f2a`). **Necesaria** para entrar. |
 
 ---
 
@@ -104,9 +105,13 @@ indego/
 │   ├── product/page.tsx     # LA TIENDA (catálogo)
 │   ├── success/page.tsx     # página de "gracias por tu compra"
 │   ├── terms/page.tsx       # términos y condiciones
+│   ├── idg-hq-9f2a/         # panel admin (ruta SECRETA, no adivinable)
+│   │   ├── page.tsx         # dashboard (menú lateral con accesos)
+│   │   └── login/page.tsx   # login del panel
 │   └── api/
 │       ├── checkout/route.ts   # crea la sesión de pago de Stripe
-│       └── webhook/route.ts    # recibe confirmaciones de Stripe
+│       ├── webhook/route.ts    # recibe confirmaciones de Stripe
+│       └── panel/              # login/logout del panel
 ├── components/              # piezas de interfaz reutilizables
 │   ├── countdown.tsx        # la cuenta regresiva
 │   ├── navbar.tsx           # barra superior con logo, idioma, tema y bolsa
@@ -119,9 +124,11 @@ indego/
 │   └── langToggle.tsx       # botón EN/ES para cambiar de idioma
 ├── config/                  # configuración editable del negocio
 │   ├── drop.ts              # fecha, nombre y clave del drop
-│   └── products.ts          # catálogo e inventario (stock por talla)
+│   ├── products.ts          # catálogo e inventario (stock por talla)
+│   └── panel.ts             # links/accesos del panel de administración
 ├── lib/
 │   ├── format.ts            # formatea precios ($1,200 MXN)
+│   ├── adminAuth.ts         # helper de sesión del panel (hash de contraseña)
 │   └── i18n/                # idioma EN/ES
 │       ├── dictionaries.ts  # TODOS los textos (inglés y español)
 │       └── context.tsx      # provee el idioma a la app
@@ -129,7 +136,7 @@ indego/
 │   └── cart.ts              # estado del carrito (Zustand)
 ├── types/
 │   └── products.ts          # definiciones de tipos (Producto, Carrito…)
-├── middleware.ts            # candado: protege /product hasta el drop
+├── proxy.ts                 # candado: protege /product hasta el drop
 └── next.config.ts           # config de Next (dominios de imágenes permitidos)
 ```
 
@@ -143,6 +150,8 @@ indego/
   - `DROP_DATE`: fecha y hora del drop.
   - `DROP_NAME`: nombre que se muestra ("DROP #1").
   - `DROP_ACCESS_KEY`: clave para probar la tienda antes de tiempo.
+  - `DROP_VIDEO` / `DROP_POSTER`: video de fondo del countdown y su imagen de
+    respaldo (ambos en Cloudinary).
   - `isDropOpen()`: función que dice si el drop ya abrió.
 - **`config/products.ts`** — El catálogo. Cada producto tiene `slug`, `name`,
   `image`, `price` (en pesos) y `sizes` (tallas con su `stock`).
@@ -151,9 +160,10 @@ indego/
 
 - **`layout.tsx`** — Envuelve todo el sitio. Carga la fuente Inter, define los
   metadatos (título, previsualización al compartir) y Analytics.
-- **`page.tsx`** (home) — Muestra el countdown. Cuando llega a cero (o si ya pasó
-  la fecha), revela el botón **ENTRAR**. Si tienes la cookie de preview, muestra
-  un enlace discreto "Entrar (preview)".
+- **`page.tsx`** (home) — **Video de fondo en bucle** (Cloudinary) con el
+  contador encima (rojo, Helvetica, un poco abajo). El video ya trae el branding.
+  Cuando llega a cero (o si ya pasó la fecha), revela el botón **ENTRAR**; si
+  tienes la cookie de preview, muestra "Entrar (preview)".
 - **`product/page.tsx`** — La tienda. Lee el catálogo de `config/products.ts` y
   pinta las tarjetas. Aquí se montan el Navbar, el CartDrawer y el Footer.
 - **`success/page.tsx`** — A donde Stripe manda al cliente tras pagar. Vacía el
@@ -212,6 +222,20 @@ indego/
   espejo: `en` y `es`. Los componentes leen los textos con `useI18n()`.
 - Los términos y condiciones también están ahí (`terms`), en ambos idiomas.
 
+### Panel de administración (ruta secreta)
+
+- Vive en una **ruta secreta**: `/idg-hq-9f2a` (así `/panel` o `/admin` no
+  revelan nada — dan 404). Es un **menú lateral** con tus accesos directos
+  (Stripe, Vercel, GitHub, Cloudinary, envíos, utilidades…). Pensado para crecer:
+  mostrará ventas y stock reales cuando se conecte Supabase.
+- Protegido con **login por contraseña** (`ADMIN_PASSWORD`): sin sesión te manda
+  a `/idg-hq-9f2a/login`. La cookie guarda un **hash**, no la contraseña en claro
+  (`lib/adminAuth.ts`).
+- Los accesos se editan en **`config/panel.ts`**.
+- La **contraseña es la protección real**; la ruta secreta es una capa extra
+  contra curiosos. (Si el repo es público, la ruta se ve en el código; la
+  contraseña sigue protegiendo el acceso.)
+
 ### Lógica de apoyo
 
 - **`store/cart.ts`** — El "cerebro" del carrito (Zustand). Guarda los productos,
@@ -219,7 +243,7 @@ indego/
 - **`lib/format.ts`** — Convierte números a formato de precio: `1200` → `"$1,200 MXN"`.
 - **`types/products.ts`** — Define las "formas" de los datos (qué campos tiene un
   producto, un item del carrito, etc.).
-- **`middleware.ts`** — El candado. Corre en el servidor antes de mostrar
+- **`proxy.ts`** — El candado. Corre en el servidor antes de mostrar
   `/product`: si el drop ya abrió, deja pasar; si no, exige la clave.
 
 ---
@@ -228,7 +252,7 @@ indego/
 
 1. El público entra a la home y ve el **countdown** (`app/page.tsx` +
    `components/countdown.tsx`), que cuenta hacia `DROP_DATE`.
-2. Si alguien intenta entrar directo a `/product`, el **`middleware.ts`** lo
+2. Si alguien intenta entrar directo a `/product`, el **`proxy.ts`** lo
    revisa en el servidor:
    - ¿Ya pasó `DROP_DATE`? → entra (tienda pública).
    - ¿No, pero trae `?access=CLAVE` correcta? → guarda cookie y entra.
@@ -257,6 +281,11 @@ indego/
 ## 9. Cómo hacer cambios comunes
 
 > Casi todo lo del día a día se cambia en la carpeta `config/`.
+
+### Cambiar el video del countdown
+`config/drop.ts` → `DROP_VIDEO` (URL de Cloudinary del video) y `DROP_POSTER`
+(imagen de respaldo). Súbelo a Cloudinary como *video* y usa `q_auto,vc_h264` en
+la URL para que sea ligero y compatible. No subir videos pesados a git (`/public/*.mp4` está ignorado).
 
 ### Cambiar la fecha del drop
 `config/drop.ts` → edita `DROP_DATE`. Formato: `"2026-12-01T18:00:00-06:00"`
@@ -297,6 +326,18 @@ Ambos bloques deben tener las mismas claves.
 
 ### Cambiar el idioma por defecto
 `lib/i18n/context.tsx` → `DEFAULT_LANG` (`"en"` o `"es"`).
+
+### Editar los accesos del panel
+`config/panel.ts` → agrega/quita links por grupo. `external: true` abre en pestaña
+nueva; `soon: true` lo marca "próximamente".
+
+### Cambiar la contraseña del panel
+Variable de entorno `ADMIN_PASSWORD` (en `.env.local` para local, y en Vercel para
+producción).
+
+### Cambiar la ruta secreta del panel
+Edita `PANEL_PATH` en `lib/adminAuth.ts`, el `matcher` en `proxy.ts` (debe ser
+literal), y **renombra la carpeta** `app/idg-hq-9f2a/` para que coincidan los tres.
 
 ### Editar los términos y condiciones
 `lib/i18n/dictionaries.ts` → sección `terms` (en `en` y `es`). Reemplaza los

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/context";
 
 /*
@@ -11,16 +11,17 @@ import { useI18n } from "@/lib/i18n/context";
 */
 export default function TermsPage() {
   const { t } = useI18n();
+  const router = useRouter();
 
   return (
     <main className="min-h-dvh bg-background px-6 py-16 text-foreground md:px-12">
       <div className="mx-auto max-w-2xl">
-        <Link
-          href="/"
+        <button
+          onClick={() => router.back()}
           className="text-[10px] uppercase tracking-[0.3em] opacity-50 transition-opacity hover:opacity-100"
         >
           {t.terms.back}
-        </Link>
+        </button>
 
         <h1 className="mt-8 text-3xl font-bold uppercase tracking-tight md:text-4xl">
           {t.terms.title}

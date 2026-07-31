@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isDropOpen, DROP_ACCESS_KEY } from "@/config/drop";
+import { ADMIN_COOKIE, PANEL_PATH, sha256 } from "@/lib/adminAuth";
 
 const ACCESS_COOKIE = "drop_access";
 const PREVIEW_COOKIE = "drop_preview";
 
 /**
- * Candado de la tienda:
+ * Candado de la tienda (antes "middleware", ahora "proxy" en Next 16):
  *  - Si el drop ya abrió (fecha alcanzada) -> acceso público.
  *  - Si no ha abierto -> solo entra quien tenga la clave de prueba.
  *    Comparte: /product?access=TU_CLAVE  (se guarda en cookie por dispositivo).
@@ -15,7 +16,22 @@ const PREVIEW_COOKIE = "drop_preview";
  * La verificación de fecha es del lado del servidor, así que NO se puede
  * burlar cambiando el reloj del navegador.
  */
-export function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // --- PANEL DE ADMINISTRACIÓN (ruta secreta) ---
+  // Siempre protegido con login (independiente de la fecha del drop).
+  if (pathname.startsWith(PANEL_PATH)) {
+    if (pathname === `${PANEL_PATH}/login`) return NextResponse.next();
+    const adminPass = process.env.ADMIN_PASSWORD;
+    const cookie = request.cookies.get(ADMIN_COOKIE)?.value;
+    if (adminPass && cookie && cookie === (await sha256(adminPass))) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL(`${PANEL_PATH}/login`, request.url));
+  }
+
+  // --- CANDADO DE LA TIENDA (/product) ---
   // 1. Drop abierto al público: pasa cualquiera.
   if (isDropOpen()) {
     return NextResponse.next();
@@ -55,5 +71,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/product/:path*"],
+  // OJO: si cambias PANEL_PATH en lib/adminAuth.ts, actualiza también este
+  // matcher (debe ser un literal) y renombra la carpeta app/idg-hq-9f2a/.
+  matcher: ["/product/:path*", "/idg-hq-9f2a/:path*"],
 };

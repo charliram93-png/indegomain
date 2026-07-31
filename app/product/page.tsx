@@ -6,6 +6,7 @@ import Footer from "@/components/footer";
 import CartDrawer from "@/components/cartDrawer";
 import ProductCard from "@/components/productCard";
 import ProductModal from "@/components/productModal";
+import ProductTeaser from "@/components/productTeaser";
 import { PRODUCTS } from "@/config/products";
 import { DROP_NAME } from "@/config/drop";
 import { useI18n } from "@/lib/i18n/context";
@@ -15,10 +16,10 @@ export default function Catalog() {
   const [selected, setSelected] = useState<number | null>(null);
 
   return (
-    <>
+    <div className="flex min-h-dvh flex-col bg-background">
       <Navbar />
 
-      <main className="min-h-screen bg-background px-6 pt-32 md:px-12">
+      <main className="flex-1 px-6 pt-32 md:px-12">
         {/* Encabezado editorial */}
         <header className="mx-auto mb-10 max-w-5xl text-center md:mb-14">
           <p className="text-[11px] font-bold tracking-[0.4em] opacity-40">
@@ -39,6 +40,10 @@ export default function Catalog() {
               onClick={() => setSelected(i)}
             />
           ))}
+
+          {/* Adelanto Drop 1.5 (incógnito) */}
+          <ProductTeaser index={PRODUCTS.length} />
+          <ProductTeaser index={PRODUCTS.length + 1} />
         </div>
       </main>
 
@@ -50,6 +55,6 @@ export default function Catalog() {
 
       <CartDrawer />
       <Footer />
-    </>
+    </div>
   );
 }

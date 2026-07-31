@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Videos pesados: usar Cloudinary en producción, no subir a git
+/public/*.mp4

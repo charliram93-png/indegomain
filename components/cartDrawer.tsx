@@ -94,7 +94,7 @@ export default function CartDrawer() {
                 <ul className="divide-y divide-foreground/10">
                   {items.map((item) => (
                     <li key={item.id} className="flex gap-4 py-5">
-                      <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-background">
+                      <div className="relative h-24 w-20 shrink-0 overflow-hidden">
                         <Image
                           src={item.image}
                           alt={item.name}
