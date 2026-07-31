@@ -67,12 +67,20 @@ export default function ProductCard({ product, index, onClick }: Props) {
             {product.name}
           </h2>
         </button>
+        {/* Descripción en desktop (junto al nombre) */}
         {product.description && (
-          <p className="mt-5 max-w-xs text-sm leading-relaxed opacity-50">
+          <p className="mt-5 hidden max-w-xs text-sm leading-relaxed opacity-50 md:block">
             {product.description[lang]}
           </p>
         )}
       </div>
+
+      {/* Descripción en móvil: DEBAJO de la imagen */}
+      {product.description && (
+        <p className="order-3 max-w-xs text-sm leading-relaxed opacity-50 md:hidden">
+          {product.description[lang]}
+        </p>
+      )}
     </motion.div>
   );
 }
