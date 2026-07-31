@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Saira_Semi_Condensed } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/themeProvider";
+import ThemeColorSync from "@/components/themeColorSync";
 import { I18nProvider } from "@/lib/i18n/context";
 import "./globals.css";
 
@@ -51,6 +52,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`}>
         <ThemeProvider>
+          <ThemeColorSync />
           <I18nProvider>{children}</I18nProvider>
         </ThemeProvider>
         <Analytics />
