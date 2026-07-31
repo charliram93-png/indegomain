@@ -30,7 +30,8 @@ estados:
   comprar en línea (pago con Stripe, envíos solo dentro de México).
 
 Estética minimalista inspirada en drops tipo Yeezy: paleta olivo/crema,
-tipografía Inter, mucho espacio en blanco.
+tipografía condensada (Saira Semi Condensed, **temporal** — a definir con el
+equipo), mucho espacio en blanco.
 
 ---
 
@@ -118,9 +119,11 @@ indego/
 │   ├── footer.tsx           # pie de página
 │   ├── productCard.tsx      # fila editorial del catálogo (imagen + nombre grande)
 │   ├── productModal.tsx     # ventana de detalle (fotos, tallas, compra)
+│   ├── productTeaser.tsx    # cuadro "incógnito" 04–05 (adelanto Drop 1.5)
 │   ├── cartDrawer.tsx       # carrito lateral
 │   ├── themeProvider.tsx    # provee el modo claro/oscuro a la app
 │   ├── themeToggle.tsx      # botón sol/luna para cambiar de tema
+│   ├── themeColorSync.tsx   # sincroniza el color de la barra del navegador (iOS)
 │   └── langToggle.tsx       # botón EN/ES para cambiar de idioma
 ├── config/                  # configuración editable del negocio
 │   ├── drop.ts              # fecha, nombre y clave del drop
@@ -158,8 +161,10 @@ indego/
 
 ### Páginas (`app/`)
 
-- **`layout.tsx`** — Envuelve todo el sitio. Carga la fuente Inter, define los
-  metadatos (título, previsualización al compartir) y Analytics.
+- **`layout.tsx`** — Envuelve todo el sitio. Carga la fuente (Saira Semi
+  Condensed, **temporal** — cambiable en 1 línea por otra de `next/font/google`),
+  define los metadatos (título, previsualización al compartir), el proveedor de
+  tema y Analytics.
 - **`page.tsx`** (home) — **Video de fondo en bucle** (Cloudinary) con el
   contador encima (rojo, Helvetica, un poco abajo). El video ya trae el branding.
   Cuando llega a cero (o si ya pasó la fecha), revela el botón **ENTRAR**; si
@@ -188,22 +193,25 @@ indego/
 - **`navbar.tsx`** — Barra superior. El ícono de bolsa abre el carrito y muestra
   cuántos productos hay.
 - **`footer.tsx`** — Pie con enlaces a Términos y Linktree.
-- **`productCard.tsx`** — Fila editorial del catálogo: el cuadro de imagen (con
-  número 01/02/03) de un lado y el **nombre en grande** + una descripción corta
-  del otro, alternando izquierda/derecha por producto. Al hacer clic abre el
-  modal. Marca SOLD OUT.
+- **`productCard.tsx`** — Fila editorial del catálogo: cuadro de imagen (con
+  número 01/02/03) y **nombre en grande** + descripción, alternando
+  izquierda/derecha por producto. En **móvil**: título arriba de la imagen y
+  descripción debajo. Al hacer clic abre el modal. Marca SOLD OUT.
 - **`productTeaser.tsx`** — Cuadro "incógnito" (04–05) que adelanta el Drop 1.5,
   con candado y "Drop 1.5 · Próximamente" dentro. Se muestra al final del catálogo.
-- **`productModal.tsx`** — Ventana de detalle en un **panel tipo glass** (vidrio
-  esmerilado) con la imagen flotando: si el producto tiene varias fotos, se
-  cambian tocando la imagen o los **puntos** indicadores. Incluye precio,
-  descripción bilingüe, selección de talla y cantidad, y agregar al carrito.
-  Deshabilita tallas agotadas.
+- **`productModal.tsx`** — Ventana de detalle en un **panel tipo glass**. En
+  **escritorio** es tarjeta centrada (imagen + info al lado, precio bajo el
+  nombre). En **móvil** ocupa la pantalla completa (`100svh`, sin scroll: imagen
+  arriba flexible, controles abajo, precio junto al nombre) y se puede **deslizar
+  (swipe)** para cambiar de foto; bloquea el scroll del fondo al abrir. Incluye
+  puntos, descripción bilingüe, talla, cantidad y agregar al carrito.
 - **`cartDrawer.tsx`** — Carrito lateral: lista de productos, cantidades,
   subtotal y botón para pagar.
 - **`themeProvider.tsx`** — Envuelve la app para dar modo claro/oscuro (sigue el
   sistema por defecto).
 - **`themeToggle.tsx`** — Botón sol/luna que alterna claro/oscuro.
+- **`themeColorSync.tsx`** — Sincroniza el `<meta theme-color>` con el tema para
+  que la barra del navegador (iOS) cambie de color al cambiar de tema.
 
 ### Modo claro / oscuro (temas)
 
@@ -317,6 +325,12 @@ La `description` es **bilingüe**: `{ en: "...", es: "..." }`.
 `config/drop.ts` → `DROP_ACCESS_KEY`. En producción, mejor ponla como variable de
 entorno `DROP_ACCESS_KEY` en Vercel.
 
+### Cambiar la fuente
+`app/layout.tsx` → cambia el import y el componente de `next/font/google`
+(actualmente `Saira_Semi_Condensed`, **temporal**). Ej.: para volver a la de
+antes, usa `Inter_Tight`. La variable CSS `--font-inter` se mantiene, así que no
+hay que tocar nada más.
+
 ### Cambiar colores de marca
 `app/globals.css`:
 - Colores fijos de marca: `--color-olive`, `--color-cream`, `--color-cream-dark`.
@@ -351,24 +365,41 @@ textos entre `[corchetes]` con tus datos reales.
 
 ## 10. Despliegue en Vercel
 
-1. Sube el proyecto a un repo de GitHub.
-2. En [vercel.com](https://vercel.com) → New Project → importa el repo.
-3. Agrega las **variables de entorno** (sección 4) en Settings.
-4. Deploy. Vercel te da una URL; conecta tu dominio `indegostudio.com`.
-5. Para el webhook: en Stripe → Developers → Webhooks → agrega el endpoint
-   `https://indegostudio.com/api/webhook` y copia el `whsec_...` a
-   `STRIPE_WEBHOOK_SECRET` en Vercel.
-6. Para aceptar **OXXO**: actívalo en Stripe → Settings → Payment methods.
+**Ya está conectado:** el repo está en GitHub y Vercel despliega solo. **Cada push
+a la rama `main` = despliegue a producción en vivo.** Variables de entorno ya
+capturadas en Vercel (STRIPE keys, NEXT_PUBLIC_URL, ADMIN_PASSWORD).
+
+Recordatorios de configuración:
+- El **webhook**: en Stripe → Developers → Webhooks → endpoint
+  `https://indegostudio.com/api/webhook`, y copia el `whsec_...` a
+  `STRIPE_WEBHOOK_SECRET` en Vercel.
+- Para aceptar **OXXO**: actívalo en Stripe → Settings → Payment methods.
+- Si cambias variables `NEXT_PUBLIC_*`, haz **Redeploy** para que apliquen.
 
 ---
 
 ## 11. Pendientes / próximos pasos
 
-- **Base de datos** — para guardar órdenes propias, descontar stock automático y
-  mandar correos de confirmación. (Ver opciones con el equipo.)
-- **Correos automáticos** de confirmación al cliente.
-- **Tarifa de envío** — definir si es gratis (en el precio) o tarifa plana.
-- **Meses sin intereses (MSI)** — evaluar según cómo venda el primer drop.
+**Diseño / contenido:**
+- **Fuente definitiva** — Saira Semi Condensed es temporal; definir con el equipo.
+- **Assets reales a Cloudinary** — logos oficiales (negro y blanco → reemplazar
+  `LOGO_DARK`/`LOGO_LIGHT` en `navbar.tsx`) y fotos reales de playeras
+  (frente/espalda → `config/products.ts`).
+- **Video en escritorio** — decidir si va con zoom (`object-cover`, actual) o
+  completo con franjas (`object-contain`).
+- **`theme-color` en iOS** — aún puede tardar un instante en repintar la barra al
+  cambiar tema; es una limitación conocida de Safari.
+
+**Antes de abrir la tienda:**
+- **Fecha real del drop** (`DROP_DATE`), hoy placeholder 1-sep-2026.
+- **Stripe en modo LIVE** + activar **OXXO** + webhook live.
+- **Rellenar `/terms`** (textos entre `[corchetes]`).
+
+**Siguiente etapa técnica:**
+- **Base de datos (Supabase) + correos (Resend)** — guardar órdenes, descontar
+  stock automático y confirmar por correo. Mostrar ventas/stock en el panel.
+- **Tarifa de envío** — definir (gratis en el precio o tarifa plana).
+- **Meses sin intereses (MSI)** — evaluar tras el primer drop.
 
 ---
 
