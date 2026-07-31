@@ -21,10 +21,10 @@ export default function Home() {
   const handleComplete = useCallback(() => setOpen(true), []);
 
   return (
-    <main className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-black text-white">
+    <main className="landscape-lock relative flex h-dvh w-full items-center justify-center overflow-hidden bg-black text-white">
       {/* VIDEO DE FONDO (bucle, sin sonido). El video ya trae el branding/texto. */}
       <video
-        className="absolute inset-0 h-full w-full object-contain md:object-cover"
+        className="absolute inset-0 h-full w-full object-cover"
         autoPlay
         loop
         muted

@@ -42,8 +42,7 @@ export default function Catalog() {
           ))}
 
           {/* Adelanto Drop 1.5 (incógnito) */}
-          <ProductTeaser index={PRODUCTS.length} />
-          <ProductTeaser index={PRODUCTS.length + 1} />
+          <ProductTeaser />
         </div>
       </main>
 

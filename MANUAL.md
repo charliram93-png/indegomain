@@ -163,7 +163,9 @@ indego/
 - **`page.tsx`** (home) — **Video de fondo en bucle** (Cloudinary) con el
   contador encima (rojo, Helvetica, un poco abajo). El video ya trae el branding.
   Cuando llega a cero (o si ya pasó la fecha), revela el botón **ENTRAR**; si
-  tienes la cookie de preview, muestra "Entrar (preview)".
+  tienes la cookie de preview, muestra "Entrar (preview)". En **móvil vertical**
+  el contenido se rota a horizontal (clase `.landscape-lock` en globals.css) para
+  que el video horizontal llene la pantalla.
 - **`product/page.tsx`** — La tienda. Lee el catálogo de `config/products.ts` y
   pinta las tarjetas. Aquí se montan el Navbar, el CartDrawer y el Footer.
 - **`success/page.tsx`** — A donde Stripe manda al cliente tras pagar. Vacía el
@@ -190,6 +192,8 @@ indego/
   número 01/02/03) de un lado y el **nombre en grande** + una descripción corta
   del otro, alternando izquierda/derecha por producto. Al hacer clic abre el
   modal. Marca SOLD OUT.
+- **`productTeaser.tsx`** — Cuadro "incógnito" (04–05) que adelanta el Drop 1.5,
+  con candado y "Drop 1.5 · Próximamente" dentro. Se muestra al final del catálogo.
 - **`productModal.tsx`** — Ventana de detalle en un **panel tipo glass** (vidrio
   esmerilado) con la imagen flotando: si el producto tiene varias fotos, se
   cambian tocando la imagen o los **puntos** indicadores. Incluye precio,

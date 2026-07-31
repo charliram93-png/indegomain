@@ -60,28 +60,29 @@ export default function ProductModal({ product, index, onClose }: Props) {
     <AnimatePresence>
       {product && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/15 p-4 backdrop-blur-sm md:p-10"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/15 p-4 backdrop-blur-sm md:items-center md:p-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
+          {/* Cerrar: FIJO en pantalla (siempre visible, aunque se haga scroll) */}
+          <button
+            onClick={onClose}
+            aria-label={t.product.close}
+            className="fixed right-4 top-4 z-[70] rounded-full bg-surface/70 p-2 text-foreground shadow-md backdrop-blur transition-opacity hover:opacity-60"
+          >
+            <X size={22} strokeWidth={1.5} />
+          </button>
+
           <motion.div
             initial={{ opacity: 0, scale: 0.97, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative grid max-h-[92vh] w-full max-w-6xl items-start gap-5 overflow-y-auto rounded-sm border border-foreground/15 bg-surface/50 p-5 shadow-2xl backdrop-blur-2xl md:grid-cols-2 md:items-center md:gap-10 md:p-10"
+            className="relative grid w-full max-w-6xl items-start gap-5 rounded-sm border border-foreground/15 bg-surface/50 p-5 shadow-2xl backdrop-blur-2xl md:grid-cols-2 md:items-center md:gap-10 md:p-10"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={onClose}
-              aria-label={t.product.close}
-              className="absolute right-4 top-4 z-10 p-2 text-foreground transition-opacity hover:opacity-40"
-            >
-              <X size={22} strokeWidth={1.5} />
-            </button>
-
             {/* IMAGEN + GALERÍA (puntos) */}
             <div>
               <button
