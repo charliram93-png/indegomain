@@ -35,7 +35,6 @@ export default function ProductModal({ product, index, onClose }: Props) {
   const qty = Math.min(quantity, Math.max(1, maxQty));
 
   const number = String(index + 1).padStart(2, "0");
-  // Imagen segura (por si se cambió de producto con una miniatura activa alta).
   const mainImage = product
     ? product.images[activeImage] ?? product.images[0]
     : "";
@@ -89,23 +88,20 @@ export default function ProductModal({ product, index, onClose }: Props) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative h-dvh w-full overflow-y-auto bg-surface/50 p-5 backdrop-blur-2xl md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-sm md:border md:border-foreground/15 md:p-10 md:shadow-2xl"
+            className="relative flex h-dvh w-full flex-col bg-surface/50 p-4 backdrop-blur-2xl md:grid md:h-auto md:max-h-[90vh] md:max-w-6xl md:grid-cols-2 md:items-center md:gap-10 md:overflow-y-auto md:rounded-sm md:border md:border-foreground/15 md:p-10 md:shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Cerrar: en la esquina del modal, sticky (no se corta al hacer scroll) */}
-            <div className="pointer-events-none sticky top-0 z-20 flex justify-end">
-              <button
-                onClick={onClose}
-                aria-label={t.product.close}
-                className="pointer-events-auto -mr-1 -mt-1 p-2 text-foreground transition-opacity hover:opacity-50"
-              >
-                <X size={22} strokeWidth={1.5} />
-              </button>
-            </div>
+            {/* Cerrar */}
+            <button
+              onClick={onClose}
+              aria-label={t.product.close}
+              className="absolute right-3 top-3 z-30 p-2 text-foreground transition-opacity hover:opacity-50"
+            >
+              <X size={22} strokeWidth={1.5} />
+            </button>
 
-            <div className="-mt-6 grid gap-4 md:grid-cols-2 md:items-center md:gap-10">
-            {/* IMAGEN + GALERÍA (puntos) */}
-            <div>
+            {/* IMAGEN + GALERÍA (puntos). En móvil ocupa el espacio disponible. */}
+            <div className="flex min-h-0 flex-1 flex-col md:block md:flex-none">
               <button
                 type="button"
                 onClick={() => {
@@ -118,7 +114,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
                 onTouchStart={onTouchStart}
                 onTouchEnd={onTouchEnd}
                 aria-label={hasGallery ? t.product.changeView : product.name}
-                className={`relative flex h-[30vh] w-full items-center justify-center md:h-auto md:aspect-square ${
+                className={`relative flex min-h-0 w-full flex-1 items-center justify-center md:h-auto md:aspect-square md:flex-none ${
                   hasGallery ? "cursor-pointer" : "cursor-default"
                 }`}
               >
@@ -131,14 +127,14 @@ export default function ProductModal({ product, index, onClose }: Props) {
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   priority
-                  className={`select-none object-contain p-4 pointer-events-none drop-shadow-2xl ${
+                  className={`select-none object-contain p-2 pointer-events-none drop-shadow-2xl md:p-4 ${
                     soldOut ? "opacity-50 grayscale" : ""
                   }`}
                 />
               </button>
 
               {hasGallery && (
-                <div className="mt-4 flex justify-center gap-2.5">
+                <div className="mt-3 flex shrink-0 justify-center gap-2.5">
                   {product.images.map((_, i) => (
                     <button
                       key={i}
@@ -156,14 +152,17 @@ export default function ProductModal({ product, index, onClose }: Props) {
             </div>
 
             {/* INFO Y CONTROLES */}
-            <div className="flex flex-col justify-center space-y-5 text-foreground md:space-y-6">
+            <div className="flex shrink-0 flex-col space-y-3 pt-3 text-foreground md:justify-center md:space-y-6 md:pt-0">
               <div>
-                <h1 className="text-4xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
-                  {product.name}
-                </h1>
-                <p className="mt-2 text-lg font-medium opacity-70">
-                  {formatMXN(product.price)}
-                </p>
+                {/* Nombre + precio: en la MISMA línea en móvil, apilados en desktop */}
+                <div className="flex items-baseline justify-between gap-3 md:block">
+                  <h1 className="text-3xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
+                    {product.name}
+                  </h1>
+                  <p className="shrink-0 text-lg font-medium opacity-70 md:mt-2">
+                    {formatMXN(product.price)}
+                  </p>
+                </div>
                 {product.description && (
                   <p className="mt-2 max-w-sm text-sm leading-relaxed opacity-60">
                     {product.description[lang]}
@@ -185,7 +184,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
                         key={size}
                         onClick={() => !out && setSelectedSize(size)}
                         disabled={out}
-                        className={`flex h-12 w-12 items-center justify-center border text-xs font-bold transition-all ${
+                        className={`flex h-11 w-11 items-center justify-center border text-xs font-bold transition-all md:h-12 md:w-12 ${
                           active
                             ? "border-foreground bg-foreground text-background"
                             : "border-foreground/20 text-foreground hover:border-foreground"
@@ -207,7 +206,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
                 <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.quantity}
                 </span>
-                <div className="flex h-12 w-fit items-center border border-foreground/20">
+                <div className="flex h-11 w-fit items-center border border-foreground/20 md:h-12">
                   <button
                     onClick={() => setQuantity(Math.max(1, qty - 1))}
                     disabled={soldOut}
@@ -236,11 +235,10 @@ export default function ProductModal({ product, index, onClose }: Props) {
               <button
                 onClick={handleAddToCart}
                 disabled={soldOut || !activeSize}
-                className="w-full bg-foreground px-16 py-5 text-[10px] font-bold uppercase tracking-[0.03em] text-background shadow-2xl transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 md:w-fit"
+                className="w-full bg-foreground px-16 py-4 text-[10px] font-bold uppercase tracking-[0.03em] text-background shadow-2xl transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 md:w-fit md:py-5"
               >
                 {soldOut ? t.product.soldOut : t.product.addToCart}
               </button>
-            </div>
             </div>
           </motion.div>
         </motion.div>
