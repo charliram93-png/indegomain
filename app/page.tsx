@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import Countdown from "@/components/countdown";
-import ThemeToggle from "@/components/themeToggle";
-import LangToggle from "@/components/langToggle";
 import { useI18n } from "@/lib/i18n/context";
 import { DROP_VIDEO, DROP_POSTER, isDropOpen } from "@/config/drop";
 
@@ -33,12 +31,6 @@ export default function Home() {
       >
         <source src={DROP_VIDEO} type="video/mp4" />
       </video>
-
-      {/* CONTROLES */}
-      <div className="absolute top-6 right-6 z-20 flex items-center gap-1">
-        <LangToggle variant="light" />
-        <ThemeToggle variant="light" />
-      </div>
 
       {/* CONTADOR (un poco abajo del centro) */}
       <div className="absolute inset-x-0 bottom-[16%] z-10 flex flex-col items-center px-6 text-center">
