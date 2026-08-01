@@ -18,10 +18,11 @@
   --color-cream: #e2e5d5;
   --color-cream-dark: #d6d8c2;
   /*
-    Rojo de marca (el mismo del contador del countdown).
-    NO SE USA todavía: se probó para marcar la talla elegida en el modal y
-    quedó pendiente de decidir con el equipo (rojo vs. el contraste del tema).
-    No borrar hasta esa junta — se usa poniendo `text-accent`.
+    Rojo de marca: el mismo del contador del countdown (que lo trae escrito
+    aparte en `components/countdown.tsx`).
+    SIN USAR en el resto del sitio. Se probó para marcar la talla elegida en el
+    modal y se DESCARTÓ (1-ago-2026): esa talla se marca con el contraste del
+    tema. Se deja el token disponible por si algún día se ocupa: `text-accent`.
   */
   --color-accent: #e10600;
 
@@ -78,30 +79,55 @@ body {
 }
 
 /*
-  HALO PARA LAS PRENDAS EN TEMA OSCURO
-  ------------------------------------
-  Las tres playeras son OSCURAS y en tema oscuro se confunden con el fondo.
-  Medido sobre las fotos reales (luminancia 0–255, sobre la placa oscura que
-  vale 60):
+  HALO DETRÁS DE LA PRENDA (los dos temas)
+  ----------------------------------------
+  Una luz suave detrás de la playera, como si la prenda estuviera sobre un
+  fondo iluminado. Es una capa de fondo, no un filtro: no cuesta nada de
+  rendimiento. Va sobre el contenedor de la foto y funciona igual con o sin la
+  placa, así que sigue sirviendo cuando lleguen los recortes buenos y se quite
+  el cuadro.
 
-      negra  46   |   café  57   |   gris  67
+  Nació por NECESIDAD en tema oscuro y se quedó por ESTÉTICA en los dos.
 
-  O sea, la CAFÉ está a 3 puntos de su propio fondo: prácticamente invisible.
-  (En tema claro el fondo vale 214, así que ahí las tres resaltan de sobra.)
+  En OSCURO resuelve un problema medido: las tres playeras son oscuras y
+  contra la placa (luminancia 60 de 255) se perdían —negra 46, café 57,
+  gris 67—, o sea la café estaba a 3 puntos de su propio fondo.
 
-  Este halo enciende una luz suave DETRÁS de la prenda, solo en tema oscuro,
-  para que la silueta se despegue. Es una capa de fondo, no un filtro: no
-  cuesta nada de rendimiento. En tema claro no existe.
+  En CLARO no hace falta para el contraste (ahí la placa vale 214 y las tres
+  resaltan de sobra): es puro gusto.
 
-  Va sobre el contenedor de la foto y funciona igual con o sin la placa, así
-  que sigue sirviendo cuando lleguen los recortes buenos y se quite el cuadro.
+  LOS DOS TEMAS SE ESPEJEAN, cada uno con el color de marca CONTRARIO:
+    · en oscuro (fondo olivo)  -> el halo es CREMA
+    · en claro  (fondo crema)  -> el halo es OLIVO (verde)
+  Por eso el de tema claro oscurece en vez de aclarar: es la misma idea al
+  revés, un charco de color detrás de la prenda.
+
+  LOS DOS TEMAS NO LLEVAN LA MISMA FORMA, y es a propósito — no se toque uno
+  "para emparejarlo" con el otro:
+
+  · OSCURO: degradado angosto, casi todo apagado al 72%. Aquí basta muy poca
+    luz sobre el olivo para que la prenda se despegue, y así quedó aprobado.
+
+  · CLARO: degradado ANCHO y PAREJO. La playera tapa el centro del cuadro, que
+    es justo donde un halo angosto es más intenso, así que lo único visible
+    sería su cola más débil — y en claro la placa ya es de un tono muy cercano
+    al fondo de la página, o sea que un velo suave literalmente no se veía.
+    Poniendo la fuerza en el ANILLO que rodea a la prenda sí se lee.
+    Medido sobre los pixeles: fondo de página 221, esquina de la placa 200,
+    anillo del halo 178. Las playeras están en 46–67, así que no pierden nada.
 */
 .halo-prenda::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: transparent;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgb(50 51 31 / 0.3) 0%,
+    rgb(50 51 31 / 0.26) 55%,
+    rgb(50 51 31 / 0.1) 80%,
+    transparent 95%
+  );
 }
 
 .dark .halo-prenda::before {
@@ -110,6 +136,38 @@ body {
     rgb(226 229 213 / 0.16) 0%,
     rgb(226 229 213 / 0.07) 45%,
     transparent 72%
+  );
+}
+
+/*
+  HALO DEL MODAL — es OTRA clase, no un ajuste de la de arriba, por dos razones
+  que vienen de revisarlo en pantalla (ago-2026):
+
+  1. EN TEMA CLARO NO LLEVA NADA. En el catálogo el halo verde se ve bien
+     porque cae dentro de la placa del cuadro; en el modal no hay placa, así
+     que el mismo verde quedaba como una mancha suelta en medio de la pantalla.
+
+  2. EN OSCURO SÍ, PERO CON EL BORDE SUELTO. El del catálogo se cortaba en seco
+     contra el borde del recuadro y se le veía la forma cuadrada. Pasaba porque
+     el degradado se apagaba al 72% de la distancia a la ESQUINA más lejana,
+     que en un rectángulo alto (el modal en el teléfono) queda MÁS ALLÁ de los
+     lados: llegaba al borde todavía con color y ahí se cortaba de tajo.
+
+     `closest-side` mide contra el lado MÁS CERCANO en vez de la esquina más
+     lejana, así que el degradado siempre termina en transparente ANTES de
+     tocar cualquier borde, sea cual sea la forma de la caja. Se desvanece solo
+     y ya no hay cuadro que se note.
+*/
+.dark .halo-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle closest-side at 50% 45%,
+    rgb(226 229 213 / 0.16) 0%,
+    rgb(226 229 213 / 0.08) 55%,
+    transparent 100%
   );
 }
 

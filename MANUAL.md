@@ -180,22 +180,35 @@ indego/
 
 ### Páginas (`app/`)
 
-- **`layout.tsx`** — Envuelve todo el sitio. Carga la fuente (Saira Semi
-  Condensed, **temporal** — cambiable en 1 línea por otra de `next/font/google`),
-  define los metadatos (título, previsualización al compartir), el proveedor de
-  tema y Analytics. También carga la **Helvetica del countdown**: ver abajo.
+- **`layout.tsx`** — Envuelve todo el sitio. Carga la **Helvetica** (única
+  tipografía del sitio, ver abajo), define los metadatos (título,
+  previsualización al compartir), el proveedor de tema, el grano y Analytics.
 - **`page.tsx`** (home) — **Video de fondo en bucle** (Cloudinary) con el texto
   del drop encima (`dropIntro.tsx`) y el contador (rojo, Helvetica, un poco
   abajo). Cuando llega a cero (o si ya pasó la fecha), revela el botón
   **ENTRAR**; si tienes la cookie de preview, muestra "Entrar (preview)". En
   móvil vertical el video llena la pantalla con `object-cover`, es decir hace
   zoom a los caballos, y el texto se reacomoda solo al formato vertical.
+- **`product/[slug]/page.tsx`** — **PRUEBA (ago-2026)**: página propia de cada
+  playera. Lo que gana contra el modal es que tiene DIRECCIÓN propia (se puede
+  mandar el enlace de UNA playera por Instagram o WhatsApp) y **previsualización
+  propia al compartir**: `generateMetadata` pone el nombre, el precio y la foto
+  de ESA prenda, en vez de la imagen genérica del sitio. Las tres se
+  pregeneran. El candado del drop ya las cubre (el filtro de `proxy.ts` es
+  `/product/:path*`). Hoy NADA enlaza a ellas: se entra escribiendo la
+  dirección, porque el catálogo sigue abriendo el modal.
 - **`product/page.tsx`** — La tienda. Abre con el **manifiesto** (de lado a lado,
   justo debajo del navbar), y luego las tarjetas del catálogo. Ya no lleva título
   ("The Collection" / "Drop 1"): se quitó porque el manifiesto ya hace de
   entrada. Aquí se montan el Navbar, el CartDrawer y el Footer.
 - **`success/page.tsx`** — A donde Stripe manda al cliente tras pagar. Vacía el
-  carrito.
+  carrito y le muestra su **número de pedido** (`IDG-XXXXXX`), que es lo que va
+  a necesitar para consultar su pedido después.
+- **`order/page.tsx`** — **Estado del pedido**, enlazada desde el pie. El
+  cliente escribe su número de pedido y el correo con el que compró, y ve en
+  qué va: pago confirmado, esperando OXXO, en camino (con guía) o no pagado.
+  Se piden LAS DOS COSAS porque con el número solo, cualquiera que se lo
+  encontrara vería una compra ajena.
 - **`terms/page.tsx`** — Términos y condiciones (texto editable con placeholders).
 
 ### API (`app/api/`)
@@ -206,6 +219,13 @@ indego/
 - **`webhook/route.ts`** — Stripe le avisa aquí cuando un pago se completa.
   Maneja el caso especial de OXXO (pago diferido). Hoy registra la orden en los
   logs; a futuro guardará en base de datos.
+- **`order/route.ts`** — Resuelve la consulta del estado del pedido. Como
+  todavía no hay base de datos, le pregunta a **Stripe**. Detalle importante:
+  Stripe solo deja BUSCAR por `metadata` en los pagos, no en las sesiones de
+  checkout, por eso el número de pedido se guarda en los dos lados. Y como el
+  pago no existe hasta que el cliente entra a pagar (y Stripe tarda hasta un
+  minuto en indexar lo nuevo), hay un respaldo que revisa las últimas 100
+  sesiones para cubrir ese hueco.
 
 ### Componentes (`components/`)
 
@@ -237,6 +257,18 @@ indego/
   número 01/02/03) y **nombre en grande** + descripción, alternando
   izquierda/derecha por producto. En **móvil**: título arriba de la imagen y
   descripción debajo. Al hacer clic abre el modal. Marca SOLD OUT.
+  **Muestra la ESPALDA sin abrir el modal**: en computadora, al pasar el cursor
+  la foto se funde a la espalda; en teléfono se DESLIZA sobre la foto, el mismo
+  gesto que ya tenía el modal. Va SIN puntitos, por decisión de diseño: se
+  probaron y ensuciaban el cuadro. La contra es real y hay que tenerla
+  presente: sin ellos nada avisa que hay una segunda foto en el teléfono. Las
+  dos fotos van encimadas y solo se cambia la opacidad — si se intercambiara el
+  `src`, la espalda parpadearía la primera vez.
+- **`productDetail.tsx`** — **PRUEBA (ago-2026)**: el contenido de la página
+  propia de cada playera (`/product/idg-01`). Es lo mismo que el modal pero
+  como página: aquí sí cabe la descripción y la foto se queda pegada al
+  scrollear en escritorio. **Está a revisión**: falta decidir si reemplaza al
+  modal o convive con él.
 - **`productTeaser.tsx`** — Cuadro "incógnito" (04–05) que adelanta el Drop 1.5,
   con candado y "Drop 1.5 · Próximamente" dentro. Se muestra al final del catálogo.
 - **`productModal.tsx`** — Ventana de detalle en un **panel tipo glass**. En
@@ -263,13 +295,28 @@ indego/
   el sitio se le abría en oscuro sin pedirlo, y la primera impresión de la
   marca cambiaba según el aparato. El botón sol/luna (en el navbar y en la
   home) lo cambia a mano y la elección se recuerda.
-- **Las prendas en tema oscuro:** las tres playeras son oscuras y contra el
-  fondo olivo se perdían (medido: la café marca 57 de luminancia y su fondo 60,
-  o sea casi lo mismo). Por eso hay un **halo**: una luz suave detrás de la
-  prenda que solo existe en tema oscuro (clase `.halo-prenda` en `globals.css`,
-  puesta en `productCard.tsx` y `productModal.tsx`). Es un fondo, no un filtro:
-  no cuesta rendimiento. Sigue sirviendo cuando lleguen los recortes buenos y
-  se quite la placa del cuadro.
+- **El HALO detrás de la prenda.** Nació por necesidad: las tres playeras son
+  oscuras y contra el fondo olivo se perdían (medido: la café marca 57 de
+  luminancia y su fondo 60, o sea casi lo mismo). Es un fondo, no un filtro: no
+  cuesta rendimiento, y sigue sirviendo cuando lleguen los recortes buenos y se
+  quite la placa del cuadro.
+
+  Hay **DOS clases distintas** en `globals.css` y no se deben unificar:
+
+  | Clase | Dónde | Claro | Oscuro |
+  |---|---|---|---|
+  | `.halo-prenda` | catálogo y página de producto | verde olivo, ancho | crema, angosto |
+  | `.halo-modal` | solo el modal | **nada** | crema, con `closest-side` |
+
+  Por qué son distintas, que es lo que costó afinar:
+  - En el **modal en claro** no va nada: ahí no hay placa, así que el verde
+    quedaba como una mancha suelta en medio de la pantalla.
+  - En **claro** el halo va ancho porque la playera tapa el centro del cuadro,
+    justo donde un halo angosto es más intenso; poniendo la fuerza en el anillo
+    que rodea a la prenda sí se ve.
+  - El del modal usa `closest-side` para que el degradado siempre termine en
+    transparente ANTES de tocar el borde. Sin eso se le veía la forma cuadrada
+    recortada, porque en una caja alta el degradado llegaba al borde con color.
 - Los colores viven en `app/globals.css` con **tokens semánticos** que cambian
   según el tema: `background` (fondo), `foreground` (texto), `surface`
   (navbar/tarjetas). En claro son crema/olivo; en oscuro se invierten.
@@ -473,6 +520,34 @@ tener una tipografía distinta en el cuerpo, se carga en `app/layout.tsx` (con
 - Colores del tema **claro**: bloque `:root` (`--background`, `--foreground`, `--surface`).
 - Colores del tema **oscuro**: bloque `.dark` (los mismos tokens, invertidos).
 Cambiarlos ahí actualiza todo el sitio en su respectivo tema.
+
+### Publicar el número de guía de un pedido
+La página de **estado del pedido** (`/order`) puede mostrarle al cliente su
+guía, pero Stripe no sabe nada de paqueterías: hay que escribírsela.
+
+En el Dashboard de Stripe, abre el **pago** de esa orden y agrégale estos
+`metadata` (botón "Edit metadata" en la sección de detalles del pago):
+
+| Clave | Valor | ¿Obligatorio? |
+|---|---|---|
+| `tracking_number` | El número de guía | Sí — sin este, el pedido sigue como "en preparación" |
+| `tracking_carrier` | La paquetería (Estafeta, DHL…) | No |
+| `tracking_url` | El enlace directo de rastreo | No |
+
+En cuanto guardes, el cliente lo ve al consultar su pedido y el estado cambia
+a **"En camino"**. Para OXXO pendiente puedes poner también `oxxo_voucher_url`
+con el enlace de la ficha.
+
+Cuando exista Supabase esto se automatiza y ya no habrá que capturarlo a mano.
+
+### Encontrar un pedido por su número
+Los pedidos llevan un número corto tipo `IDG-4F7K2P` (lo genera
+`lib/orderNumber.ts` al crear la sesión de pago). En Stripe lo tienes en el
+`metadata` de la sesión y del pago, así que se puede buscar en el buscador del
+Dashboard escribiendo el número tal cual.
+
+El alfabeto del código no usa O, 0, I, 1 ni L: son las que la gente confunde
+al dictarlas por teléfono.
 
 ### Editar textos / traducciones
 `lib/i18n/dictionaries.ts` → cambia el texto en `en` y su equivalente en `es`.

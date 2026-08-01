@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { generarNumeroPedido } from "@/lib/orderNumber";
 
 // Cliente de Stripe perezoso: se crea en la 1ª petición, NO al cargar el módulo.
 // Así el build (que no tiene las variables de entorno) no truena.
@@ -52,11 +53,26 @@ export async function POST(request: Request) {
       };
     });
 
+    /*
+      NÚMERO DE PEDIDO (`IDG-4F7K2P`). Se genera aquí y se guarda en DOS
+      lugares de Stripe a propósito:
+
+        · en la sesión de checkout -> para leerlo en la página de "gracias"
+        · en el PaymentIntent      -> para poder BUSCARLO después
+
+      Lo segundo es lo importante: Stripe solo deja buscar por `metadata` en
+      los pagos, no en las sesiones. Sin esa copia, la página de estado del
+      pedido no tendría forma de encontrar la compra a partir del número.
+    */
+    const numeroPedido = generarNumeroPedido();
+
     const session = await getStripe().checkout.sessions.create({
       // Sin payment_method_types: Stripe usa los métodos habilitados en tu
       // Dashboard (tarjeta por defecto; activa OXXO ahí para aceptarlo).
       line_items,
       mode: "payment",
+      metadata: { order_number: numeroPedido },
+      payment_intent_data: { metadata: { order_number: numeroPedido } },
       // Recolecta dirección de envío, restringida a México.
       billing_address_collection: "required",
       shipping_address_collection: { allowed_countries: ["MX"] },

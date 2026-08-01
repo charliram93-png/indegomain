@@ -7,22 +7,8 @@ import { X, Plus, Minus } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCart } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
-import { useFlag } from "@/lib/flags";
 import { useScrollLock } from "@/lib/useScrollLock";
 import { useI18n } from "@/lib/i18n/context";
-
-/**
- * CÓMO SE MARCA LA TALLA ELEGIDA — pendiente de decidir con el equipo.
- *
- *   "tema" -> con el color de texto del tema a contraste pleno (las otras
- *             tallas apagadas al 35%). Es lo que hay hoy.
- *   "rojo" -> con el rojo de marca, el mismo del contador del countdown.
- *
- * Para verlas EN VIVO en la junta, sin desplegar nada, abre el catálogo con
- * `?talla=rojo` o `?talla=tema` al final de la dirección.
- * Cuando se decida, se cambia esta línea y se borra la bandera.
- */
-const MARCA_TALLA_POR_DEFECTO = "tema";
 
 type Props = {
   product: Product | null;
@@ -33,7 +19,6 @@ type Props = {
 export default function ProductModal({ product, index, onClose }: Props) {
   const { addItem, openCart } = useCart();
   const { t } = useI18n();
-  const tallaEnRojo = useFlag("talla", MARCA_TALLA_POR_DEFECTO) === "rojo";
 
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -158,10 +143,11 @@ export default function ProductModal({ product, index, onClose }: Props) {
                 onTouchStart={onTouchStart}
                 onTouchEnd={onTouchEnd}
                 aria-label={hasGallery ? t.product.changeView : product.name}
-                /* `halo-prenda`: luz suave detrás de la playera SOLO en tema
-                   oscuro, si no la café desaparece contra el fondo. Ver
+                /* `halo-modal` (NO `halo-prenda`, que es la del catálogo): luz
+                   suave detrás de la playera SOLO en tema oscuro, si no la café
+                   desaparece contra el fondo. En claro el modal va limpio. Ver
                    globals.css. */
-                className={`halo-prenda relative flex min-h-0 w-full flex-1 items-center justify-center md:h-auto md:aspect-square md:flex-none ${
+                className={`halo-modal relative flex min-h-0 w-full flex-1 items-center justify-center md:h-auto md:aspect-square md:flex-none ${
                   hasGallery ? "cursor-pointer" : "cursor-default"
                 }`}
               >
@@ -233,25 +219,21 @@ export default function ProductModal({ product, index, onClose }: Props) {
                 {/* Solo texto: sin recuadro ni fondo. El `py-2` no se ve, pero
                     deja el área de toque decente en el teléfono.
 
-                    Cómo se marca la elegida está PENDIENTE DE DECIDIR (ver
-                    MARCA_TALLA_POR_DEFECTO arriba): hoy con el contraste del
-                    tema, `?talla=rojo` para verla con el rojo de marca. */}
+                    DECIDIDO con el equipo (1-ago-2026): la talla elegida se
+                    marca con el CONTRASTE DEL TEMA —color de texto al 100% y
+                    las demás al 35%—, no con un color fijo. Se probaron y se
+                    descartaron el rojo de marca y una rayita debajo. */}
                 <div className="flex gap-6">
                   {product.sizes.map(({ size, stock }) => {
                     const out = stock <= 0;
                     const active = activeSize === size;
-                    const marcada = active && !out;
                     return (
                       <button
                         key={size}
                         onClick={() => !out && setSelectedSize(size)}
                         disabled={out}
-                        aria-pressed={marcada}
-                        className={`py-2 text-sm font-bold uppercase transition-opacity ${
-                          marcada && tallaEnRojo
-                            ? "text-accent"
-                            : "text-foreground"
-                        } ${
+                        aria-pressed={active && !out}
+                        className={`py-2 text-sm font-bold uppercase text-foreground transition-opacity ${
                           out
                             ? "cursor-not-allowed opacity-25 line-through"
                             : active
