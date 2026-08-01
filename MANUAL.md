@@ -480,6 +480,27 @@ Recordatorios de configuración:
 
 ## 11. Pendientes / próximos pasos
 
+**Rendimiento — dónde está el costo (investigado el 31-jul-2026):**
+
+El usuario reporta tirones, sobre todo **al abrir el carrito**. El culpable más
+probable **no es el granulado** (ya se le quitó el `mix-blend-mode`, que era lo
+caro; hoy es una capa normal que la GPU dibuja una vez). El costo está en
+**`backdrop-filter`**, que obliga al navegador a volver a desenfocar el fondo en
+CADA cuadro mientras algo se mueve encima. Hay cuatro, en orden de costo:
+
+| Dónde | Clase | Por qué duele |
+|---|---|---|
+| `productModal.tsx:116` | `backdrop-blur-2xl` | Radio enorme, sobre un panel grande, **mientras el panel entra animado**. El más caro con diferencia. |
+| `cartDrawer.tsx:57` | `backdrop-blur-sm` | El panel se desliza encima: el desenfoque se recalcula en cada cuadro de la animación. **Esto explica el tirón del carrito.** |
+| `productModal.tsx:105` | `backdrop-blur-sm` | Igual que el anterior. |
+| `navbar.tsx:32` | `backdrop-blur-md` | Fijo: se recalcula al hacer scroll. Menos grave, pero suma. |
+
+Qué probar (en este orden, midiendo en el teléfono entre cada paso):
+1. Cambiar el `backdrop-blur-2xl` del panel del modal por un fondo sólido.
+2. En los fondos oscuros del carrito y del modal, quitar el desenfoque y subir
+   un poco la opacidad (`bg-foreground/40`) en su lugar.
+3. Si aún se siente, apagar el granulado solo en móvil.
+
 **Para ver con el equipo:**
 - **Cómo se marca la talla elegida en el modal.** Hoy se distingue solo por
   contraste: la elegida va con el color de texto del tema al 100% y las demás
@@ -488,6 +509,20 @@ Recordatorios de configuración:
   hasta esa junta) y **con una rayita debajo**. El punto a resolver: hoy la
   diferencia es solo opacidad, y con poco brillo o al sol podría no notarse
   cuál talla está seleccionada, que es justo la que se va al carrito.
+
+**Estética — propuestas pendientes de decidir:**
+- **El carrito quedó fuera de estilo.** El modal ya es minimalista (solo texto,
+  sin bordes ni fondos), pero el carrito sigue con el estilo viejo: recuadro con
+  borde en la cantidad y botón de pagar con fondo sólido. Conviene emparejarlos.
+- **Quitar la placa del cuadro de producto.** Hoy la foto va sobre un cuadro
+  `bg-surface`. Cuando lleguen los recortes buenos, se puede quitar y dejar la
+  prenda flotando sobre el fondo de la página: más editorial y más limpio.
+- **Cierre del catálogo.** El manifiesto se movió arriba, así que la página
+  ahora termina en el teaser y el pie, sin remate. Falta un cierre.
+- **Transición countdown → tienda.** Hoy el botón ENTRAR es un salto seco.
+- **Unificar tipografía.** Conviven Saira (cuerpo) y Helvetica (títulos y
+  countdown). Al definir la fuente definitiva hay que decidir si se queda la
+  mezcla a propósito o se unifica.
 
 **Diseño / contenido:**
 - **Recortes buenos de las playeras** — el editor entrega los mockups sin fondo
