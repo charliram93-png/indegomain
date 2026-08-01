@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Countdown from "@/components/countdown";
+import DropIntro from "@/components/dropIntro";
 import { useI18n } from "@/lib/i18n/context";
 import { DROP_VIDEO, DROP_POSTER, isDropOpen } from "@/config/drop";
 
 export default function Home() {
   const { t } = useI18n();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState(false);
 
@@ -19,9 +21,10 @@ export default function Home() {
   const handleComplete = useCallback(() => setOpen(true), []);
 
   return (
-    <main className="landscape-lock relative flex h-dvh w-full items-center justify-center overflow-hidden bg-black text-white">
-      {/* VIDEO DE FONDO (bucle, sin sonido). El video ya trae el branding/texto. */}
+    <main className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-black text-white">
+      {/* VIDEO DE FONDO (bucle, sin sonido). Va SIN letras: solo los caballos. */}
       <video
+        ref={videoRef}
         className="absolute inset-0 h-full w-full object-cover"
         autoPlay
         loop
@@ -31,6 +34,9 @@ export default function Home() {
       >
         <source src={DROP_VIDEO} type="video/mp4" />
       </video>
+
+      {/* TEXTO DEL DROP, dibujado en el navegador y pegado al tiempo del video. */}
+      <DropIntro videoRef={videoRef} />
 
       {/* CONTADOR (un poco abajo del centro) */}
       <div className="absolute inset-x-0 bottom-[16%] z-10 flex flex-col items-center px-6 text-center">

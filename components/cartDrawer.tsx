@@ -6,6 +6,7 @@ import { X, Plus, Minus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
+import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
 
 export default function CartDrawer() {
@@ -62,6 +63,8 @@ export default function CartDrawer() {
 
           {/* Panel */}
           <motion.aside
+            /* Todo el carrito en la Helvetica del sitio (se hereda hacia adentro) */
+            style={{ fontFamily: HELVETICA }}
             className="fixed top-0 right-0 z-[70] flex h-dvh w-full max-w-md flex-col bg-surface text-foreground shadow-2xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -70,7 +73,7 @@ export default function CartDrawer() {
           >
             {/* Encabezado */}
             <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-5">
-              <h2 className="text-xs font-bold uppercase tracking-[0.03em]">
+              <h2 className="text-xs font-bold uppercase italic tracking-[0.08em]">
                 {t.cart.title}
               </h2>
               <button

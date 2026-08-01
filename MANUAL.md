@@ -115,6 +115,8 @@ indego/
 │       └── panel/              # login/logout del panel
 ├── components/              # piezas de interfaz reutilizables
 │   ├── countdown.tsx        # la cuenta regresiva
+│   ├── dropIntro.tsx        # el texto animado que va sobre el video del countdown
+│   ├── manifesto.tsx        # el corte tipográfico que cierra el catálogo
 │   ├── navbar.tsx           # barra superior con logo, idioma, tema y bolsa
 │   ├── footer.tsx           # pie de página
 │   ├── productCard.tsx      # fila editorial del catálogo (imagen + nombre grande)
@@ -127,6 +129,8 @@ indego/
 │   └── langToggle.tsx       # botón EN/ES para cambiar de idioma
 ├── config/                  # configuración editable del negocio
 │   ├── drop.ts              # fecha, nombre y clave del drop
+│   ├── dropIntro.ts         # guion del texto del countdown (tiempos y tamaños)
+│   ├── brand.ts             # contacto, redes y el manifiesto
 │   ├── products.ts          # catálogo e inventario (stock por talla)
 │   └── panel.ts             # links/accesos del panel de administración
 ├── lib/
@@ -158,19 +162,29 @@ indego/
   - `isDropOpen()`: función que dice si el drop ya abrió.
 - **`config/products.ts`** — El catálogo. Cada producto tiene `slug`, `name`,
   `image`, `price` (en pesos) y `sizes` (tallas con su `stock`).
+- **`config/brand.ts`** — Lo que el sitio dice de sí mismo: `CONTACT_EMAIL`,
+  `INSTAGRAM_URL`, `LINKTREE_URL` y el `MANIFESTO`. El correo y el Instagram
+  **solo aparecen en el footer si están llenos** (vacío = no se muestra el
+  enlace), para no publicar un dato inventado.
+- **`config/dropIntro.ts`** — El **guion del texto del countdown**: qué palabra
+  entra, en qué segundo del video, de qué tamaño y en qué lugar. Los valores
+  salieron de medir cuadro por cuadro el video original que traía las letras
+  quemadas, por eso la secuencia se ve igual pero ahora se adapta a cualquier
+  pantalla. Aquí también están `INTRO_COLOR` (color del texto) e
+  `INTRO_ENABLED` (para apagarlo).
 
 ### Páginas (`app/`)
 
 - **`layout.tsx`** — Envuelve todo el sitio. Carga la fuente (Saira Semi
   Condensed, **temporal** — cambiable en 1 línea por otra de `next/font/google`),
   define los metadatos (título, previsualización al compartir), el proveedor de
-  tema y Analytics.
-- **`page.tsx`** (home) — **Video de fondo en bucle** (Cloudinary) con el
-  contador encima (rojo, Helvetica, un poco abajo). El video ya trae el branding.
-  Cuando llega a cero (o si ya pasó la fecha), revela el botón **ENTRAR**; si
-  tienes la cookie de preview, muestra "Entrar (preview)". En móvil vertical el
-  contenido se rota a horizontal, centrado (clase `.landscape-lock` en globals.css,
-  rotación desde el centro), para que el video horizontal llene la pantalla.
+  tema y Analytics. También carga la **Helvetica del countdown**: ver abajo.
+- **`page.tsx`** (home) — **Video de fondo en bucle** (Cloudinary) con el texto
+  del drop encima (`dropIntro.tsx`) y el contador (rojo, Helvetica, un poco
+  abajo). Cuando llega a cero (o si ya pasó la fecha), revela el botón
+  **ENTRAR**; si tienes la cookie de preview, muestra "Entrar (preview)". En
+  móvil vertical el video llena la pantalla con `object-cover`, es decir hace
+  zoom a los caballos, y el texto se reacomoda solo al formato vertical.
 - **`product/page.tsx`** — La tienda. Lee el catálogo de `config/products.ts` y
   pinta las tarjetas. Aquí se montan el Navbar, el CartDrawer y el Footer.
 - **`success/page.tsx`** — A donde Stripe manda al cliente tras pagar. Vacía el
@@ -190,6 +204,18 @@ indego/
 
 - **`countdown.tsx`** — La cuenta regresiva. Lee `DROP_DATE` y avisa cuando llega
   a cero.
+- **`dropIntro.tsx`** — El texto del drop (INDEGOSTUDIO, "YOU ARE NOT A CONTENT
+  CREATOR / YOU ARE AN ARTIST", COMING SOON) **dibujado en el navegador**, no
+  quemado en el video. Va pegado al `currentTime` del video, así que reinicia
+  solo con cada vuelta del bucle, y todo se mide en `cqw` (% del ancho del
+  video) para que escale nítido en cualquier pantalla. El guion (textos,
+  segundos, tamaños, posiciones) vive en `config/dropIntro.ts`.
+- **`manifesto.tsx`** — El corte tipográfico que cierra el catálogo: "YOU ARE
+  NOT A CONTENT CREATOR / YOU ARE AN ARTIST", con los colores invertidos para
+  que rompa el ritmo de la página. Usa la misma Helvetica del countdown, así se
+  lee como continuación del video. El texto se edita en `config/brand.ts`, donde
+  lo que va entre `*asteriscos*` sale en cursiva. Va en inglés fijo, no se
+  traduce: es identidad de marca, no interfaz.
 - **`navbar.tsx`** — Barra superior. El ícono de bolsa abre el carrito y muestra
   cuántos productos hay.
 - **`footer.tsx`** — Pie con enlaces a Términos y Linktree.
@@ -299,6 +325,21 @@ indego/
 (imagen de respaldo). Súbelo a Cloudinary como *video* y usa `q_auto,vc_h264` en
 la URL para que sea ligero y compatible. No subir videos pesados a git (`/public/*.mp4` está ignorado).
 
+**Importante:** el video debe ir **SIN letras** (solo los caballos). El texto lo
+pone el sitio encima. Si el video nuevo dura distinto, ajusta `INTRO_LOOP` en
+`config/dropIntro.ts` y revisa los tiempos de las escenas.
+
+### Cambiar los textos o tiempos del countdown
+`config/dropIntro.ts` → `INTRO_CUES`. Cada escena tiene `start` y `end` (segundos
+del video), `x`/`y` (% de la caja del video) y `size` (en `cqw`, o sea % del ancho
+del video). Para mover una palabra a la derecha, súbele la `x`; para agrandarla,
+súbele el `size`. Para apagar todo el texto: `INTRO_ENABLED = false`.
+
+### Cambiar el color del texto del countdown
+`config/dropIntro.ts` → `INTRO_COLOR`. Está en blanco. Si algún día hay que
+compararlo contra un video que ya traiga letras quemadas, ponlo en verde
+(`"#00E676"`) y se distingue solo.
+
 ### Cambiar la fecha del drop
 `config/drop.ts` → edita `DROP_DATE`. Formato: `"2026-12-01T18:00:00-06:00"`
 (el `-06:00` es la zona horaria del centro de México).
@@ -324,6 +365,27 @@ La `description` es **bilingüe**: `{ en: "...", es: "..." }`.
 ### Cambiar la clave de acceso de preview
 `config/drop.ts` → `DROP_ACCESS_KEY`. En producción, mejor ponla como variable de
 entorno `DROP_ACCESS_KEY` en Vercel.
+
+### Poner el correo de contacto y el Instagram
+`config/brand.ts` → `CONTACT_EMAIL` e `INSTAGRAM_URL`. Mientras estén vacíos, el
+footer simplemente no muestra esos enlaces; en cuanto los llenes, aparecen solos.
+
+### Ajustar el grano de película
+`app/globals.css` → clase `.grain`, la propiedad `opacity` (hoy `0.1`). Es una
+textura que genera el navegador con un `<svg>` que vive en `app/layout.tsx`, así
+que no pesa nada. Pasando de ~0.15 empieza a comerse el contraste del texto.
+
+### La Helvetica del countdown
+El video original está tipografiado en **Helvetica**. Windows y Android no la
+traen y el navegador caía en Arial, que se ve casi igual pero tiene la **G sin
+espolón** y la **R de pierna recta** — se notaba. Por eso `app/layout.tsx` carga
+**TeX Gyre Heros**, un clon libre de Helvetica (licencia GUST), desde
+`app/fonts/heros-*.woff2`. Están recortadas a los caracteres que usa el sitio:
+pesan ~9 KB cada una, ~38 KB las cuatro (normal, negritas y sus itálicas).
+
+Se usa con la variable `--font-helvetica` en `dropIntro.tsx` y `countdown.tsx`.
+Si algún día se compra la licencia de la Helvetica real, basta reemplazar los
+cuatro archivos de `app/fonts/` y no hay que tocar nada más.
 
 ### Cambiar la fuente
 `app/layout.tsx` → cambia el import y el componente de `next/font/google`

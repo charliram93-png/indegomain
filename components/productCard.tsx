@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Product, isSoldOut } from "@/types/products";
+import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
 
 type Props = {
@@ -63,7 +64,10 @@ export default function ProductCard({ product, index, onClick }: Props) {
       {/* NOMBRE EN GRANDE (arriba de la imagen en móvil) */}
       <div className={`order-1 flex flex-col ${reversed ? "md:order-1" : "md:order-2"}`}>
         <button onClick={onClick} className="text-left">
-          <h2 className="text-5xl font-bold uppercase leading-none tracking-tighter transition-opacity hover:opacity-60 md:text-7xl">
+          <h2
+            className="text-5xl font-bold uppercase leading-none tracking-tighter transition-opacity hover:opacity-60 md:text-7xl"
+            style={{ fontFamily: HELVETICA }}
+          >
             {product.name}
           </h2>
         </button>

@@ -7,42 +7,42 @@ import CartDrawer from "@/components/cartDrawer";
 import ProductCard from "@/components/productCard";
 import ProductModal from "@/components/productModal";
 import ProductTeaser from "@/components/productTeaser";
+import Manifesto from "@/components/manifesto";
 import { PRODUCTS } from "@/config/products";
-import { DROP_NAME } from "@/config/drop";
-import { useI18n } from "@/lib/i18n/context";
 
 export default function Catalog() {
-  const { t } = useI18n();
   const [selected, setSelected] = useState<number | null>(null);
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <Navbar />
 
-      <main className="flex-1 px-6 pt-32 md:px-12">
-        {/* Encabezado editorial */}
-        <header className="mx-auto mb-10 max-w-5xl text-center md:mb-14">
-          <p className="text-[11px] font-bold tracking-[0.04em] opacity-40">
-            {DROP_NAME}
-          </p>
-          <h1 className="mt-3 text-4xl font-bold uppercase tracking-tighter md:text-6xl">
-            {t.catalog.title}
-          </h1>
-        </header>
+      <main className="flex-1">
+        {/*
+          Hueco del navbar: la barra es fija y mide h-20 (80px). Así el bloque
+          del manifiesto ARRANCA debajo de ella y el fondo contrastante no se
+          mete detrás del cristal del navbar.
+        */}
+        <div className="h-20" />
 
-        {/* Filas editoriales alternadas (espaciado compacto) */}
-        <div className="mx-auto max-w-6xl space-y-16 pb-24 md:space-y-24">
-          {PRODUCTS.map((product, i) => (
-            <ProductCard
-              key={product.slug}
-              product={product}
-              index={i}
-              onClick={() => setSelected(i)}
-            />
-          ))}
+        {/* El manifiesto ABRE la página, de lado a lado */}
+        <Manifesto />
 
-          {/* Adelanto Drop 1.5 (incógnito) */}
-          <ProductTeaser />
+        <div className="px-6 md:px-12">
+          {/* Filas editoriales alternadas (espaciado compacto) */}
+          <div className="mx-auto mt-16 max-w-6xl space-y-16 pb-24 md:mt-24 md:space-y-24">
+            {PRODUCTS.map((product, i) => (
+              <ProductCard
+                key={product.slug}
+                product={product}
+                index={i}
+                onClick={() => setSelected(i)}
+              />
+            ))}
+
+            {/* Adelanto Drop 1.5 (incógnito) */}
+            <ProductTeaser />
+          </div>
         </div>
       </main>
 

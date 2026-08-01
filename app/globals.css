@@ -56,20 +56,33 @@ body {
 }
 
 /*
-  Countdown en horizontal en móvil (vertical): rota el contenido 90° para que el
-  video horizontal llene la pantalla. Rotación desde el CENTRO para que quede
-  siempre centrado (no cargado a un lado). En escritorio no aplica.
+  GRANO DE PELÍCULA
+  Capa fija sobre todo el sitio, muy tenue, para amarrar la interfaz con el
+  material crudo del video. La textura la genera el navegador (el <svg> vive en
+  `app/layout.tsx`), así que no pesa nada: no hay imagen que descargar.
+  `pointer-events: none` para que no estorbe ningún clic, y va encima de todo
+  (el z más alto del sitio es 70).
 */
-@media (max-width: 767px) and (orientation: portrait) {
-  .landscape-lock {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 100vh;
-    height: 100vw;
-    transform: translate(-50%, -50%) rotate(90deg);
-    transform-origin: center center;
-    overflow: hidden;
-  }
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /*
+    Sube o baja SOLO este número para que el grano se note más o menos.
+    Ojo: pasando de ~0.15 empieza a comerse el contraste del texto.
+  */
+  opacity: 0.1;
+  mix-blend-mode: overlay;
 }
+
+/*
+  NOTA: antes el countdown se rotaba 90° en móvil vertical (clase
+  `.landscape-lock`) para que el video horizontal llenara la pantalla. Ya no:
+  el video llena en vertical con `object-cover` (hace zoom a los caballos) y el
+  texto, al estar hecho en HTML, se acomoda solo al formato vertical.
+*/
+
 

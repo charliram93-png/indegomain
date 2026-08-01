@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DROP_DATE } from "@/config/drop";
+import { HELVETICA } from "@/lib/fonts";
 
 type TimeLeft = {
   days: number;
@@ -68,7 +69,7 @@ export default function Countdown({
       aria-label="Cuenta regresiva para el lanzamiento"
       className="text-4xl font-bold tabular-nums leading-none sm:text-6xl md:text-8xl"
       style={{
-        fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+        fontFamily: HELVETICA,
         color: "#E10600",
         letterSpacing: "-0.06em",
       }}

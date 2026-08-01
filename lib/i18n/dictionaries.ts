@@ -49,6 +49,8 @@ const en = {
   footer: {
     terms: "Terms",
     linktree: "Linktree",
+    instagram: "Instagram",
+    contact: "Contact",
     rights: "© 2026 INDEGO STUDIO",
   },
   terms: {
@@ -124,6 +126,8 @@ const es: typeof en = {
   footer: {
     terms: "Términos",
     linktree: "Linktree",
+    instagram: "Instagram",
+    contact: "Contacto",
     rights: "© 2026 INDEGO STUDIO",
   },
   terms: {

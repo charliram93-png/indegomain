@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
 
 /*
@@ -14,7 +15,11 @@ export default function TermsPage() {
   const router = useRouter();
 
   return (
-    <main className="min-h-dvh bg-background px-6 py-16 text-foreground md:px-12">
+    /* Toda la página en la Helvetica del sitio (se hereda hacia adentro). */
+    <main
+      className="min-h-dvh bg-background px-6 py-16 text-foreground md:px-12"
+      style={{ fontFamily: HELVETICA }}
+    >
       <div className="mx-auto max-w-2xl">
         <button
           onClick={() => router.back()}
