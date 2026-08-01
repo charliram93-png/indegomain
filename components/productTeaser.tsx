@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
+import Reveal from "@/components/reveal";
+import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
 
 /**
@@ -12,13 +13,7 @@ export default function ProductTeaser() {
   const { t } = useI18n();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="grid items-center gap-6 md:grid-cols-2 md:gap-16"
-    >
+    <Reveal className="grid items-center gap-6 md:grid-cols-2 md:gap-16">
       {/* Cuadro único incógnito (derecha en desktop, abajo del título en móvil) */}
       <div className="order-2 md:order-2">
         <div className="relative flex aspect-square w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-sm bg-surface">
@@ -38,10 +33,13 @@ export default function ProductTeaser() {
 
       {/* Título (arriba del cuadro en móvil, a la izquierda en desktop) */}
       <div className="order-1 flex flex-col md:order-1">
-        <h2 className="text-5xl font-bold uppercase leading-none tracking-tighter opacity-25 md:text-7xl">
+        <h2
+          className="text-5xl font-bold uppercase leading-none tracking-tighter opacity-25 md:text-7xl"
+          style={{ fontFamily: HELVETICA }}
+        >
           IDG — ??
         </h2>
       </div>
-    </motion.div>
+    </Reveal>
   );
 }

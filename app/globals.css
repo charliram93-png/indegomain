@@ -56,6 +56,42 @@ body {
 }
 
 /*
+  El manifiesto va con los colores AL REVÉS, así que la selección de arriba
+  quedaría del mismo color que su fondo (no se vería). Aquí se invierte también.
+*/
+.manifesto ::selection {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/*
+  APARICIÓN AL SCROLLEAR (components/reveal.tsx)
+  El movimiento se hace con una transición de CSS —no con JavaScript cuadro a
+  cuadro— para que el scroll no se sienta pesado en el teléfono.
+*/
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
+}
+
+.reveal[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Menos movimiento: el contenido simplemente está ahí. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/*
   GRANO DE PELÍCULA
   Capa fija sobre todo el sitio, muy tenue, para amarrar la interfaz con el
   material crudo del video. La textura la genera el navegador (el <svg> vive en
@@ -72,10 +108,15 @@ body {
   pointer-events: none;
   /*
     Sube o baja SOLO este número para que el grano se note más o menos.
-    Ojo: pasando de ~0.15 empieza a comerse el contraste del texto.
+    Ojo: pasando de ~0.12 empieza a comerse el contraste del texto.
+
+    NOTA de rendimiento: antes esta capa usaba `mix-blend-mode: overlay`, que
+    obliga al navegador a recombinar TODA la pantalla en cada cuadro mientras
+    se hace scroll. Se quitó: ahora es una capa normal, que la GPU dibuja una
+    vez y reutiliza. El ruido trae motas claras y oscuras, así que sigue
+    funcionando igual en tema claro y en oscuro.
   */
-  opacity: 0.1;
-  mix-blend-mode: overlay;
+  opacity: 0.07;
 }
 
 /*
@@ -84,5 +125,3 @@ body {
   el video llena en vertical con `object-cover` (hace zoom a los caballos) y el
   texto, al estar hecho en HTML, se acomoda solo al formato vertical.
 */
-
-

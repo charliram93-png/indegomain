@@ -37,7 +37,7 @@ const Line = ({ line }: { line: string }) => (
 export default function Manifesto() {
   return (
     <section
-      className="bg-foreground px-6 py-16 text-background md:px-12 md:py-24"
+      className="manifesto bg-foreground px-6 py-16 text-background md:px-12 md:py-24"
       style={{ fontFamily: HELVETICA }}
     >
       <div className="mx-auto w-full max-w-6xl">

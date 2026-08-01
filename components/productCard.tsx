@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import Reveal from "@/components/reveal";
 import { Product, isSoldOut } from "@/types/products";
 import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
@@ -23,13 +23,7 @@ export default function ProductCard({ product, index, onClick }: Props) {
   const reversed = index % 2 === 1;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="grid items-center gap-6 md:grid-cols-2 md:gap-16"
-    >
+    <Reveal className="grid items-center gap-6 md:grid-cols-2 md:gap-16">
       {/* IMAGEN (cuadro con número) */}
       <button
         onClick={onClick}
@@ -85,6 +79,6 @@ export default function ProductCard({ product, index, onClick }: Props) {
           {product.description[lang]}
         </p>
       )}
-    </motion.div>
+    </Reveal>
   );
 }
