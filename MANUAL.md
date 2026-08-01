@@ -480,6 +480,14 @@ Recordatorios de configuración:
 
 ## 11. Pendientes / próximos pasos
 
+**Bug abierto — el botón de pagar del carrito se ve cortado en iOS/móvil.**
+Es lo primero a atacar. Pista: `cartDrawer.tsx:68` usa `h-dvh`, y en iOS esa
+altura cambia cuando aparece o se esconde la barra del navegador, así que el pie
+del checkout (`cartDrawer.tsx:165`) se queda fuera. **El modal de producto tuvo
+este mismo bug** y se arregló con `100svh`. Probar: cambiar el panel a `h-svh` y
+agregar `pb-[env(safe-area-inset-bottom)]` al pie, por la barra de gestos del
+iPhone. Se verifica en el teléfono, no en el escritorio.
+
 **Rendimiento — dónde está el costo (investigado el 31-jul-2026):**
 
 El usuario reporta tirones, sobre todo **al abrir el carrito**. El culpable más
