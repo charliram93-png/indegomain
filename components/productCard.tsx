@@ -38,7 +38,10 @@ export default function ProductCard({ product, index, onClick }: Props) {
           escritorio salía proporcionalmente más grande que en móvil: por eso
           se veía distinto en cada pantalla.
         */}
-        <div className="relative aspect-square w-full [container-type:inline-size]">
+        {/* `halo-prenda`: luz suave detrás de la playera SOLO en tema oscuro.
+            Las tres prendas son oscuras y contra la placa oscura se pierden
+            (la café es la peor). Ver globals.css. */}
+        <div className="halo-prenda relative aspect-square w-full [container-type:inline-size]">
           {/*
             El número va ABAJO A LA DERECHA y un poco metido hacia adentro, para
             que la playera lo tape en parte. Queda ANTES de la <Image> a

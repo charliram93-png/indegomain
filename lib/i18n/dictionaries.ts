@@ -4,6 +4,27 @@
  * Todos los textos visibles de la interfaz viven aquí. Para agregar/editar
  * una traducción, cambia el valor en `en` y su equivalente en `es`.
  * El idioma por defecto es inglés.
+ *
+ * QUÉ SE TRADUCE Y QUÉ NO (revisado ago-2026)
+ * -------------------------------------------
+ * SÍ se traduce: todo lo que se ve en pantalla, los textos que solo leen los
+ * lectores de pantalla (`aria-label`), los errores del pago, y el nombre de
+ * cada producto tal como viaja a Stripe ("IDG - 02 — Talla S" / "Size S").
+ *
+ * NO se traduce, A PROPÓSITO:
+ *  · El MANIFIESTO (`config/brand.ts`) — va en inglés fijo: es identidad de
+ *    marca, no interfaz.
+ *  · Los NOMBRES de los productos ("IDG - 01") y "Drop 1.5".
+ *  · El PANEL de administración (`/idg-hq-9f2a`) — es interno, solo español.
+ *  · El botón de idioma dice "EN"/"ES" en los dos idiomas.
+ *
+ * PENDIENTE DE CONTENIDO (no de traducción): los TÉRMINOS traen huecos entre
+ * [corchetes] en los dos idiomas (correo, tiempos de envío, política de
+ * cambios). Hay que llenarlos antes de abrir la tienda.
+ *
+ * CLAVES SIN USAR hoy, se dejan porque se van a ocupar:
+ * `catalog.title`, `product.view`, `home.outNow` y las etiquetas del
+ * countdown (`days`/`hrs`/`min`/`sec`, el contador solo muestra números).
  */
 
 export type Lang = "en" | "es";
@@ -17,11 +38,23 @@ const en = {
     enter: "ENTER",
     enterPreview: "Enter (preview)",
   },
-  countdown: { days: "DAYS", hrs: "HRS", min: "MIN", sec: "SEC" },
+  countdown: {
+    days: "DAYS",
+    hrs: "HRS",
+    min: "MIN",
+    sec: "SEC",
+    /** Texto para lectores de pantalla (el contador solo muestra números). */
+    label: "Countdown to the drop",
+  },
   catalog: { title: "The Collection" },
-  nav: { openCart: "Open cart" },
+  nav: {
+    openCart: "Open cart",
+    toLight: "Switch to light mode",
+    toDark: "Switch to dark mode",
+  },
   cart: {
     title: "Cart",
+    close: "Close cart",
     empty: "Your cart is empty",
     size: "Size",
     subtotal: "Subtotal",
@@ -29,6 +62,12 @@ const en = {
     pay: "Pay now",
     connecting: "Connecting to Stripe...",
     remove: "Remove",
+    /** Botones de cantidad (− / +): solo los lee un lector de pantalla. */
+    less: "Decrease quantity",
+    more: "Increase quantity",
+    /** Errores del pago. Se muestran si Stripe no responde. */
+    errorPay: "Payment could not be started",
+    errorNetwork: "Connection error",
   },
   product: {
     selectSize: "Select size",
@@ -94,11 +133,22 @@ const es: typeof en = {
     enter: "ENTRAR",
     enterPreview: "Entrar (preview)",
   },
-  countdown: { days: "DÍAS", hrs: "HRS", min: "MIN", sec: "SEG" },
+  countdown: {
+    days: "DÍAS",
+    hrs: "HRS",
+    min: "MIN",
+    sec: "SEG",
+    label: "Cuenta regresiva para el drop",
+  },
   catalog: { title: "La Colección" },
-  nav: { openCart: "Abrir carrito" },
+  nav: {
+    openCart: "Abrir carrito",
+    toLight: "Cambiar a modo claro",
+    toDark: "Cambiar a modo oscuro",
+  },
   cart: {
     title: "Carrito",
+    close: "Cerrar carrito",
     empty: "Tu carrito está vacío",
     size: "Talla",
     subtotal: "Subtotal",
@@ -106,6 +156,10 @@ const es: typeof en = {
     pay: "Pagar ahora",
     connecting: "Conectando con Stripe...",
     remove: "Quitar",
+    less: "Quitar uno",
+    more: "Agregar uno",
+    errorPay: "No se pudo iniciar el pago",
+    errorNetwork: "Error de conexión",
   },
   product: {
     selectSize: "Selecciona talla",

@@ -246,17 +246,30 @@ indego/
   (swipe)** para cambiar de foto; bloquea el scroll del fondo al abrir. Incluye
   puntos, descripción bilingüe, talla, cantidad y agregar al carrito.
 - **`cartDrawer.tsx`** — Carrito lateral: lista de productos, cantidades,
-  subtotal y botón para pagar.
-- **`themeProvider.tsx`** — Envuelve la app para dar modo claro/oscuro (sigue el
-  sistema por defecto).
+  subtotal y botón para pagar. Va **al mismo estilo minimalista del modal**:
+  sin recuadro en la cantidad y con el botón de pagar en puro texto. Mientras
+  está abierto **bloquea el scroll de la página** (ver `lib/useScrollLock.ts`).
+- **`themeProvider.tsx`** — Envuelve la app para dar modo claro/oscuro. El sitio
+  **siempre abre en claro**; el botón sol/luna lo cambia y esa elección se
+  recuerda en el navegador de cada quien.
 - **`themeToggle.tsx`** — Botón sol/luna que alterna claro/oscuro.
 - **`themeColorSync.tsx`** — Sincroniza el `<meta theme-color>` con el tema para
   que la barra del navegador (iOS) cambie de color al cambiar de tema.
 
 ### Modo claro / oscuro (temas)
 
-- El tema sigue la preferencia del dispositivo por defecto; el botón sol/luna
-  (en el navbar y en la home) lo cambia a mano.
+- El sitio **siempre abre en tema CLARO** (ago-2026). Antes seguía la
+  preferencia del dispositivo, así que a quien tuviera el modo oscuro prendido
+  el sitio se le abría en oscuro sin pedirlo, y la primera impresión de la
+  marca cambiaba según el aparato. El botón sol/luna (en el navbar y en la
+  home) lo cambia a mano y la elección se recuerda.
+- **Las prendas en tema oscuro:** las tres playeras son oscuras y contra el
+  fondo olivo se perdían (medido: la café marca 57 de luminancia y su fondo 60,
+  o sea casi lo mismo). Por eso hay un **halo**: una luz suave detrás de la
+  prenda que solo existe en tema oscuro (clase `.halo-prenda` en `globals.css`,
+  puesta en `productCard.tsx` y `productModal.tsx`). Es un fondo, no un filtro:
+  no cuesta rendimiento. Sigue sirviendo cuando lleguen los recortes buenos y
+  se quite la placa del cuadro.
 - Los colores viven en `app/globals.css` con **tokens semánticos** que cambian
   según el tema: `background` (fondo), `foreground` (texto), `surface`
   (navbar/tarjetas). En claro son crema/olivo; en oscuro se invierten.
@@ -295,6 +308,18 @@ indego/
 - **`lib/format.ts`** — Convierte números a formato de precio: `1200` → `"$1,200 MXN"`.
 - **`types/products.ts`** — Define las "formas" de los datos (qué campos tiene un
   producto, un item del carrito, etc.).
+- **`lib/useScrollLock.ts`** — Congela la página de atrás mientras el carrito o
+  el modal están abiertos. Usa `position: fixed` y no `overflow: hidden` porque
+  **Safari en iPhone ignora `overflow: hidden`** en el body: sin esto, la página
+  seguía moviéndose al arrastrar dentro del carrito, y al cerrarlo aparecías
+  hasta el final del catálogo. Guarda y restaura la posición, y compensa el
+  ancho de la barra de scroll para que en computadora no brinque el contenido.
+- **`lib/flags.ts`** — Banderas de prueba por dirección (`?grano=0`,
+  `?glass=0`, `?talla=rojo`). Sirven para comparar dos versiones **en el teléfono, en vivo**,
+  sin volver a desplegar. Nada se guarda: al abrir la dirección normal, todo
+  vuelve a su valor de siempre. Se borran cuando cada cosa quede decidida.
+- **`components/grain.tsx`** — El grano de película (el `<svg>` que genera el
+  ruido). Antes vivía dentro de `app/layout.tsx`.
 - **`proxy.ts`** — El candado. Corre en el servidor antes de mostrar
   `/product`: si el drop ya abrió, deja pasar; si no, exige la clave.
 
@@ -410,8 +435,12 @@ footer simplemente no muestra esos enlaces; en cuanto los llenes, aparecen solos
 
 ### Ajustar el grano de película
 `app/globals.css` → clase `.grain`, la propiedad `opacity` (hoy `0.05`). Es una
-textura que genera el navegador con un `<svg>` que vive en `app/layout.tsx`, así
-que no pesa nada. Pasando de ~0.15 empieza a comerse el contraste del texto.
+textura que genera el navegador con un `<svg>` que vive en
+`components/grain.tsx`, así que no pesa nada. Pasando de ~0.15 empieza a
+comerse el contraste del texto.
+
+Para **apagarlo y compararlo** sin desplegar nada, abre cualquier página con
+`?grano=0` al final de la dirección (y `?grano=1` para prenderlo).
 
 ### La Helvetica del countdown
 El video original está tipografiado en **Helvetica**. Windows y Android no la
@@ -421,15 +450,22 @@ espolón** y la **R de pierna recta** — se notaba. Por eso `app/layout.tsx` ca
 `app/fonts/heros-*.woff2`. Están recortadas a los caracteres que usa el sitio:
 pesan ~9 KB cada una, ~38 KB las cuatro (normal, negritas y sus itálicas).
 
-Se usa con la variable `--font-helvetica` en `dropIntro.tsx` y `countdown.tsx`.
+Están recortadas a **Latin-1 completo**: traen minúsculas, acentos, ñ, ¿, ¡ y
+comillas tipográficas, por eso alcanzan para TODO el sitio en español y no solo
+para el countdown. Desde ago-2026 son la única tipografía (ver "Cambiar la
+fuente").
+
 Si algún día se compra la licencia de la Helvetica real, basta reemplazar los
 cuatro archivos de `app/fonts/` y no hay que tocar nada más.
 
 ### Cambiar la fuente
-`app/layout.tsx` → cambia el import y el componente de `next/font/google`
-(actualmente `Saira_Semi_Condensed`, **temporal**). Ej.: para volver a la de
-antes, usa `Inter_Tight`. La variable CSS `--font-inter` se mantiene, así que no
-hay que tocar nada más.
+Desde ago-2026 el sitio tiene **UNA SOLA tipografía**: la Helvetica del
+countdown (TeX Gyre Heros), en todo. Antes convivían dos — Saira Semi
+Condensed para el cuerpo y la Helvetica para títulos y countdown.
+
+Se controla en un solo lugar: `app/globals.css` → `--font-sans`. Para volver a
+tener una tipografía distinta en el cuerpo, se carga en `app/layout.tsx` (con
+`next/font/google`) y se apunta `--font-sans` a su variable.
 
 ### Cambiar colores de marca
 `app/globals.css`:
@@ -480,82 +516,93 @@ Recordatorios de configuración:
 
 ## 11. Pendientes / próximos pasos
 
-**Bug abierto — el botón de pagar del carrito se ve cortado en iOS/móvil.**
-Es lo primero a atacar. Pista: `cartDrawer.tsx:68` usa `h-dvh`, y en iOS esa
-altura cambia cuando aparece o se esconde la barra del navegador, así que el pie
-del checkout (`cartDrawer.tsx:165`) se queda fuera. **El modal de producto tuvo
-este mismo bug** y se arregló con `100svh`. Probar: cambiar el panel a `h-svh` y
-agregar `pb-[env(safe-area-inset-bottom)]` al pie, por la barra de gestos del
-iPhone. Se verifica en el teléfono, no en el escritorio.
+### Resuelto el 1-ago-2026
 
-**Rendimiento — dónde está el costo (investigado el 31-jul-2026):**
+- **El botón de pagar cortado en iOS.** La causa no era solo `h-dvh`: era que
+  la página de atrás **seguía scrolleando** con el carrito abierto, y al
+  scrollear Safari esconde su barra de abajo, así que la altura de la ventana
+  cambiaba a media animación y el pie del checkout quedaba fuera. Se arregló
+  bloqueando el scroll del fondo (`lib/useScrollLock.ts`), cambiando el panel a
+  `h-svh` y agregando `env(safe-area-inset-bottom)` al pie por la barra de
+  gestos del iPhone. **Falta confirmarlo en el iPhone.**
+- **Se movía la página desde el carrito** y al cerrarlo aparecías hasta abajo.
+  Mismo arreglo: ahora se guarda y se restaura la posición exacta.
+- **Rendimiento: se quitaron los cuatro `backdrop-filter`.** Eran el costo real
+  (el navegador tenía que volver a desenfocar el fondo en cada cuadro). El panel
+  del modal pasó a fondo sólido y los fondos oscuros del carrito y el modal, a
+  color plano con más opacidad. **El cristal del navbar SE QUEDÓ**: era el más
+  barato de los cuatro (una franja de 80 px, no un panel animado encima) y el
+  que más se nota. Si el scroll aún se siente pesado, es el siguiente
+  sospechoso: se prueba con `?glass=0`.
+- **El carrito ya está al estilo del modal:** sin recuadro en la cantidad y
+  botón de pagar en puro texto.
+- **Tema claro por defecto** y **halo para las prendas en tema oscuro**.
+- **Tipografía unificada:** todo el sitio en la Helvetica del countdown.
+- **Transición countdown → tienda:** fundido al color del tema.
+- **Traducciones auditadas** (ver la nota grande en `lib/i18n/dictionaries.ts`).
 
-El usuario reporta tirones, sobre todo **al abrir el carrito**. El culpable más
-probable **no es el granulado** (ya se le quitó el `mix-blend-mode`, que era lo
-caro; hoy es una capa normal que la GPU dibuja una vez). El costo está en
-**`backdrop-filter`**, que obliga al navegador a volver a desenfocar el fondo en
-CADA cuadro mientras algo se mueve encima. Hay cuatro, en orden de costo:
+### Falta verificar EN EL IPHONE
 
-| Dónde | Clase | Por qué duele |
-|---|---|---|
-| `productModal.tsx:116` | `backdrop-blur-2xl` | Radio enorme, sobre un panel grande, **mientras el panel entra animado**. El más caro con diferencia. |
-| `cartDrawer.tsx:57` | `backdrop-blur-sm` | El panel se desliza encima: el desenfoque se recalcula en cada cuadro de la animación. **Esto explica el tirón del carrito.** |
-| `productModal.tsx:105` | `backdrop-blur-sm` | Igual que el anterior. |
-| `navbar.tsx:32` | `backdrop-blur-md` | Fijo: se recalcula al hacer scroll. Menos grave, pero suma. |
+1. Que el botón de pagar ya no se corte, con la página scrolleada hasta abajo.
+2. Si los tirones se fueron al quitar los `backdrop-filter`. Si aún se sienten,
+   comparar con `?grano=0` (granulado) y `?glass=0` (cristal del navbar) para
+   descartarlos uno por uno.
+3. Que la barra de direcciones cambie de color con el tema. Si falla, hay
+   PLAN B en `components/themeColorSync.tsx` (`DEJAR_QUE_SAFARI_ELIJA = true`).
 
-Qué probar (en este orden, midiendo en el teléfono entre cada paso):
-1. Cambiar el `backdrop-blur-2xl` del panel del modal por un fondo sólido.
-2. En los fondos oscuros del carrito y del modal, quitar el desenfoque y subir
-   un poco la opacidad (`bg-foreground/40`) en su lugar.
-3. Si aún se siente, apagar el granulado solo en móvil.
+### Para decidir con el equipo
 
-**Para ver con el equipo:**
-- **Cómo se marca la talla elegida en el modal.** Hoy se distingue solo por
-  contraste: la elegida va con el color de texto del tema al 100% y las demás
-  al 35%. Se probaron dos alternativas y no convencieron: **en rojo** (queda
-  guardado como `--color-accent` en `globals.css`, sin usar — **no borrarlo**
-  hasta esa junta) y **con una rayita debajo**. El punto a resolver: hoy la
-  diferencia es solo opacidad, y con poco brillo o al sol podría no notarse
-  cuál talla está seleccionada, que es justo la que se va al carrito.
+- **Cómo se marca la talla elegida.** Hoy con el contraste del tema: la elegida
+  al 100% y las demás al 35%. El riesgo es que, siendo solo opacidad, con poco
+  brillo o al sol no se note cuál está seleccionada — que es justo la que se va
+  al carrito. Para verlas **en vivo, una junto a la otra**: abre el catálogo con
+  `?talla=rojo` o `?talla=tema`. Se decide y se borra la bandera
+  (`MARCA_TALLA_POR_DEFECTO` en `productModal.tsx`).
+- **Modal en escritorio con los controles CENTRADOS** — es un cambio de prueba
+  de esta sesión. Cómo revertirlo está comentado en el propio archivo.
+- **Nombres de los productos** — reemplazar "IDG - 01/02/03".
+- **Video del countdown** — pesa 5.29 MB, lo más pesado del sitio. Medido:
+  `q_auto:eco` lo baja a 4.07 MB (−23%); a 960 px de ancho, a 2.63 MB (−50%).
+  Afecta la calidad del material, por eso es decisión del equipo.
+- **Datos que faltan** — correo de contacto e Instagram en `config/brand.ts`
+  (mientras estén vacíos, el footer no muestra esos enlaces).
 
-**Estética — propuestas pendientes de decidir:**
-- **El carrito quedó fuera de estilo.** El modal ya es minimalista (solo texto,
-  sin bordes ni fondos), pero el carrito sigue con el estilo viejo: recuadro con
-  borde en la cantidad y botón de pagar con fondo sólido. Conviene emparejarlos.
+### Estética — propuestas pendientes
+
 - **Quitar la placa del cuadro de producto.** Hoy la foto va sobre un cuadro
   `bg-surface`. Cuando lleguen los recortes buenos, se puede quitar y dejar la
-  prenda flotando sobre el fondo de la página: más editorial y más limpio.
+  prenda flotando sobre el fondo de la página. El halo de tema oscuro sigue
+  funcionando sin la placa.
 - **Cierre del catálogo.** El manifiesto se movió arriba, así que la página
-  ahora termina en el teaser y el pie, sin remate. Falta un cierre.
-- **Transición countdown → tienda.** Hoy el botón ENTRAR es un salto seco.
-- **Unificar tipografía.** Conviven Saira (cuerpo) y Helvetica (títulos y
-  countdown). Al definir la fuente definitiva hay que decidir si se queda la
-  mezcla a propósito o se unifica.
+  termina en el teaser y el pie, sin remate.
 
-**Diseño / contenido:**
+### Diseño / contenido
+
 - **Recortes buenos de las playeras** — el editor entrega los mockups sin fondo
   con el borde suavizado. Al reemplazarlos en Cloudinary desaparecen los
   escalones que hoy se ven en tema claro. Ver "Las fotos de las playeras".
-- **Fuente definitiva** — Saira Semi Condensed es temporal; definir con el equipo.
 - **Assets reales a Cloudinary** — logos oficiales (negro y blanco → reemplazar
   `LOGO_DARK`/`LOGO_LIGHT` en `navbar.tsx`) y fotos reales de playeras
   (frente/espalda → `config/products.ts`).
 - **Video en escritorio** — decidir si va con zoom (`object-cover`, actual) o
   completo con franjas (`object-contain`).
-- **`theme-color` en iOS** — aún puede tardar un instante en repintar la barra al
-  cambiar tema; es una limitación conocida de Safari.
 
-**Antes de abrir la tienda:**
+### Antes de abrir la tienda
+
 - **Fecha real del drop** (`DROP_DATE`), hoy placeholder 1-sep-2026.
 - **Stripe en modo LIVE** + activar **OXXO** + webhook live.
-- **Rellenar `/terms`** (textos entre `[corchetes]`).
+- **Rellenar `/terms`** (textos entre `[corchetes]`, en los dos idiomas).
+- **Variables de entorno en Vercel** (STRIPE, NEXT_PUBLIC_URL, ADMIN_PASSWORD).
 
-**Siguiente etapa técnica:**
+### Siguiente etapa técnica
+
 - **Base de datos (Supabase) + correos (Resend)** — guardar órdenes, descontar
   stock automático y confirmar por correo. Mostrar ventas/stock en el panel.
+- **Login más robusto para el panel** (hoy es contraseña por variable de
+  entorno; migrar a Supabase Auth cuando maneje datos de ventas).
 - **Tarifa de envío** — definir (gratis en el precio o tarifa plana).
 - **Meses sin intereses (MSI)** — evaluar tras el primer drop.
 
 ---
 
-_Última actualización de este manual: 31 de julio de 2026._
+_Última actualización de este manual: 1 de agosto de 2026._

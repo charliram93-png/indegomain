@@ -14,7 +14,9 @@ export default function Catalog() {
   const [selected, setSelected] = useState<number | null>(null);
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    /* `entrada`: el catálogo aparece desde el color del tema, enganchando con
+       el fundido del countdown (ver `app/page.tsx` y globals.css). */
+    <div className="entrada flex min-h-dvh flex-col bg-background">
       <Navbar />
 
       <main className="flex-1">

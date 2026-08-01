@@ -4,10 +4,25 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product, isSoldOut } from "@/types/products";
 import { X, Plus, Minus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useCart } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
+import { useFlag } from "@/lib/flags";
+import { useScrollLock } from "@/lib/useScrollLock";
 import { useI18n } from "@/lib/i18n/context";
+
+/**
+ * CÓMO SE MARCA LA TALLA ELEGIDA — pendiente de decidir con el equipo.
+ *
+ *   "tema" -> con el color de texto del tema a contraste pleno (las otras
+ *             tallas apagadas al 35%). Es lo que hay hoy.
+ *   "rojo" -> con el rojo de marca, el mismo del contador del countdown.
+ *
+ * Para verlas EN VIVO en la junta, sin desplegar nada, abre el catálogo con
+ * `?talla=rojo` o `?talla=tema` al final de la dirección.
+ * Cuando se decida, se cambia esta línea y se borra la bandera.
+ */
+const MARCA_TALLA_POR_DEFECTO = "tema";
 
 type Props = {
   product: Product | null;
@@ -18,6 +33,7 @@ type Props = {
 export default function ProductModal({ product, index, onClose }: Props) {
   const { addItem, openCart } = useCart();
   const { t } = useI18n();
+  const tallaEnRojo = useFlag("talla", MARCA_TALLA_POR_DEFECTO) === "rojo";
 
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -65,13 +81,8 @@ export default function ProductModal({ product, index, onClose }: Props) {
 
   // Bloquea el scroll del fondo mientras el modal está abierto (evita el
   // "zoom raro" por el cambio de altura de la barra del navegador en móvil).
-  useEffect(() => {
-    if (!product) return;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [product]);
+  // Mismo mecanismo que el carrito, ver `lib/useScrollLock.ts`.
+  useScrollLock(!!product);
 
   const hasGallery = !!product && product.images.length > 1;
   const total = product?.images.length ?? 1;
@@ -102,7 +113,9 @@ export default function ProductModal({ product, index, onClose }: Props) {
     <AnimatePresence>
       {product && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-foreground/15 backdrop-blur-sm md:items-center md:p-10"
+          /* Sin `backdrop-blur`: desenfocar el fondo se recalcula en cada
+             cuadro mientras el panel entra. Se compensa subiendo la opacidad. */
+          className="fixed inset-0 z-50 flex items-start justify-center bg-foreground/30 md:items-center md:p-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -113,7 +126,13 @@ export default function ProductModal({ product, index, onClose }: Props) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative flex h-svh w-full flex-col bg-surface/50 p-4 backdrop-blur-2xl md:grid md:h-auto md:max-h-[90vh] md:max-w-6xl md:grid-cols-2 md:items-center md:gap-10 md:overflow-y-auto md:rounded-sm md:border md:border-foreground/15 md:p-10 md:shadow-2xl"
+            /*
+              Fondo SÓLIDO. Antes era `bg-surface/50 backdrop-blur-2xl`, y ese
+              desenfoque era, con diferencia, lo más caro del sitio: un radio
+              enorme recalculándose en cada cuadro mientras el panel entra
+              animado. Con color plano la animación va suave hasta en teléfono.
+            */
+            className="relative flex h-svh w-full flex-col bg-surface p-4 md:grid md:h-auto md:max-h-[90vh] md:max-w-6xl md:grid-cols-2 md:items-center md:gap-10 md:overflow-y-auto md:rounded-sm md:border md:border-foreground/15 md:p-10 md:shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Cerrar */}
@@ -139,7 +158,10 @@ export default function ProductModal({ product, index, onClose }: Props) {
                 onTouchStart={onTouchStart}
                 onTouchEnd={onTouchEnd}
                 aria-label={hasGallery ? t.product.changeView : product.name}
-                className={`relative flex min-h-0 w-full flex-1 items-center justify-center md:h-auto md:aspect-square md:flex-none ${
+                /* `halo-prenda`: luz suave detrás de la playera SOLO en tema
+                   oscuro, si no la café desaparece contra el fondo. Ver
+                   globals.css. */
+                className={`halo-prenda relative flex min-h-0 w-full flex-1 items-center justify-center md:h-auto md:aspect-square md:flex-none ${
                   hasGallery ? "cursor-pointer" : "cursor-default"
                 }`}
               >
@@ -181,12 +203,15 @@ export default function ProductModal({ product, index, onClose }: Props) {
             </div>
 
             {/* INFO Y CONTROLES */}
-            {/* En móvil (modal a pantalla completa) los controles van
-                CENTRADOS; en escritorio, alineados a la izquierda como siempre. */}
-            <div className="flex shrink-0 flex-col items-center space-y-3 pt-3 text-foreground md:items-stretch md:justify-center md:space-y-6 md:pt-0">
+            {/* PRUEBA DE DISEÑO (ago-2026): ahora la columna va CENTRADA
+                también en escritorio, no solo en móvil. Para volver a la
+                versión alineada a la izquierda: cambia `md:items-center` por
+                `md:items-stretch` aquí, quita `md:text-center` del bloque del
+                nombre y regresa `md:items-start` a tallas y cantidad. */}
+            <div className="flex shrink-0 flex-col items-center space-y-3 pt-3 text-foreground md:items-center md:justify-center md:space-y-6 md:pt-0">
               <div className="w-full">
                 {/* Nombre + precio: en la MISMA línea en móvil, apilados en desktop */}
-                <div className="flex items-baseline justify-between gap-3 md:block">
+                <div className="flex items-baseline justify-between gap-3 md:block md:text-center">
                   <h1 className="text-3xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
                     {product.name}
                   </h1>
@@ -201,27 +226,32 @@ export default function ProductModal({ product, index, onClose }: Props) {
               </div>
 
               {/* TALLAS */}
-              <div className="flex flex-col items-center space-y-2 md:items-start">
+              <div className="flex flex-col items-center space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.selectSize}
                 </span>
-                {/* Solo texto: sin recuadro ni fondo. La talla elegida se
-                    marca en rojo. El `py-2` no se ve, pero deja el área de
-                    toque decente en el teléfono. */}
+                {/* Solo texto: sin recuadro ni fondo. El `py-2` no se ve, pero
+                    deja el área de toque decente en el teléfono.
+
+                    Cómo se marca la elegida está PENDIENTE DE DECIDIR (ver
+                    MARCA_TALLA_POR_DEFECTO arriba): hoy con el contraste del
+                    tema, `?talla=rojo` para verla con el rojo de marca. */}
                 <div className="flex gap-6">
                   {product.sizes.map(({ size, stock }) => {
                     const out = stock <= 0;
                     const active = activeSize === size;
+                    const marcada = active && !out;
                     return (
                       <button
                         key={size}
                         onClick={() => !out && setSelectedSize(size)}
                         disabled={out}
-                        /* La talla elegida va con el color de TEXTO del tema
-                           (olivo en claro, crema en oscuro) a contraste pleno;
-                           las demás, el mismo color pero apagado. Así el
-                           contraste lo pone el tema y no un color fijo. */
-                        className={`py-2 text-sm font-bold uppercase text-foreground transition-opacity ${
+                        aria-pressed={marcada}
+                        className={`py-2 text-sm font-bold uppercase transition-opacity ${
+                          marcada && tallaEnRojo
+                            ? "text-accent"
+                            : "text-foreground"
+                        } ${
                           out
                             ? "cursor-not-allowed opacity-25 line-through"
                             : active
@@ -237,7 +267,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
               </div>
 
               {/* CANTIDAD */}
-              <div className="flex flex-col items-center space-y-2 md:items-start">
+              <div className="flex flex-col items-center space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.quantity}
                 </span>
@@ -246,7 +276,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
                   <button
                     onClick={() => setQuantity(Math.max(1, qty - 1))}
                     disabled={soldOut}
-                    aria-label="-"
+                    aria-label={t.cart.less}
                     className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-20"
                   >
                     <Minus size={16} />
@@ -257,7 +287,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
                   <button
                     onClick={() => setQuantity(Math.min(maxQty, qty + 1))}
                     disabled={soldOut || qty >= maxQty}
-                    aria-label="+"
+                    aria-label={t.cart.more}
                     className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-20"
                   >
                     <Plus size={16} />

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useCart } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
 import { HELVETICA } from "@/lib/fonts";
+import { useScrollLock } from "@/lib/useScrollLock";
 import { useI18n } from "@/lib/i18n/context";
 
 export default function CartDrawer() {
@@ -17,6 +18,13 @@ export default function CartDrawer() {
 
   const total = subtotal();
 
+  /*
+    Con el carrito abierto la página de atrás ya no se mueve: arregla el botón
+    de PAGAR cortado y que al cerrar el carrito aparecieras hasta el final del
+    catálogo. El detalle del por qué está en `lib/useScrollLock.ts`.
+  */
+  useScrollLock(isOpen);
+
   const handleCheckout = async () => {
     if (items.length === 0) return;
     setLoading(true);
@@ -26,7 +34,9 @@ export default function CartDrawer() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((i) => ({
-            name: `${i.name} — Talla ${i.size}`,
+            // El nombre viaja a Stripe, así que se arma en el idioma que el
+            // cliente está viendo (antes decía "Talla" siempre, aun en inglés).
+            name: `${i.name} — ${t.cart.size} ${i.size}`,
             price: i.price,
             image: i.image,
             quantity: i.quantity,
@@ -38,10 +48,10 @@ export default function CartDrawer() {
       if (session.url) {
         window.location.assign(session.url);
       } else {
-        throw new Error(session.error || "No se pudo iniciar el pago");
+        throw new Error(session.error || t.cart.errorPay);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error de conexión";
+      const msg = err instanceof Error ? err.message : t.cart.errorNetwork;
       console.error(msg);
       alert(msg);
       setLoading(false);
@@ -52,9 +62,14 @@ export default function CartDrawer() {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Fondo */}
+          {/*
+            Fondo. SIN `backdrop-blur`: desenfocar el fondo obliga al navegador
+            a volver a desenfocarlo en cada cuadro mientras el panel se desliza
+            encima, y eso era el tirón al abrir el carrito. Ahora es una capa
+            de color plana, más opaca para que siga separando del contenido.
+          */}
           <motion.div
-            className="fixed inset-0 z-[60] bg-foreground/30 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-foreground/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -65,7 +80,12 @@ export default function CartDrawer() {
           <motion.aside
             /* Todo el carrito en la Helvetica del sitio (se hereda hacia adentro) */
             style={{ fontFamily: HELVETICA }}
-            className="fixed top-0 right-0 z-[70] flex h-dvh w-full max-w-md flex-col bg-surface text-foreground shadow-2xl"
+            /*
+              `h-svh` (no `h-dvh`): mide la ventana en su estado MÁS CHICO, con
+              las barras del navegador visibles. Así el panel siempre cabe,
+              aunque Safari muestre u oculte su barra a media animación.
+            */
+            className="fixed top-0 right-0 z-[70] flex h-svh w-full max-w-md flex-col bg-surface text-foreground shadow-2xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -78,7 +98,7 @@ export default function CartDrawer() {
               </h2>
               <button
                 onClick={closeCart}
-                aria-label={t.cart.title}
+                aria-label={t.cart.close}
                 className="transition-opacity hover:opacity-40"
               >
                 <X size={22} strokeWidth={1.5} />
@@ -102,6 +122,7 @@ export default function CartDrawer() {
                           src={item.image}
                           alt={item.name}
                           fill
+                          sizes="80px"
                           className="object-contain"
                         />
                       </div>
@@ -119,34 +140,38 @@ export default function CartDrawer() {
                           <button
                             onClick={() => removeItem(item.id)}
                             aria-label={t.cart.remove}
-                            className="opacity-40 transition-opacity hover:opacity-100"
+                            className="cursor-pointer p-1 opacity-30 transition-opacity hover:opacity-100"
                           >
-                            <Trash2 size={16} strokeWidth={1.5} />
+                            <Trash2 size={14} strokeWidth={1.5} />
                           </button>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <div className="flex h-9 items-center border border-foreground/20">
+                          {/*
+                            CANTIDAD, igual que en el modal de producto: sin
+                            recuadro ni fondo, solo los signos y el número.
+                          */}
+                          <div className="flex w-fit items-center gap-5">
                             <button
                               onClick={() =>
                                 updateQuantity(item.id, item.quantity - 1)
                               }
-                              aria-label="Menos"
-                              className="px-3 h-full transition-colors hover:bg-foreground/5"
+                              aria-label={t.cart.less}
+                              className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100"
                             >
-                              <Minus size={12} />
+                              <Minus size={16} />
                             </button>
-                            <span className="w-8 text-center text-xs font-bold">
+                            <span className="min-w-6 text-center text-sm font-bold">
                               {item.quantity}
                             </span>
                             <button
                               onClick={() =>
                                 updateQuantity(item.id, item.quantity + 1)
                               }
-                              aria-label="Más"
-                              className="px-3 h-full transition-colors hover:bg-foreground/5"
+                              aria-label={t.cart.more}
+                              className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100"
                             >
-                              <Plus size={12} />
+                              <Plus size={16} />
                             </button>
                           </div>
                           <p className="text-xs font-bold">
@@ -160,9 +185,14 @@ export default function CartDrawer() {
               )}
             </div>
 
-            {/* Pie / checkout */}
+            {/*
+              Pie / checkout.
+              `pb-[env(safe-area-inset-bottom)]` deja libre la franja de la
+              barra de gestos del iPhone: sin eso, el botón queda debajo de
+              ella y se ve mochado.
+            */}
             {items.length > 0 && (
-              <div className="border-t border-foreground/10 px-6 py-5">
+              <div className="border-t border-foreground/10 px-6 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
                 <div className="mb-1 flex items-center justify-between text-sm font-bold uppercase tracking-[0.02em]">
                   <span>{t.cart.subtotal}</span>
                   <span>{formatMXN(total)}</span>
@@ -170,10 +200,14 @@ export default function CartDrawer() {
                 <p className="mb-4 text-[10px] uppercase tracking-[0.02em] opacity-40">
                   {t.cart.shippingNote}
                 </p>
+                {/*
+                  PAGAR: solo texto, como "Agregar al carrito" en el modal.
+                  Sin fondo sólido, sin borde, sin sombra.
+                */}
                 <button
                   onClick={handleCheckout}
                   disabled={loading}
-                  className="w-full bg-foreground py-4 text-[10px] font-bold uppercase tracking-[0.03em] text-background transition-colors hover:opacity-90 disabled:opacity-50"
+                  className="w-fit cursor-pointer py-2 text-left text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-opacity hover:opacity-50 disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   {loading ? t.cart.connecting : t.cart.pay}
                 </button>

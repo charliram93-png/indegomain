@@ -3,6 +3,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n/context";
 
 /**
  * Botón para alternar claro/oscuro. Muestra el ícono del tema actual.
@@ -14,6 +15,7 @@ export default function ThemeToggle({
   variant?: "auto" | "light";
 }) {
   const { resolvedTheme, setTheme } = useTheme();
+  const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -25,7 +27,7 @@ export default function ThemeToggle({
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+      aria-label={isDark ? t.nav.toLight : t.nav.toDark}
       className={`${color} p-2 opacity-70 outline-none transition-opacity hover:opacity-100`}
     >
       {/* Evita mismatch de hidratación: hasta montar, un placeholder neutro. */}

@@ -29,7 +29,13 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
 
-  --font-sans: var(--font-inter), "Inter", sans-serif;
+  /*
+    TIPOGRAFÍA ÚNICA: la Helvetica del countdown (TeX Gyre Heros), en todo el
+    sitio. Antes aquí vivía Saira Semi Condensed para el cuerpo, y convivían
+    dos tipografías. Ver la nota larga en `app/layout.tsx`.
+  */
+  --font-sans:
+    var(--font-helvetica), "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 /* Tema CLARO (default) */
@@ -72,6 +78,42 @@ body {
 }
 
 /*
+  HALO PARA LAS PRENDAS EN TEMA OSCURO
+  ------------------------------------
+  Las tres playeras son OSCURAS y en tema oscuro se confunden con el fondo.
+  Medido sobre las fotos reales (luminancia 0–255, sobre la placa oscura que
+  vale 60):
+
+      negra  46   |   café  57   |   gris  67
+
+  O sea, la CAFÉ está a 3 puntos de su propio fondo: prácticamente invisible.
+  (En tema claro el fondo vale 214, así que ahí las tres resaltan de sobra.)
+
+  Este halo enciende una luz suave DETRÁS de la prenda, solo en tema oscuro,
+  para que la silueta se despegue. Es una capa de fondo, no un filtro: no
+  cuesta nada de rendimiento. En tema claro no existe.
+
+  Va sobre el contenedor de la foto y funciona igual con o sin la placa, así
+  que sigue sirviendo cuando lleguen los recortes buenos y se quite el cuadro.
+*/
+.halo-prenda::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: transparent;
+}
+
+.dark .halo-prenda::before {
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgb(226 229 213 / 0.16) 0%,
+    rgb(226 229 213 / 0.07) 45%,
+    transparent 72%
+  );
+}
+
+/*
   APARICIÓN AL SCROLLEAR (components/reveal.tsx)
   El movimiento se hace con una transición de CSS —no con JavaScript cuadro a
   cuadro— para que el scroll no se sienta pesado en el teléfono.
@@ -95,6 +137,31 @@ body {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+}
+
+/*
+  ENTRADA DEL CATÁLOGO (la otra mitad de la transición del countdown).
+  La home se funde al color del tema y el catálogo aparece desde ese MISMO
+  color, así que se lee como un solo movimiento y no como dos páginas.
+  Solo aparece: nada se mueve de lugar, para no retrasar la lectura.
+*/
+.entrada {
+  animation: entrada 0.55s ease-out both;
+}
+
+@keyframes entrada {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entrada {
+    animation: none;
   }
 }
 

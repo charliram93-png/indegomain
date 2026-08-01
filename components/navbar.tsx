@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 import { useCart } from "@/store/cart";
 import ThemeToggle from "@/components/themeToggle";
 import LangToggle from "@/components/langToggle";
+import { useFlag } from "@/lib/flags";
 import { useI18n } from "@/lib/i18n/context";
 
 // TODO: reemplazar por los logos oficiales (negro y blanco) subidos a Cloudinary.
@@ -20,6 +21,8 @@ const Navbar: React.FC = () => {
   const { openCart, totalItems } = useCart();
   const { t } = useI18n();
   const { resolvedTheme } = useTheme();
+  // `?glass=0` apaga el cristal de la barra, para medirlo en el teléfono.
+  const glass = useFlag("glass", "1") !== "0";
 
   // Evita mismatch de hidratación: contador y logo temático solo tras montar.
   const [mounted, setMounted] = useState(false);
@@ -29,7 +32,24 @@ const Navbar: React.FC = () => {
     mounted && resolvedTheme === "dark" ? LOGO_LIGHT : LOGO_DARK;
 
   return (
-    <nav className="fixed top-0 left-0 z-50 flex h-20 w-full items-center justify-between bg-surface/70 px-6 backdrop-blur-md md:px-12">
+    /*
+      EL CRISTAL DE LA BARRA (`backdrop-blur`) SE QUEDA.
+      Es el único desenfoque que sobrevivió a la limpieza de rendimiento, y a
+      propósito: de los cuatro que había era el MÁS BARATO (una franja de 80 px
+      de alto, no un panel entero moviéndose encima) y el que más se nota.
+      Los caros —el del panel del modal y los de los fondos del carrito y el
+      modal— sí se quitaron: esos se recalculaban en cada cuadro MIENTRAS el
+      panel entraba animado, que es justo el tirón que se sentía.
+
+      Aun así, la barra es fija y su desenfoque se recalcula al scrollear. Si
+      después de todo lo demás el scroll TODAVÍA se siente pesado en el
+      teléfono, este es el siguiente sospechoso: pruébalo con `?glass=0`.
+    */
+    <nav
+      className={`fixed top-0 left-0 z-50 flex h-20 w-full items-center justify-between px-6 md:px-12 ${
+        glass ? "bg-surface/70 backdrop-blur-md" : "bg-surface/95"
+      }`}
+    >
       {/* LOGO */}
       <div className="flex select-none items-center">
         <Link href="/" className="select-none">

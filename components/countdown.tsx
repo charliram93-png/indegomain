@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DROP_DATE } from "@/config/drop";
 import { HELVETICA } from "@/lib/fonts";
+import { useI18n } from "@/lib/i18n/context";
 
 type TimeLeft = {
   days: number;
@@ -40,6 +41,7 @@ export default function Countdown({
 }: {
   onComplete?: () => void;
 }) {
+  const { t } = useI18n();
   // Evita hydration mismatch: no calculamos tiempo hasta montar en el cliente.
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
 
@@ -66,7 +68,7 @@ export default function Countdown({
 
   return (
     <div
-      aria-label="Cuenta regresiva para el lanzamiento"
+      aria-label={t.countdown.label}
       className="text-4xl font-bold tabular-nums leading-none sm:text-6xl md:text-8xl"
       style={{
         fontFamily: HELVETICA,
