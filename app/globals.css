@@ -17,6 +17,13 @@
   --color-olive: #32331f;
   --color-cream: #e2e5d5;
   --color-cream-dark: #d6d8c2;
+  /*
+    Rojo de marca (el mismo del contador del countdown).
+    NO SE USA todavía: se probó para marcar la talla elegida en el modal y
+    quedó pendiente de decidir con el equipo (rojo vs. el contraste del tema).
+    No borrar hasta esa junta — se usa poniendo `text-accent`.
+  */
+  --color-accent: #e10600;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

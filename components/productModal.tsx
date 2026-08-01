@@ -17,7 +17,7 @@ type Props = {
 
 export default function ProductModal({ product, index, onClose }: Props) {
   const { addItem, openCart } = useCart();
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
 
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -181,8 +181,10 @@ export default function ProductModal({ product, index, onClose }: Props) {
             </div>
 
             {/* INFO Y CONTROLES */}
-            <div className="flex shrink-0 flex-col space-y-3 pt-3 text-foreground md:justify-center md:space-y-6 md:pt-0">
-              <div>
+            {/* En móvil (modal a pantalla completa) los controles van
+                CENTRADOS; en escritorio, alineados a la izquierda como siempre. */}
+            <div className="flex shrink-0 flex-col items-center space-y-3 pt-3 text-foreground md:items-stretch md:justify-center md:space-y-6 md:pt-0">
+              <div className="w-full">
                 {/* Nombre + precio: en la MISMA línea en móvil, apilados en desktop */}
                 <div className="flex items-baseline justify-between gap-3 md:block">
                   <h1 className="text-3xl font-bold uppercase leading-none tracking-tighter md:text-6xl">
@@ -192,22 +194,21 @@ export default function ProductModal({ product, index, onClose }: Props) {
                     {formatMXN(product.price)}
                   </p>
                 </div>
-                {/* La descripción NO se muestra en móvil: ahí el modal ocupa
-                    toda la pantalla y el espacio se necesita para la foto y
-                    los controles de compra. */}
-                {product.description && (
-                  <p className="mt-2 hidden max-w-sm text-sm leading-relaxed opacity-60 md:block">
-                    {product.description[lang]}
-                  </p>
-                )}
+                {/* La descripción NO va en el modal (en ninguna pantalla): ya
+                    se lee en el catálogo, y aquí el espacio es para la foto y
+                    los controles de compra. Sigue viviendo en
+                    `config/products.ts`. */}
               </div>
 
               {/* TALLAS */}
-              <div className="space-y-2">
+              <div className="flex flex-col items-center space-y-2 md:items-start">
                 <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.selectSize}
                 </span>
-                <div className="flex gap-2">
+                {/* Solo texto: sin recuadro ni fondo. La talla elegida se
+                    marca en rojo. El `py-2` no se ve, pero deja el área de
+                    toque decente en el teléfono. */}
+                <div className="flex gap-6">
                   {product.sizes.map(({ size, stock }) => {
                     const out = stock <= 0;
                     const active = activeSize === size;
@@ -216,14 +217,16 @@ export default function ProductModal({ product, index, onClose }: Props) {
                         key={size}
                         onClick={() => !out && setSelectedSize(size)}
                         disabled={out}
-                        className={`flex h-11 w-11 items-center justify-center border text-xs font-bold transition-all md:h-12 md:w-12 ${
-                          active
-                            ? "border-foreground bg-foreground text-background"
-                            : "border-foreground/20 text-foreground hover:border-foreground"
-                        } ${
+                        /* La talla elegida va con el color de TEXTO del tema
+                           (olivo en claro, crema en oscuro) a contraste pleno;
+                           las demás, el mismo color pero apagado. Así el
+                           contraste lo pone el tema y no un color fijo. */
+                        className={`py-2 text-sm font-bold uppercase text-foreground transition-opacity ${
                           out
-                            ? "cursor-not-allowed opacity-30 line-through hover:border-foreground/20"
-                            : ""
+                            ? "cursor-not-allowed opacity-25 line-through"
+                            : active
+                              ? "cursor-pointer opacity-100"
+                              : "cursor-pointer opacity-35 hover:opacity-70"
                         }`}
                       >
                         {size}
@@ -234,27 +237,30 @@ export default function ProductModal({ product, index, onClose }: Props) {
               </div>
 
               {/* CANTIDAD */}
-              <div className="space-y-2">
+              <div className="flex flex-col items-center space-y-2 md:items-start">
                 <span className="text-[10px] font-bold uppercase tracking-[0.02em] opacity-50">
                   {t.product.quantity}
                 </span>
-                <div className="flex h-11 w-fit items-center border border-foreground/20 md:h-12">
+                {/* Igual que las tallas: sin recuadro, solo los signos. */}
+                <div className="flex w-fit items-center gap-5">
                   <button
                     onClick={() => setQuantity(Math.max(1, qty - 1))}
                     disabled={soldOut}
                     aria-label="-"
-                    className="h-full px-4 transition-colors hover:bg-foreground/5 disabled:opacity-30"
+                    className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-20"
                   >
-                    <Minus size={14} />
+                    <Minus size={16} />
                   </button>
-                  <span className="w-14 text-center text-sm font-bold">{qty}</span>
+                  <span className="min-w-6 text-center text-sm font-bold">
+                    {qty}
+                  </span>
                   <button
                     onClick={() => setQuantity(Math.min(maxQty, qty + 1))}
                     disabled={soldOut || qty >= maxQty}
                     aria-label="+"
-                    className="h-full px-4 transition-colors hover:bg-foreground/5 disabled:opacity-30"
+                    className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-20"
                   >
-                    <Plus size={14} />
+                    <Plus size={16} />
                   </button>
                 </div>
                 {!soldOut && maxQty > 0 && maxQty <= 5 && (
@@ -267,7 +273,8 @@ export default function ProductModal({ product, index, onClose }: Props) {
               <button
                 onClick={handleAddToCart}
                 disabled={soldOut || !activeSize}
-                className="w-full bg-foreground px-16 py-4 text-[10px] font-bold uppercase tracking-[0.03em] text-background shadow-2xl transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 md:w-fit md:py-5"
+                /* Sin fondo, sin borde, sin sombra: solo el texto. */
+                className="w-fit cursor-pointer py-2 text-left text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-opacity hover:opacity-50 disabled:cursor-not-allowed disabled:opacity-30"
               >
                 {soldOut ? t.product.soldOut : t.product.addToCart}
               </button>

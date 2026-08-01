@@ -40,7 +40,6 @@ export const PRODUCTS: Product[] = [
       { size: "S", stock: 10 },
       { size: "M", stock: 10 },
       { size: "L", stock: 10 },
-      { size: "XL", stock: 10 },
     ],
   },
   {
@@ -56,7 +55,6 @@ export const PRODUCTS: Product[] = [
       { size: "S", stock: 10 },
       { size: "M", stock: 10 },
       { size: "L", stock: 10 },
-      { size: "XL", stock: 10 },
     ],
   },
   {
@@ -72,7 +70,6 @@ export const PRODUCTS: Product[] = [
       { size: "S", stock: 10 },
       { size: "M", stock: 10 },
       { size: "L", stock: 10 },
-      { size: "XL", stock: 10 },
     ],
   },
 ];

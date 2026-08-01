@@ -480,6 +480,15 @@ Recordatorios de configuración:
 
 ## 11. Pendientes / próximos pasos
 
+**Para ver con el equipo:**
+- **Cómo se marca la talla elegida en el modal.** Hoy se distingue solo por
+  contraste: la elegida va con el color de texto del tema al 100% y las demás
+  al 35%. Se probaron dos alternativas y no convencieron: **en rojo** (queda
+  guardado como `--color-accent` en `globals.css`, sin usar — **no borrarlo**
+  hasta esa junta) y **con una rayita debajo**. El punto a resolver: hoy la
+  diferencia es solo opacidad, y con poco brillo o al sol podría no notarse
+  cuál talla está seleccionada, que es justo la que se va al carrito.
+
 **Diseño / contenido:**
 - **Recortes buenos de las playeras** — el editor entrega los mockups sin fondo
   con el borde suavizado. Al reemplazarlos en Cloudinary desaparecen los
