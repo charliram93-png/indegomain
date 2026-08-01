@@ -32,8 +32,23 @@ export default function ProductCard({ product, index, onClick }: Props) {
           reversed ? "md:order-2" : "md:order-1"
         }`}
       >
-        <div className="relative aspect-square w-full">
-          <span className="pointer-events-none absolute left-4 top-2 text-7xl font-bold leading-none opacity-10 md:text-9xl">
+        {/*
+          `container-type: inline-size` deja medir el número contra el ANCHO
+          del cuadro (unidad `cqw`). Antes usaba tamaños fijos (7xl/9xl) y en
+          escritorio salía proporcionalmente más grande que en móvil: por eso
+          se veía distinto en cada pantalla.
+        */}
+        <div className="relative aspect-square w-full [container-type:inline-size]">
+          {/*
+            El número va ABAJO A LA DERECHA y un poco metido hacia adentro, para
+            que la playera lo tape en parte. Queda ANTES de la <Image> a
+            propósito: al pintarse primero, la foto le pasa por encima y se ve
+            como si el número estuviera detrás.
+          */}
+          <span
+            className="pointer-events-none absolute bottom-[3%] right-[6%] text-[24cqw] font-bold leading-none opacity-15 md:right-[5%]"
+            style={{ fontFamily: HELVETICA }}
+          >
             {number}
           </span>
           <Image
@@ -41,7 +56,7 @@ export default function ProductCard({ product, index, onClick }: Props) {
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
-            className={`select-none object-contain p-8 pointer-events-none transition-transform duration-500 ease-out group-hover:scale-[1.04] ${
+            className={`pointer-events-none select-none object-contain p-8 transition-transform duration-500 ease-out group-hover:scale-[1.04] ${
               soldOut ? "opacity-50 grayscale" : ""
             }`}
           />
@@ -55,8 +70,17 @@ export default function ProductCard({ product, index, onClick }: Props) {
         </div>
       </button>
 
-      {/* NOMBRE EN GRANDE (arriba de la imagen en móvil) */}
-      <div className={`order-1 flex flex-col ${reversed ? "md:order-1" : "md:order-2"}`}>
+      {/*
+        NOMBRE EN GRANDE. En móvil se monta sobre el borde de arriba del cuadro:
+        el margen negativo sube la imagen y el `z-10` deja el nombre encima, así
+        queda mitad sobre el fondo y mitad sobre la playera. En escritorio va al
+        lado, como siempre.
+      */}
+      <div
+        className={`relative z-10 order-1 -mb-12 flex flex-col md:mb-0 ${
+          reversed ? "md:order-1" : "md:order-2"
+        }`}
+      >
         <button onClick={onClick} className="text-left">
           <h2
             className="text-5xl font-bold uppercase leading-none tracking-tighter transition-opacity hover:opacity-60 md:text-7xl"

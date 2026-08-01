@@ -116,10 +116,11 @@ indego/
 ├── components/              # piezas de interfaz reutilizables
 │   ├── countdown.tsx        # la cuenta regresiva
 │   ├── dropIntro.tsx        # el texto animado que va sobre el video del countdown
-│   ├── manifesto.tsx        # el corte tipográfico que cierra el catálogo
+│   ├── manifesto.tsx        # el corte tipográfico que ABRE el catálogo
 │   ├── navbar.tsx           # barra superior con logo, idioma, tema y bolsa
 │   ├── footer.tsx           # pie de página
 │   ├── productCard.tsx      # fila editorial del catálogo (imagen + nombre grande)
+│   ├── reveal.tsx           # aparición al scrollear (barata, con CSS)
 │   ├── productModal.tsx     # ventana de detalle (fotos, tallas, compra)
 │   ├── productTeaser.tsx    # cuadro "incógnito" 04–05 (adelanto Drop 1.5)
 │   ├── cartDrawer.tsx       # carrito lateral
@@ -155,13 +156,17 @@ indego/
 
 - **`config/drop.ts`** — El "panel de control" del lanzamiento:
   - `DROP_DATE`: fecha y hora del drop.
-  - `DROP_NAME`: nombre que se muestra ("DROP #1").
+  - `DROP_NAME`: nombre del drop ("DROP 1"). Hoy no se pinta en pantalla: el
+    catálogo ya no lleva título.
   - `DROP_ACCESS_KEY`: clave para probar la tienda antes de tiempo.
   - `DROP_VIDEO` / `DROP_POSTER`: video de fondo del countdown y su imagen de
     respaldo (ambos en Cloudinary).
   - `isDropOpen()`: función que dice si el drop ya abrió.
 - **`config/products.ts`** — El catálogo. Cada producto tiene `slug`, `name`,
-  `image`, `price` (en pesos) y `sizes` (tallas con su `stock`).
+  `images` (la PRIMERA es el frente, la segunda la espalda), `price` (en pesos),
+  `description` bilingüe y `sizes` (tallas con su `stock`). Las fotos pasan por
+  el helper `foto()`, que les aplica transformaciones de Cloudinary al vuelo —
+  ver "Las fotos de las playeras" en la sección 9.
 - **`config/brand.ts`** — Lo que el sitio dice de sí mismo: `CONTACT_EMAIL`,
   `INSTAGRAM_URL`, `LINKTREE_URL` y el `MANIFESTO`. El correo y el Instagram
   **solo aparecen en el footer si están llenos** (vacío = no se muestra el
@@ -185,8 +190,10 @@ indego/
   **ENTRAR**; si tienes la cookie de preview, muestra "Entrar (preview)". En
   móvil vertical el video llena la pantalla con `object-cover`, es decir hace
   zoom a los caballos, y el texto se reacomoda solo al formato vertical.
-- **`product/page.tsx`** — La tienda. Lee el catálogo de `config/products.ts` y
-  pinta las tarjetas. Aquí se montan el Navbar, el CartDrawer y el Footer.
+- **`product/page.tsx`** — La tienda. Abre con el **manifiesto** (de lado a lado,
+  justo debajo del navbar), y luego las tarjetas del catálogo. Ya no lleva título
+  ("The Collection" / "Drop 1"): se quitó porque el manifiesto ya hace de
+  entrada. Aquí se montan el Navbar, el CartDrawer y el Footer.
 - **`success/page.tsx`** — A donde Stripe manda al cliente tras pagar. Vacía el
   carrito.
 - **`terms/page.tsx`** — Términos y condiciones (texto editable con placeholders).
@@ -210,7 +217,14 @@ indego/
   solo con cada vuelta del bucle, y todo se mide en `cqw` (% del ancho del
   video) para que escale nítido en cualquier pantalla. El guion (textos,
   segundos, tamaños, posiciones) vive en `config/dropIntro.ts`.
-- **`manifesto.tsx`** — El corte tipográfico que cierra el catálogo: "YOU ARE
+- **`reveal.tsx`** — La aparición al hacer scroll del catálogo. Solo avisa UNA
+  vez que el elemento entró en pantalla (`IntersectionObserver`) y el movimiento
+  lo hace una transición de CSS. Antes lo animaba framer-motion cuadro a cuadro
+  con JavaScript y se sentía pesado al scrollear en el teléfono.
+- **`productModal.tsx`** — La ventana de detalle. Al cambiar de playera reinicia
+  foto, talla y cantidad; si no, se quedaba abriendo en la foto de la espalda de
+  la playera anterior.
+- **`manifesto.tsx`** — El corte tipográfico que ABRE el catálogo: "YOU ARE
   NOT A CONTENT CREATOR / YOU ARE AN ARTIST", con los colores invertidos para
   que rompa el ritmo de la página. Usa la misma Helvetica del countdown, así se
   lee como continuación del video. El texto se edita en `config/brand.ts`, donde
@@ -359,8 +373,32 @@ detalle…): la primera es la principal y las demás salen como miniaturas.
 La `description` es **bilingüe**: `{ en: "...", es: "..." }`.
 
 ### Agregar más fotos a un producto
-`config/products.ts` → en `images`, agrega más URLs de Cloudinary:
-`images: [frente, espalda, detalle]`.
+`config/products.ts` → en `images`, agrega más nombres de archivo:
+`images: [foto("frente"), foto("espalda"), foto("detalle")]`.
+
+### Las fotos de las playeras
+Se suben a Cloudinary y en `config/products.ts` solo se pone el nombre del
+archivo; el helper `foto()` arma la URL con estas transformaciones:
+
+- **`e_trim`** — recorta el vacío alrededor de la prenda. Las fotos llegan en
+  16:9 con la playera chica en medio; sin esto se verían diminutas dentro del
+  cuadro cuadrado del catálogo.
+- **`f_auto,q_auto,w_900`** — formato y calidad automáticos. Cada foto pasa de
+  ~650 KB a ~37 KB. **Siempre** hay que servirlas así.
+
+> **PENDIENTE IMPORTANTE.** Las fotos actuales están recortadas del fondo con el
+> borde duro (en escalerita, sin suavizar). Sobre fondo oscuro no se nota, pero
+> **en tema claro se ven los escalones**. El editor va a entregar los mockups
+> bien recortados; al reemplazarlos esto desaparece solo, sin tocar código.
+> (Se probó ponerles un fondo fijo oscuro para taparlo y se descartó: se prefirió
+> conservar el look de la prenda recortada sobre el fondo del tema.)
+
+### El número grande del cuadro (01, 02, 03)
+En el **catálogo** va abajo a la derecha, metido tras la playera: el `<span>`
+está ANTES de la `<Image>`, así la foto se pinta encima y parece que el número
+quedó atrás. Se mide en `cqw` (% del ancho del cuadro) para que se vea igual en
+teléfono y en computadora. En el **modal** va arriba a la izquierda, que ahí la
+prenda se ve completa y funciona mejor como marca de agua.
 
 ### Cambiar la clave de acceso de preview
 `config/drop.ts` → `DROP_ACCESS_KEY`. En producción, mejor ponla como variable de
@@ -371,7 +409,7 @@ entorno `DROP_ACCESS_KEY` en Vercel.
 footer simplemente no muestra esos enlaces; en cuanto los llenes, aparecen solos.
 
 ### Ajustar el grano de película
-`app/globals.css` → clase `.grain`, la propiedad `opacity` (hoy `0.1`). Es una
+`app/globals.css` → clase `.grain`, la propiedad `opacity` (hoy `0.05`). Es una
 textura que genera el navegador con un `<svg>` que vive en `app/layout.tsx`, así
 que no pesa nada. Pasando de ~0.15 empieza a comerse el contraste del texto.
 
@@ -443,6 +481,9 @@ Recordatorios de configuración:
 ## 11. Pendientes / próximos pasos
 
 **Diseño / contenido:**
+- **Recortes buenos de las playeras** — el editor entrega los mockups sin fondo
+  con el borde suavizado. Al reemplazarlos en Cloudinary desaparecen los
+  escalones que hoy se ven en tema claro. Ver "Las fotos de las playeras".
 - **Fuente definitiva** — Saira Semi Condensed es temporal; definir con el equipo.
 - **Assets reales a Cloudinary** — logos oficiales (negro y blanco → reemplazar
   `LOGO_DARK`/`LOGO_LIGHT` en `navbar.tsx`) y fotos reales de playeras
@@ -465,4 +506,4 @@ Recordatorios de configuración:
 
 ---
 
-_Última actualización de este manual: julio 2026._
+_Última actualización de este manual: 31 de julio de 2026._

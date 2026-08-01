@@ -23,6 +23,21 @@ export default function ProductModal({ product, index, onClose }: Props) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
+  /*
+    Al cambiar de playera hay que EMPEZAR DE CERO: mostrando el frente, sin
+    talla elegida y con cantidad 1. Si no, el modal se queda con lo de la
+    playera anterior (se abría en la foto de la espalda, por ejemplo).
+    Se ajusta durante el dibujado y no en un `useEffect` a propósito: así el
+    modal nunca alcanza a pintarse un instante con los datos viejos.
+  */
+  const [slugAnterior, setSlugAnterior] = useState(product?.slug);
+  if (product && product.slug !== slugAnterior) {
+    setSlugAnterior(product.slug);
+    setActiveImage(0);
+    setSelectedSize(null);
+    setQuantity(1);
+  }
+
   const soldOut = product ? isSoldOut(product) : false;
 
   // Talla activa derivada (sin efectos).
@@ -128,6 +143,10 @@ export default function ProductModal({ product, index, onClose }: Props) {
                   hasGallery ? "cursor-pointer" : "cursor-default"
                 }`}
               >
+                {/* En el modal el número va ARRIBA A LA IZQUIERDA (decisión de
+                    diseño): aquí la prenda se ve completa y grande, y el número
+                    funciona mejor como marca de agua en la esquina. En el
+                    catálogo sí va abajo a la derecha, metido tras la playera. */}
                 <span className="pointer-events-none absolute left-2 top-0 text-7xl font-bold leading-none opacity-10 md:text-9xl">
                   {number}
                 </span>
@@ -173,8 +192,11 @@ export default function ProductModal({ product, index, onClose }: Props) {
                     {formatMXN(product.price)}
                   </p>
                 </div>
+                {/* La descripción NO se muestra en móvil: ahí el modal ocupa
+                    toda la pantalla y el espacio se necesita para la foto y
+                    los controles de compra. */}
                 {product.description && (
-                  <p className="mt-2 max-w-sm text-sm leading-relaxed opacity-60">
+                  <p className="mt-2 hidden max-w-sm text-sm leading-relaxed opacity-60 md:block">
                     {product.description[lang]}
                   </p>
                 )}

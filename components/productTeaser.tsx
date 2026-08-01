@@ -16,9 +16,13 @@ export default function ProductTeaser() {
     <Reveal className="grid items-center gap-6 md:grid-cols-2 md:gap-16">
       {/* Cuadro único incógnito (derecha en desktop, abajo del título en móvil) */}
       <div className="order-2 md:order-2">
-        <div className="relative flex aspect-square w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-sm bg-surface">
-          <span className="pointer-events-none absolute left-4 top-2 text-6xl font-bold leading-none opacity-10 md:text-8xl">
-            04–05
+        <div className="relative flex aspect-square w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-sm bg-surface [container-type:inline-size]">
+          {/* Mismo tratamiento que el catálogo: número abajo a la derecha. */}
+          <span
+            className="pointer-events-none absolute bottom-[3%] right-[8%] text-[19cqw] font-bold leading-none opacity-15"
+            style={{ fontFamily: HELVETICA }}
+          >
+            04-05
           </span>
           <Lock
             size={40}
@@ -31,13 +35,13 @@ export default function ProductTeaser() {
         </div>
       </div>
 
-      {/* Título (arriba del cuadro en móvil, a la izquierda en desktop) */}
-      <div className="order-1 flex flex-col md:order-1">
+      {/* Título: en móvil se monta sobre el borde del cuadro, como el catálogo */}
+      <div className="relative z-10 order-1 -mb-12 flex flex-col md:order-1 md:mb-0">
         <h2
           className="text-5xl font-bold uppercase leading-none tracking-tighter opacity-25 md:text-7xl"
           style={{ fontFamily: HELVETICA }}
         >
-          IDG — ??
+          IDG - ??
         </h2>
       </div>
     </Reveal>
