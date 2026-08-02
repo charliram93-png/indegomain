@@ -25,11 +25,28 @@ export const DROP_VIDEO =
 export const DROP_POSTER =
   "https://res.cloudinary.com/dij60ghdf/video/upload/so_1,w_1280,q_auto/v1785541329/caballos_etxysz.jpg";
 
-// Clave de acceso para probar la tienda ANTES del lanzamiento.
-// Comparte el link: https://indegostudio.com/product?access=TU_CLAVE
-// (se guarda en una cookie, así solo hace falta una vez por dispositivo).
-// En producción conviene moverla a una variable de entorno (DROP_ACCESS_KEY).
-export const DROP_ACCESS_KEY = process.env.DROP_ACCESS_KEY || "indego-preview";
+/**
+ * CLAVE DE ACCESO para probar la tienda ANTES del lanzamiento.
+ * Se comparte así:  https://indegostudio.com/product?access=LA_CLAVE
+ * (queda en una cookie, así solo hace falta abrirlo una vez por dispositivo).
+ *
+ * LA CLAVE NO SE ESCRIBE AQUÍ. Sale ÚNICAMENTE de la variable de entorno
+ * `DROP_ACCESS_KEY`, y no hay valor de respaldo a propósito.
+ *
+ * Por qué: **este repositorio es público**. Antes la clave estaba escrita en
+ * esta línea (`"indego-preview"`), o sea que cualquiera que abriera el código
+ * en GitHub podía entrar a la tienda antes del drop. Poner una clave nueva
+ * aquí tendría exactamente el mismo problema el día que se suba.
+ *
+ * Si la variable no está puesta, el acceso anticipado queda APAGADO y todos
+ * ven el countdown. Es la falla segura: preferimos que no entre nadie a que
+ * entre cualquiera.
+ *
+ * Dónde ponerla:
+ *   · producción -> Vercel > Settings > Environment Variables
+ *   · local      -> archivo `.env.local` (nunca se sube, está en .gitignore)
+ */
+export const DROP_ACCESS_KEY = process.env.DROP_ACCESS_KEY ?? "";
 
 // Helper: ¿ya abrió el drop al público?
 export const isDropOpen = (now: Date = new Date()) => now >= DROP_DATE;

@@ -1,6 +1,23 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { PRODUCTS } from "@/config/products";
 import type { CartItem, Product } from "@/types/products";
+
+/**
+ * EL PRECIO QUE SE MUESTRA.
+ *
+ * El carrito se guarda en el navegador y sobrevive días, así que el precio
+ * que quedó grabado puede ser viejo. Como al pagar el servidor SIEMPRE cobra
+ * el del catálogo (ver `app/api/checkout/route.ts`), aquí se muestra ese mismo
+ * — si no, alguien con un carrito de la semana pasada vería $600 en pantalla y
+ * Stripe le cobraría otra cosa.
+ *
+ * Si la playera ya no está en el catálogo (se retiró entre drops), se cae al
+ * precio guardado para no romper la vista; el checkout la rechazará de todos
+ * modos y ahí se entera.
+ */
+export const precioVigente = (item: CartItem): number =>
+  PRODUCTS.find((p) => p.slug === item.slug)?.price ?? item.price;
 
 type CartState = {
   items: CartItem[];
@@ -69,7 +86,10 @@ export const useCart = create<CartState>()(
       totalItems: () =>
         get().items.reduce((sum, i) => sum + i.quantity, 0),
       subtotal: () =>
-        get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+        get().items.reduce(
+          (sum, i) => sum + precioVigente(i) * i.quantity,
+          0
+        ),
     }),
     {
       name: "indego-cart",

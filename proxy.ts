@@ -31,10 +31,49 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(`${PANEL_PATH}/login`, request.url));
   }
 
+  /*
+    --- LIMPIEZA DE COOKIES VIEJAS (la home) ---
+    La home NO se protege; aquí solo se BORRAN las cookies de acceso que ya no
+    valen, por ejemplo después de rotar la clave.
+
+    Por qué hace falta: son DOS cookies distintas. `drop_access` es la que da
+    el acceso de verdad, y `drop_preview` solo le dice a la home que muestre el
+    enlace de "Entrar (preview)". Al cambiar la clave, la primera deja de servir
+    sola... pero la segunda no, así que a quien ya había entrado le seguía
+    saliendo el enlace: le daba clic, la pantalla se fundía al color del tema
+    (se quedaba en verde) y el candado lo regresaba al countdown. Un callejón.
+
+    Limpiando las dos aquí, el enlace simplemente ya no aparece.
+  */
+  if (pathname === "/") {
+    const acceso = request.cookies.get(ACCESS_COOKIE)?.value;
+    const preview = request.cookies.get(PREVIEW_COOKIE)?.value;
+    const sigueValiendo = !!DROP_ACCESS_KEY && acceso === DROP_ACCESS_KEY;
+
+    if (!sigueValiendo && (acceso || preview)) {
+      const res = NextResponse.next();
+      res.cookies.delete(ACCESS_COOKIE);
+      res.cookies.delete(PREVIEW_COOKIE);
+      return res;
+    }
+    return NextResponse.next();
+  }
+
   // --- CANDADO DE LA TIENDA (/product) ---
   // 1. Drop abierto al público: pasa cualquiera.
   if (isDropOpen()) {
     return NextResponse.next();
+  }
+
+  /*
+    Si no hay clave configurada (`DROP_ACCESS_KEY` en las variables de entorno),
+    el acceso anticipado queda APAGADO y todos ven el countdown. Es la falla
+    segura, y evita que un valor vacío accidental deje entrar a cualquiera.
+    Ver la nota en `config/drop.ts`: el repositorio es público, la clave no
+    puede vivir en el código.
+  */
+  if (!DROP_ACCESS_KEY) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // 2. ¿Trae la clave en la URL? Se guarda en cookie y se limpia la URL.
@@ -66,12 +105,19 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 4. Drop cerrado y sin acceso -> al countdown.
-  return NextResponse.redirect(new URL("/", request.url));
+  // 4. Drop cerrado y sin acceso -> al countdown, y de paso se tiran las
+  //    cookies que ya no valen (misma razón que la limpieza de la home).
+  const fuera = NextResponse.redirect(new URL("/", request.url));
+  fuera.cookies.delete(ACCESS_COOKIE);
+  fuera.cookies.delete(PREVIEW_COOKIE);
+  return fuera;
 }
 
 export const config = {
   // OJO: si cambias PANEL_PATH en lib/adminAuth.ts, actualiza también este
   // matcher (debe ser un literal) y renombra la carpeta app/idg-hq-9f2a/.
-  matcher: ["/product/:path*", "/idg-hq-9f2a/:path*"],
+  //
+  // La home ("/") entra aquí NO para protegerla —es pública— sino para poder
+  // borrar cookies de acceso vencidas antes de que se pinte el countdown.
+  matcher: ["/", "/product/:path*", "/idg-hq-9f2a/:path*"],
 };

@@ -214,8 +214,21 @@ indego/
 ### API (`app/api/`)
 
 - **`checkout/route.ts`** — Recibe los items del carrito y crea una **sesión de
-  pago** en Stripe con todos los productos. Pide dirección de envío (solo México)
-  y teléfono. Devuelve la URL de pago.
+  pago** en Stripe. Pide dirección de envío (solo México) y teléfono.
+
+  **REGLA QUE NO SE DEBE ROMPER: el navegador NO manda precios.** Solo dice qué
+  playera (`slug`), qué talla y cuántas; el precio lo pone el servidor leyendo
+  `config/products.ts`. Antes el precio venía en la petición y se le hacía
+  caso — o sea que cualquiera con las herramientas de desarrollador podía
+  cambiarlo antes de enviarlo y comprarse una playera de $600 en $20 (probado
+  el 1-ago-2026: Stripe cobraba los $20 sin chistar). Si algún día se agrega
+  un producto o un descuento, el precio tiene que seguir saliendo del servidor.
+
+  También valida contra el catálogo que la playera y la talla existan, que la
+  talla no esté agotada y que no se pidan más de 10 piezas. Ojo con el límite
+  real de esto: el inventario de `config/products.ts` está escrito a mano, así
+  que frena pedidos absurdos pero **no evita que dos personas compren la última
+  pieza al mismo tiempo** — eso llega con Supabase.
 - **`webhook/route.ts`** — Stripe le avisa aquí cuando un pago se completa.
   Maneja el caso especial de OXXO (pago diferido). Hoy registra la orden en los
   logs; a futuro guardará en base de datos.
@@ -473,8 +486,18 @@ teléfono y en computadora. En el **modal** va arriba a la izquierda, que ahí l
 prenda se ve completa y funciona mejor como marca de agua.
 
 ### Cambiar la clave de acceso de preview
-`config/drop.ts` → `DROP_ACCESS_KEY`. En producción, mejor ponla como variable de
-entorno `DROP_ACCESS_KEY` en Vercel.
+**La clave NO se escribe en el código.** Sale solo de la variable de entorno
+`DROP_ACCESS_KEY`: en producción se pone en Vercel (Settings > Environment
+Variables) y en local en `.env.local`. Si no está puesta, el acceso anticipado
+queda apagado y todos ven el countdown.
+
+Es así porque **este repositorio es público**: hasta el 1-ago-2026 la clave
+estaba escrita en `config/drop.ts` (`"indego-preview"`), o sea que cualquiera
+que abriera el código en GitHub podía entrar a la tienda antes del drop.
+
+Para rotarla: cambia el valor en Vercel y vuelve a desplegar. Las cookies de
+quienes ya habían entrado con la clave vieja dejan de servir solas, porque se
+comparan contra la nueva.
 
 ### Poner el correo de contacto y el Instagram
 `config/brand.ts` → `CONTACT_EMAIL` e `INSTAGRAM_URL`. Mientras estén vacíos, el
@@ -662,6 +685,46 @@ Recordatorios de configuración:
 - **Video en escritorio** — decidir si va con zoom (`object-cover`, actual) o
   completo con franjas (`object-contain`).
 
+### Revisión completa del proyecto (1-ago-2026)
+
+Lo que se buscó: seguridad, rendimiento, código muerto y correctitud.
+
+**Corregido en el momento:**
+- **El precio del checkout venía del navegador** y el servidor le hacía caso.
+  Explotado en prueba: una playera de $600 quedó lista para cobrarse en $20.
+  Ya no — ver `checkout/route.ts`. **Es el hallazgo más grave de la revisión.**
+- **No se validaban existencias en el servidor**: se podían pedir 500 piezas o
+  una talla agotada. Ahora se valida contra el catálogo.
+- **La clave de preview estaba escrita en el código de un repo público.** Ahora
+  sale solo de `DROP_ACCESS_KEY`.
+- **El carrito guardado mostraba precios viejos.** Como el cobro sale del
+  catálogo, el carrito ahora muestra ese mismo (`precioVigente` en
+  `store/cart.ts`), para que lo que se ve sea lo que se cobra.
+
+**Detectado y NO corregido (por orden de importancia):**
+1. **El login del panel es débil.** La cookie guarda `sha256(contraseña)` sin
+   sal y sin caducar ni rotar. Sirve mientras el panel solo tenga enlaces, pero
+   NO cuando muestre ventas. Ya está en el plan migrar a Supabase Auth.
+2. **Nadie descuenta el stock.** `config/products.ts` es un inventario a mano:
+   dos personas pueden comprar la última pieza a la vez y las dos pagan. Es EL
+   motivo principal para hacer la etapa de Supabase antes del drop.
+3. **`/api/checkout` no tiene freno de peticiones.** Se pueden crear sesiones de
+   pago en masa. No cobra nada ni rompe nada, pero ensucia el Dashboard.
+   (`/api/order` sí tiene un tope de 10 por minuto.)
+4. **El catálogo ahora descarga el doble de fotos** (frente + espalda de cada
+   playera, para el efecto del cursor). Son ~37 KB cada una y van en carga
+   diferida, así que hoy no duele; si algún día se suben fotos pesadas, sí.
+5. **El video del countdown sigue siendo 5.29 MB**, con diferencia lo más
+   pesado del sitio. Sigue pendiente la decisión de comprimirlo.
+6. **`DROP_NAME` en `config/drop.ts` ya no se usa** (el catálogo dejó de tener
+   título cuando entró el manifiesto). Se deja por si vuelve.
+7. **`router.back()` en `/order` y `/terms`** no hace nada si alguien llega
+   directo desde un enlace compartido, porque no hay historial.
+
+**Revisado y sin problemas:** `.env.local` nunca se ha subido a git; el panel no
+tiene contraseñas escritas en el código; el webhook valida la firma de Stripe;
+la consulta de pedidos no filtra datos de más ni dice cuál dato falló.
+
 ### Antes de abrir la tienda
 
 - **Fecha real del drop** (`DROP_DATE`), hoy placeholder 1-sep-2026.
@@ -680,4 +743,4 @@ Recordatorios de configuración:
 
 ---
 
-_Última actualización de este manual: 1 de agosto de 2026._
+_Última actualización de este manual: 1 de agosto de 2026 (incluye la revisión completa del proyecto)._

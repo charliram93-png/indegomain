@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useCart } from "@/store/cart";
+import { useCart, precioVigente } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
 import { HELVETICA } from "@/lib/fonts";
 import { useScrollLock } from "@/lib/useScrollLock";
@@ -13,7 +13,7 @@ import { useI18n } from "@/lib/i18n/context";
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, subtotal } =
     useCart();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [loading, setLoading] = useState(false);
 
   const total = subtotal();
@@ -29,16 +29,21 @@ export default function CartDrawer() {
     if (items.length === 0) return;
     setLoading(true);
     try {
+      /*
+        Se manda SOLO qué playera, qué talla y cuántas. NADA de precios: el
+        servidor los saca de `config/products.ts`, que es la única fuente en la
+        que se puede confiar. Antes se enviaba el precio desde aquí y el
+        servidor le hacía caso — cualquiera podía cambiarlo antes de enviarlo.
+        El idioma va para que el recibo de Stripe diga "Talla" o "Size".
+      */
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          lang,
           items: items.map((i) => ({
-            // El nombre viaja a Stripe, así que se arma en el idioma que el
-            // cliente está viendo (antes decía "Talla" siempre, aun en inglés).
-            name: `${i.name} — ${t.cart.size} ${i.size}`,
-            price: i.price,
-            image: i.image,
+            slug: i.slug,
+            size: i.size,
             quantity: i.quantity,
           })),
         }),
@@ -48,12 +53,11 @@ export default function CartDrawer() {
       if (session.url) {
         window.location.assign(session.url);
       } else {
-        throw new Error(session.error || t.cart.errorPay);
+        throw new Error(t.cart.errorPay);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t.cart.errorNetwork;
-      console.error(msg);
-      alert(msg);
+      console.error(err);
+      alert(t.cart.errorPay);
       setLoading(false);
     }
   };
@@ -175,7 +179,9 @@ export default function CartDrawer() {
                             </button>
                           </div>
                           <p className="text-xs font-bold">
-                            {formatMXN(item.price * item.quantity)}
+                            {/* `precioVigente` y no `item.price`: el carrito
+                                guardado puede traer un precio viejo. */}
+                            {formatMXN(precioVigente(item) * item.quantity)}
                           </p>
                         </div>
                       </div>
