@@ -11,7 +11,9 @@ import { HELVETICA } from "@/lib/fonts";
 const parse = (line: string) =>
   line.split("*").map((chunk, i) => ({ text: chunk, italic: i % 2 === 1 }));
 
-const Line = ({ line }: { line: string }) => (
+/** Se exporta porque la página de "Nosotros" usa la misma convención de
+ *  *asteriscos* para sus frases de marca (ver `components/aboutBlock.tsx`). */
+export const Line = ({ line }: { line: string }) => (
   <>
     {parse(line).map((chunk, i) => (
       <span key={i} style={{ fontStyle: chunk.italic ? "italic" : "normal" }}>

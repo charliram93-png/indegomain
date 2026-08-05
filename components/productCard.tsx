@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import Reveal from "@/components/reveal";
+import SwipeHint from "@/components/swipeHint";
 import { Product, isSoldOut } from "@/types/products";
 import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
@@ -55,12 +56,30 @@ export default function ProductCard({ product, index, onClick }: Props) {
   const inicioX = useRef<number | null>(null);
   const deslizo = useRef(false);
 
+  /*
+    Cuánto lleva recorrido el dedo, en fracción de foto. Solo sirve para que la
+    rayita de abajo se mueva CON la mano (ver `components/swipeHint.tsx`); el
+    cambio de foto sigue decidiéndose al soltar. Se mide contra el ancho del
+    cuadro, así el gesto se siente igual en cualquier teléfono.
+  */
+  const [arrastre, setArrastre] = useState(0);
+  const cuadro = useRef<HTMLButtonElement | null>(null);
+
   const onTouchStart = (e: React.TouchEvent) => {
     inicioX.current = e.touches[0].clientX;
     deslizo.current = false;
   };
 
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (inicioX.current === null || !hayEspalda) return;
+    const ancho = cuadro.current?.offsetWidth ?? 1;
+    const dx = e.touches[0].clientX - inicioX.current;
+    // El signo se invierte: arrastrar a la IZQUIERDA avanza a la espalda.
+    setArrastre(Math.min(Math.max(-dx / ancho, -1), 1));
+  };
+
   const onTouchEnd = (e: React.TouchEvent) => {
+    setArrastre(0);
     if (inicioX.current === null || !hayEspalda) return;
     const dx = e.changedTouches[0].clientX - inicioX.current;
     if (Math.abs(dx) > 40) {
@@ -80,12 +99,14 @@ export default function ProductCard({ product, index, onClick }: Props) {
 
   return (
     <Reveal className="grid items-center gap-6 md:grid-cols-2 md:gap-16">
-      {/* IMAGEN (cuadro con número) */}
+      {/* IMAGEN (cuadro con número y la rayita de fotos) */}
       <button
+        ref={cuadro}
         onClick={abrirModal}
         onMouseEnter={() => hayEspalda && setViendoEspalda(true)}
         onMouseLeave={() => setViendoEspalda(false)}
         onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         aria-label={product.name}
         className={`group relative order-2 block w-full overflow-hidden rounded-sm bg-surface ${
@@ -107,9 +128,14 @@ export default function ProductCard({ product, index, onClick }: Props) {
             que la playera lo tape en parte. Queda ANTES de la <Image> a
             propósito: al pintarse primero, la foto le pasa por encima y se ve
             como si el número estuviera detrás.
+
+            En COMPUTADORA va más pegado a la orilla (2%) que en teléfono (6%):
+            ahí el cuadro es más grande y la playera le tapaba casi todo, así
+            que corrido a la derecha se asoma un poco más. En móvil se quedó
+            como estaba, que ahí sí se veía bien.
           */}
           <span
-            className="pointer-events-none absolute bottom-[3%] right-[6%] text-[24cqw] font-bold leading-none opacity-15 md:right-[5%]"
+            className="pointer-events-none absolute bottom-[3%] right-[6%] text-[24cqw] font-bold leading-none opacity-15 md:right-[2%]"
             style={{ fontFamily: HELVETICA }}
           >
             {number}
@@ -120,7 +146,7 @@ export default function ProductCard({ product, index, onClick }: Props) {
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
-            className={`pointer-events-none select-none object-contain p-8 transition-all duration-500 ease-out group-hover:scale-[1.04] ${
+            className={`pointer-events-none select-none object-contain p-12 transition-all duration-500 ease-out group-hover:scale-[1.04] ${
               soldOut ? "opacity-50 grayscale" : ""
             } ${viendoEspalda ? "opacity-0" : ""}`}
           />
@@ -132,7 +158,7 @@ export default function ProductCard({ product, index, onClick }: Props) {
               alt={product.name}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              className={`pointer-events-none select-none object-contain p-8 transition-all duration-500 ease-out group-hover:scale-[1.04] ${
+              className={`pointer-events-none select-none object-contain p-12 transition-all duration-500 ease-out group-hover:scale-[1.04] ${
                 soldOut ? "grayscale" : ""
               } ${viendoEspalda ? (soldOut ? "opacity-50" : "opacity-100") : "opacity-0"}`}
             />
@@ -144,6 +170,25 @@ export default function ProductCard({ product, index, onClick }: Props) {
                 {t.product.soldOut}
               </span>
             </div>
+          )}
+
+          {/*
+            LA RAYITA, solo en TELÉFONO (`md:hidden`). En computadora sobra: ahí
+            la espalda se ve con el cursor y no hay nada que deslizar. Este era
+            el hueco que quedó abierto cuando se quitaron los puntitos: en móvil
+            nada avisaba que hubiera una segunda foto.
+
+            Va DENTRO del cuadro, debajo de la playera: colgada afuera se leía
+            como un elemento más de la página; adentro se entiende que habla de
+            esa foto y de nada más.
+          */}
+          {hayEspalda && (
+            <SwipeHint
+              total={2}
+              index={viendoEspalda ? 1 : 0}
+              arrastre={arrastre}
+              className="absolute inset-x-0 bottom-4 md:hidden"
+            />
           )}
         </div>
       </button>

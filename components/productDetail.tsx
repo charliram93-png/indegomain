@@ -7,6 +7,7 @@ import { Plus, Minus } from "lucide-react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import CartDrawer from "@/components/cartDrawer";
+import SwipeHint from "@/components/swipeHint";
 import { Product, isSoldOut } from "@/types/products";
 import { useCart } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
@@ -63,10 +64,24 @@ export default function ProductDetail({ product, index }: Props) {
 
   // Deslizar en el teléfono para cambiar de foto.
   const inicioX = useRef<number | null>(null);
+  const cuadro = useRef<HTMLDivElement | null>(null);
+
+  /* Cuánto lleva recorrido el dedo, en fracción de foto: solo para que la
+     rayita se mueva CON la mano (ver `components/swipeHint.tsx`). */
+  const [arrastre, setArrastre] = useState(0);
+
   const onTouchStart = (e: React.TouchEvent) => {
     inicioX.current = e.touches[0].clientX;
   };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (inicioX.current === null || !hasGallery) return;
+    const ancho = cuadro.current?.offsetWidth ?? 1;
+    const dx = e.touches[0].clientX - inicioX.current;
+    // Arrastrar a la IZQUIERDA avanza a la siguiente foto, de ahí el signo.
+    setArrastre(Math.min(Math.max(-dx / ancho, -1), 1));
+  };
   const onTouchEnd = (e: React.TouchEvent) => {
+    setArrastre(0);
     if (inicioX.current === null || !hasGallery) return;
     const dx = e.changedTouches[0].clientX - inicioX.current;
     if (Math.abs(dx) > 40) (dx < 0 ? nextImage : prevImage)();
@@ -105,7 +120,9 @@ export default function ProductDetail({ product, index }: Props) {
                 lee lo demás. */}
             <div className="md:sticky md:top-28">
               <div
+                ref={cuadro}
                 onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
                 onClick={() => hasGallery && nextImage()}
                 className={`halo-prenda relative aspect-square w-full overflow-hidden rounded-sm bg-surface [container-type:inline-size] ${
@@ -129,7 +146,7 @@ export default function ProductDetail({ product, index }: Props) {
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
                     priority={i === 0}
-                    className={`pointer-events-none select-none object-contain p-8 transition-opacity duration-500 ${
+                    className={`pointer-events-none select-none object-contain p-12 transition-opacity duration-500 ${
                       soldOut ? "grayscale" : ""
                     } ${
                       activeImage === i
@@ -150,24 +167,16 @@ export default function ProductDetail({ product, index }: Props) {
                 )}
               </div>
 
-              {/* Puntitos, iguales a los del modal: la misma señal en todos
-                  lados. Se probó ponerles nombre (FRENTE / ESPALDA) y no
-                  convenció — metía texto donde no hacía falta. */}
+              {/* La rayita, igual que en el modal y en el catálogo: la misma
+                  señal en todos lados. Se probó ponerle nombre (FRENTE /
+                  ESPALDA) y no convenció — metía texto donde no hacía falta. */}
               {hasGallery && (
-                <div className="mt-4 flex justify-center gap-2.5">
-                  {product.images.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveImage(i)}
-                      aria-label={`${t.product.changeView} ${i + 1}`}
-                      className={`h-2 w-2 cursor-pointer rounded-full transition-all ${
-                        activeImage === i
-                          ? "scale-110 bg-foreground"
-                          : "bg-foreground/30 hover:bg-foreground/60"
-                      }`}
-                    />
-                  ))}
-                </div>
+                <SwipeHint
+                  total={total}
+                  index={activeImage}
+                  arrastre={arrastre}
+                  className="mt-4"
+                />
               )}
             </div>
 

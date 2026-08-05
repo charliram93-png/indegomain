@@ -38,6 +38,12 @@ const Footer: React.FC = () => {
             {t.footer.terms}
           </Link>
 
+          {/* De aquí en adelante empieza lo de MARCA (ver el orden explicado
+              arriba): primero quién somos, después las redes. */}
+          <Link href="/about" className={linkClass}>
+            {t.footer.about}
+          </Link>
+
           <Link href={LINKTREE_URL} target="_blank" className={linkClass}>
             {t.footer.linktree}
           </Link>

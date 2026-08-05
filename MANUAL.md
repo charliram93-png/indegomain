@@ -120,6 +120,7 @@ indego/
 │   ├── navbar.tsx           # barra superior con logo, idioma, tema y bolsa
 │   ├── footer.tsx           # pie de página
 │   ├── productCard.tsx      # fila editorial del catálogo (imagen + nombre grande)
+│   ├── aboutBlock.tsx       # dibuja un bloque de la página "Nosotros"
 │   ├── reveal.tsx           # aparición al scrollear (barata, con CSS)
 │   ├── productModal.tsx     # ventana de detalle (fotos, tallas, compra)
 │   ├── productTeaser.tsx    # cuadro "incógnito" 04–05 (adelanto Drop 1.5)
@@ -133,6 +134,7 @@ indego/
 │   ├── dropIntro.ts         # guion del texto del countdown (tiempos y tamaños)
 │   ├── brand.ts             # contacto, redes y el manifiesto
 │   ├── products.ts          # catálogo e inventario (stock por talla)
+│   ├── about.ts             # contenido de la página "Nosotros" (textos/fotos/video)
 │   └── panel.ts             # links/accesos del panel de administración
 ├── lib/
 │   ├── format.ts            # formatea precios ($1,200 MXN)
@@ -210,6 +212,14 @@ indego/
   Se piden LAS DOS COSAS porque con el número solo, cualquiera que se lo
   encontrara vería una compra ajena.
 - **`terms/page.tsx`** — Términos y condiciones (texto editable con placeholders).
+- **`about/page.tsx`** — **NOSOTROS**, la página de marca (ago-2026). Es un
+  armazón: **no tiene contenido propio**, todo sale de `config/about.ts` y aquí
+  solo se decide el orden (portada → bloques → cierre). Enlazada desde el pie.
+  **Es pública incluso antes del drop**, porque el candado de `proxy.ts` solo
+  cubre `/product`: se puede compartir desde Instagram mientras el countdown
+  sigue corriendo. Para esconderla hasta el lanzamiento, se agrega `"/about"` al
+  `matcher` de `proxy.ts`. Nace VACÍA a propósito, con textos de relleno entre
+  [corchetes] y sin fotos — ver "Llenar la página de Nosotros" abajo.
 
 ### API (`app/api/`)
 
@@ -272,9 +282,9 @@ indego/
   descripción debajo. Al hacer clic abre el modal. Marca SOLD OUT.
   **Muestra la ESPALDA sin abrir el modal**: en computadora, al pasar el cursor
   la foto se funde a la espalda; en teléfono se DESLIZA sobre la foto, el mismo
-  gesto que ya tenía el modal. Va SIN puntitos, por decisión de diseño: se
-  probaron y ensuciaban el cuadro. La contra es real y hay que tenerla
-  presente: sin ellos nada avisa que hay una segunda foto en el teléfono. Las
+  gesto que ya tenía el modal. En teléfono lleva **la rayita**
+  (`components/swipeHint.tsx`) DENTRO del cuadro, debajo de la playera — eso
+  cierra el hueco viejo de que nada avisaba que hubiera una segunda foto. Las
   dos fotos van encimadas y solo se cambia la opacidad — si se intercambiara el
   `src`, la espalda parpadearía la primera vez.
 - **`productDetail.tsx`** — **PRUEBA (ago-2026)**: el contenido de la página
@@ -289,7 +299,17 @@ indego/
   nombre). En **móvil** ocupa la pantalla completa (`100svh`, sin scroll: imagen
   arriba flexible, controles abajo, precio junto al nombre) y se puede **deslizar
   (swipe)** para cambiar de foto; bloquea el scroll del fondo al abrir. Incluye
-  puntos, descripción bilingüe, talla, cantidad y agregar al carrito.
+  la rayita, talla, cantidad y agregar al carrito.
+- **`swipeHint.tsx`** — **La rayita** que dice en qué foto vas (ago-2026,
+  reemplazó a los puntitos en los tres lugares: catálogo, modal y página de
+  producto). Es una línea fina y tenue con un relleno adentro que se carga a la
+  izquierda o a la derecha. Mientras se arrastra, el relleno **sigue al dedo**
+  (el padre le pasa `arrastre`, la fracción de foto recorrida) y al soltar cae
+  en su lugar con una transición corta. Es `aria-hidden` y
+  `pointer-events-none`: pura decoración, el cambio de foto ya se anuncia desde
+  el botón de la imagen. Por qué línea y no puntos: los puntos son dos objetos
+  sueltos que hay que contar; la línea es un solo trazo que se lee de reojo y se
+  puede arrastrar, que es justo el gesto que se quiere enseñar.
 - **`cartDrawer.tsx`** — Carrito lateral: lista de productos, cantidades,
   subtotal y botón para pagar. Va **al mismo estilo minimalista del modal**:
   sin recuadro en la cantidad y con el botón de pagar en puro texto. Mientras
@@ -462,21 +482,30 @@ La `description` es **bilingüe**: `{ en: "...", es: "..." }`.
 `images: [foto("frente"), foto("espalda"), foto("detalle")]`.
 
 ### Las fotos de las playeras
-Se suben a Cloudinary y en `config/products.ts` solo se pone el nombre del
-archivo; el helper `foto()` arma la URL con estas transformaciones:
+Se suben a Cloudinary y en `config/products.ts` se pone la **versión y el
+nombre** del archivo (`v1785968996/negro_adelante_lcb2qa`); el helper `foto()`
+arma la URL con estas transformaciones:
 
 - **`e_trim`** — recorta el vacío alrededor de la prenda. Las fotos llegan en
-  16:9 con la playera chica en medio; sin esto se verían diminutas dentro del
-  cuadro cuadrado del catálogo.
+  1700×1000 con la playera chica en medio; sin esto se verían diminutas dentro
+  del cuadro cuadrado del catálogo. **Depende de que el fondo sea transparente**:
+  con un fondo blanco sólido, `e_trim` no recorta nada.
 - **`f_auto,q_auto,w_900`** — formato y calidad automáticos. Cada foto pasa de
-  ~650 KB a ~37 KB. **Siempre** hay que servirlas así.
+  ~400–950 KB a 33–56 KB. **Siempre** hay que servirlas así.
 
-> **PENDIENTE IMPORTANTE.** Las fotos actuales están recortadas del fondo con el
-> borde duro (en escalerita, sin suavizar). Sobre fondo oscuro no se nota, pero
-> **en tema claro se ven los escalones**. El editor va a entregar los mockups
-> bien recortados; al reemplazarlos esto desaparece solo, sin tocar código.
-> (Se probó ponerles un fondo fijo oscuro para taparlo y se descartó: se prefirió
-> conservar el look de la prenda recortada sobre el fondo del tema.)
+La **versión** (`v…`) va pegada al nombre porque Cloudinary le pone una distinta
+a cada archivo según el segundo en que se subió; no hay una sola para todas.
+Cópiala tal cual de la URL, junto con el sufijo aleatorio del nombre.
+
+> **RESUELTO (5-ago-2026).** Ya están las fotos finales del editor: las seis en
+> 1700×1000, fondo transparente y **borde suavizado** (unos 9–12 mil píxeles de
+> alfa parcial en cada una). El problema viejo —el recorte en escalerita que se
+> notaba en tema claro— desapareció, sin tocar código.
+>
+> Con eso, **el cuadro (`bg-surface`) y el halo detrás de la prenda ya son
+> opcionales**: existían en parte para disimular ese borde duro. Hoy se quedan
+> por estética, pero si se quieren quitar, es la clase `halo-prenda` y el
+> `bg-surface` del botón en `components/productCard.tsx`.
 
 ### El número grande del cuadro (01, 02, 03)
 En el **catálogo** va abajo a la derecha, metido tras la playera: el `<span>`
@@ -498,6 +527,52 @@ que abriera el código en GitHub podía entrar a la tienda antes del drop.
 Para rotarla: cambia el valor en Vercel y vuelve a desplegar. Las cookies de
 quienes ya habían entrado con la clave vieja dejan de servir solas, porque se
 comparan contra la nueva.
+
+### Llenar la página de Nosotros (`/about`)
+
+> **Por qué NO se parece al catálogo.** La primera versión era la tienda con
+> otro texto (mismas bandas invertidas, mismo ancho centrado, mismos títulos
+> gigantes) y se leía como copia. Ahora comparte la piel —Helvetica, colores del
+> tema, grano— pero tiene su propia composición, la de un dossier y no la de una
+> vitrina: **rejilla asimétrica** (etiqueta angosta a la izquierda, contenido a
+> la derecha, nunca centrado), **la etiqueta se queda fija** mientras su texto
+> pasa de largo, **jerarquía al revés** (títulos chicos y espaciados, párrafos
+> grandes: esta página se viene a leer), **secciones numeradas** separadas por
+> líneas finas, y **una sola banda invertida**, al final. El manifiesto ABRE la
+> tienda; esta CIERRA el Nosotros. Si se toca el diseño, conviene no perder esas
+> cinco cosas: son lo que la distingue.
+
+Todo se edita en **`config/about.ts`**; la página (`app/about/page.tsx`) no se
+toca. Tres partes:
+
+1. **`ABOUT_PORTADA`** — la foto grande de arriba y el párrafo de entrada.
+2. **`BLOQUES`** — la lista que se pinta de arriba abajo, en ese orden. Agrega,
+   quita o reordena a gusto. Hay cinco tipos:
+   - `frase` — una cita descolgada, grande, dentro de la columna de contenido.
+     **Inglés fijo** (es voz de marca, no interfaz); lo que va entre
+     `*asteriscos*` sale en cursiva.
+   - `texto` — párrafo con título. Este **sí se traduce** (`{ en, es }`).
+   - `foto` — una imagen; con `completo: true` va de borde a borde.
+   - `duo` — dos fotos al parejo (en el teléfono se apilan).
+   - `video` — en bucle y sin sonido, como el del countdown.
+3. **`ABOUT_CIERRE`** — la última frase, arriba del botón al catálogo.
+
+**Las fotos y el video van a Cloudinary**, igual que el catálogo: se sube el
+archivo y se pega la URL con `f_auto,q_auto,w_1600` (o `q_auto,vc_h264,w_1280`
+si es video), para que no pesen de más.
+
+**Mientras no haya archivo, deja el `src` vacío (`""`).** El bloque no se
+publica: en el sitio en vivo no aparece nada roto, y en `npm run dev` sí se ve
+un recuadro punteado marcando el hueco. Así se puede ir llenando por partes sin
+riesgo de que se escape algo a medias a producción.
+
+Los textos entre **[corchetes]** son relleno (misma convención que los
+términos): están puestos como guion para ver la forma de la página, hay que
+reemplazarlos por los de verdad.
+
+**Ojo con el botón del cierre:** manda a `/product`, y antes del drop eso
+regresa al countdown a quien no tenga la clave de acceso. Es a propósito, la
+misma decisión que en las páginas por producto.
 
 ### Poner el correo de contacto y el Instagram
 `config/brand.ts` → `CONTACT_EMAIL` e `INSTAGRAM_URL`. Mientras estén vacíos, el

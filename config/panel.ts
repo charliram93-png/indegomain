@@ -26,8 +26,13 @@ export const PANEL_GROUPS: PanelGroup[] = [
       { label: "Stripe", href: "https://dashboard.stripe.com/", note: "Pagos y órdenes", external: true },
       { label: "Vercel", href: "https://vercel.com/dashboard", note: "Hosting y deploys", external: true },
       { label: "GitHub (repo)", href: "https://github.com/charliram93-png/indegomain", note: "Código", external: true },
-      { label: "Cloudinary", href: "https://console.cloudinary.com/", note: "Imágenes", external: true },
+      // Link DIRECTO a la carpeta de assets del drop en la consola. Si no hay
+      // sesión, la propia consola manda a la pantalla de credenciales y regresa
+      // aquí. (La otra forma —cloudinary.com/users/login?RelayState=…— cae en
+      // una página donde no se ve dónde iniciar sesión.)
+      { label: "Cloudinary", href: "https://console.cloudinary.com/app/c-352ca81f24567880a371335d3fb1a8/assets/media_library/folders/ce5fd576010912bdb2bba411509212f103", note: "Imágenes del drop", external: true },
       { label: "Linktree", href: "https://linktr.ee/admin", note: "Bio links", external: true },
+      { label: "Drive (marca)", href: "https://drive.google.com/drive/folders/18u7HUdStuxEBlRP3BV6Pe4F90ui43zsr?hl=es-419", note: "Carpeta compartida: fotos, textos y video", external: true },
     ],
   },
   {

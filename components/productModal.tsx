@@ -9,6 +9,7 @@ import { useCart } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
 import { useScrollLock } from "@/lib/useScrollLock";
 import { useI18n } from "@/lib/i18n/context";
+import SwipeHint from "@/components/swipeHint";
 
 type Props = {
   product: Product | null;
@@ -78,12 +79,25 @@ export default function ProductModal({ product, index, onClose }: Props) {
   // Swipe en móvil para cambiar de foto.
   const touchStartX = useRef<number | null>(null);
   const swiped = useRef(false);
+  const marco = useRef<HTMLButtonElement | null>(null);
+
+  /* Cuánto lleva recorrido el dedo, en fracción de foto: solo para que la
+     rayita se mueva CON la mano (ver `components/swipeHint.tsx`). */
+  const [arrastre, setArrastre] = useState(0);
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     swiped.current = false;
   };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || !hasGallery) return;
+    const ancho = marco.current?.offsetWidth ?? 1;
+    const dx = e.touches[0].clientX - touchStartX.current;
+    // Arrastrar a la IZQUIERDA avanza a la siguiente foto, de ahí el signo.
+    setArrastre(Math.min(Math.max(-dx / ancho, -1), 1));
+  };
   const onTouchEnd = (e: React.TouchEvent) => {
+    setArrastre(0);
     if (touchStartX.current === null || !hasGallery) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     if (Math.abs(dx) > 40) {
@@ -132,6 +146,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
             {/* IMAGEN + GALERÍA (puntos). En móvil ocupa el espacio disponible. */}
             <div className="flex min-h-0 flex-1 flex-col md:block md:flex-none">
               <button
+                ref={marco}
                 type="button"
                 onClick={() => {
                   if (swiped.current) {
@@ -141,6 +156,7 @@ export default function ProductModal({ product, index, onClose }: Props) {
                   if (hasGallery) nextImage();
                 }}
                 onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
                 aria-label={hasGallery ? t.product.changeView : product.name}
                 /* `halo-modal` (NO `halo-prenda`, que es la del catálogo): luz
@@ -170,21 +186,15 @@ export default function ProductModal({ product, index, onClose }: Props) {
                 />
               </button>
 
+              {/* La rayita en lugar de los puntitos (ago-2026). Misma señal en
+                  el catálogo, aquí y en la página de producto. */}
               {hasGallery && (
-                <div className="mt-3 flex shrink-0 justify-center gap-2.5">
-                  {product.images.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveImage(i)}
-                      aria-label={`${t.product.changeView} ${i + 1}`}
-                      className={`h-2 w-2 rounded-full transition-all ${
-                        activeImage === i
-                          ? "scale-110 bg-foreground"
-                          : "bg-foreground/30 hover:bg-foreground/60"
-                      }`}
-                    />
-                  ))}
-                </div>
+                <SwipeHint
+                  total={total}
+                  index={activeImage}
+                  arrastre={arrastre}
+                  className="mt-3 shrink-0"
+                />
               )}
             </div>
 

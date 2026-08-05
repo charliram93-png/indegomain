@@ -95,7 +95,18 @@ const en = {
     instagram: "Instagram",
     contact: "Contact",
     order: "Track order",
+    about: "About",
     rights: "© 2026 INDEGO STUDIO",
+  },
+  /**
+   * Página de marca (/about). Aquí solo va la INTERFAZ: el contenido —textos,
+   * fotos y video— vive en `config/about.ts`, con sus propias traducciones.
+   */
+  about: {
+    tag: "Indego Studio",
+    title: "About",
+    /** Este SÍ se traduce: es una instrucción, no voz de marca. */
+    cta: "SEE DROP #1",
   },
   order: {
     back: "← Back",
@@ -227,7 +238,13 @@ const es: typeof en = {
     instagram: "Instagram",
     contact: "Contacto",
     order: "Mi pedido",
+    about: "Nosotros",
     rights: "© 2026 INDEGO STUDIO",
+  },
+  about: {
+    tag: "Indego Studio",
+    title: "Nosotros",
+    cta: "VER DROP #1",
   },
   order: {
     back: "← Volver",
