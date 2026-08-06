@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useCart } from "@/store/cart";
 import ThemeToggle from "@/components/themeToggle";
+import DropTag from "@/components/dropTag";
 import LangToggle from "@/components/langToggle";
 import { useFlag } from "@/lib/flags";
 import { useI18n } from "@/lib/i18n/context";
@@ -62,6 +63,12 @@ const Navbar: React.FC = () => {
           />
         </Link>
       </div>
+
+      {/* ETIQUETA DEL DROP. Va FUERA de la fila del logo: está posicionada
+          contra la barra para poder montarse sobre su borde de abajo, la mayor
+          parte adentro y el resto colgando. Se esconde sola dentro del
+          catálogo. Ver `components/dropTag.tsx`. */}
+      <DropTag />
 
       {/* CONTROLES */}
       <div className="flex select-none items-center gap-1">

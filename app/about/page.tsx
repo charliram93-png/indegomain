@@ -7,6 +7,7 @@ import Footer from "@/components/footer";
 import CartDrawer from "@/components/cartDrawer";
 import AboutBlock from "@/components/aboutBlock";
 import Reveal from "@/components/reveal";
+import Convocatoria from "@/components/convocatoria";
 import { Line } from "@/components/manifesto";
 import { ABOUT_PORTADA, ABOUT_CIERRE, BLOQUES } from "@/config/about";
 import { HELVETICA } from "@/lib/fonts";
@@ -134,11 +135,23 @@ export default function AboutPage() {
               {/* Sin recuadro ni relleno al pasar el cursor: en todo el sitio
                   los enlaces son texto pelón que se atenúa (el nombre de cada
                   playera en el catálogo, los del pie). Un botón con contorno
-                  aquí era el único de su especie. */}
+                  aquí era el único de su especie.
+
+                  SE PROBÓ PONER AQUÍ EL STICKER DEL DROP (6-ago-2026, el mismo
+                  del navbar, en grande) y se revirtió: repetido a los pocos
+                  segundos de scroll se leía como relleno, y le quitaba fuerza
+                  al de arriba, que es el que tiene que llamar. La etiqueta
+                  ahora sale en UN solo lugar del sitio, y por eso pesa. */}
               <Reveal>
                 <Link
                   href="/product"
-                  className="mt-12 inline-block text-[11px] font-bold uppercase tracking-[0.1em] transition-opacity hover:opacity-50"
+                  /* MÁS GRANDE que los demás enlaces del sitio (6-ago-2026):
+                     los de 11 px funcionan en el pie y en el catálogo, donde
+                     hay poco alrededor, pero aquí cuelga de una frase enorme y
+                     se perdía. La separación entre letras BAJA al crecer
+                     (0.06em en vez de 0.1em): el aire que hace legible un
+                     renglón chiquito, a este tamaño lo desarma. */
+                  className="mt-12 inline-block text-base font-bold uppercase tracking-[0.06em] transition-opacity hover:opacity-50 md:text-xl"
                 >
                   {t.about.cta}
                 </Link>
@@ -146,6 +159,13 @@ export default function AboutPage() {
             </div>
           </section>
         )}
+
+        {/*
+          LA CONVOCATORIA, hasta abajo. Va DESPUÉS de la banda que manda al
+          catálogo a propósito: la página termina pidiendo algo (manda tu arte)
+          en vez de vendiendo algo. Se apaga desde `config/convocatoria.ts`.
+        */}
+        <Convocatoria />
       </main>
 
       {/* El navbar lleva el botón del carrito, así que el cajón va montado. */}

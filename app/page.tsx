@@ -6,11 +6,37 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Countdown from "@/components/countdown";
 import DropIntro from "@/components/dropIntro";
+import { Line } from "@/components/manifesto";
 import { useI18n } from "@/lib/i18n/context";
+import { HELVETICA } from "@/lib/fonts";
+import { MANIFESTO } from "@/config/brand";
 import { DROP_VIDEO, DROP_POSTER, isDropOpen } from "@/config/drop";
 
-/** Cuánto dura el fundido al catálogo, en milisegundos. */
-const DURACION_SALIDA = 500;
+/**
+ * A DÓNDE LLEVA "ENTRAR" — PRUEBA (ago-2026)
+ * Antes caía directo al catálogo. Ahora entra por la página de marca, y de ahí
+ * se pasa a las playeras por la etiqueta del drop del navbar o por el
+ * "VER DROP #1" que cierra el Nosotros. Para volver a lo de antes, aquí se
+ * pone "/product".
+ */
+const DESTINO = "/about";
+
+/*
+  LA SALIDA DEL COUNTDOWN, EN TRES TIEMPOS (ms)
+  ---------------------------------------------
+  1. CORTINA — la pantalla se llena del color del tema y se traga el video.
+  2. FRASE   — aparece el manifiesto centrado y se queda un momento. Es el
+     puente entre el video y la tienda: lo que en el countdown se leyó a
+     pedazos, aquí se lee completo y quieto.
+  3. DIFUMINA — la frase se desenfoca y se va; recién entonces se cambia de
+     página, para que del otro lado ya solo quede el fundido de entrada.
+
+  Súbelos o bájalos aquí, que el resto se acomoda solo.
+*/
+const T_CORTINA = 450;
+const T_FRASE = 1500;
+const T_DIFUMINA = 550;
+const DURACION_SALIDA = T_CORTINA + T_FRASE + T_DIFUMINA;
 
 export default function Home() {
   const { t } = useI18n();
@@ -48,7 +74,7 @@ export default function Home() {
       e.preventDefault();
       if (saliendo) return;
       setSaliendo(true);
-      setTimeout(() => router.push("/product"), DURACION_SALIDA);
+      setTimeout(() => router.push(DESTINO), DURACION_SALIDA);
     },
     [router, saliendo]
   );
@@ -75,7 +101,7 @@ export default function Home() {
       <div className="absolute inset-x-0 bottom-[16%] z-10 flex flex-col items-center px-6 text-center">
         {open ? (
           <Link
-            href="/product"
+            href={DESTINO}
             onClick={entrar}
             className="border border-white px-12 py-4 text-[11px] font-bold tracking-[0.03em] transition-colors hover:bg-white hover:text-black"
           >
@@ -86,7 +112,7 @@ export default function Home() {
             <Countdown onComplete={handleComplete} />
             {preview && (
               <Link
-                href="/product"
+                href={DESTINO}
                 onClick={entrar}
                 className="mt-3 text-[9px] uppercase tracking-[0.03em] text-white/60 transition-opacity hover:text-white"
               >
@@ -97,16 +123,68 @@ export default function Home() {
         )}
       </div>
 
-      {/* CORTINA DEL FUNDIDO. `bg-background` = el mismo color con el que abre
-          el catálogo, por eso el corte no se nota. */}
+      {/* CORTINA DEL FUNDIDO + EL MANIFIESTO.
+          `bg-background` = el mismo color con el que abre la página siguiente,
+          por eso el corte no se nota. */}
       <AnimatePresence>
         {saliendo && (
           <motion.div
-            className="pointer-events-none absolute inset-0 z-30 bg-background"
+            className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-background px-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: DURACION_SALIDA / 1000, ease: "easeInOut" }}
-          />
+            transition={{ duration: T_CORTINA / 1000, ease: "easeInOut" }}
+          >
+            {/*
+              La frase entra desenfocada, se aclara, se queda un momento y se
+              vuelve a desenfocar al irse. Va en un solo movimiento por cuadros
+              clave (`times`) en vez de encadenar estados: así los tiempos se
+              leen de corrido y no hay forma de que se desincronicen.
+            */}
+            <motion.div
+              className="w-full max-w-5xl text-center text-foreground"
+              style={{ fontFamily: HELVETICA }}
+              initial={{ opacity: 0, filter: "blur(14px)" }}
+              animate={{
+                opacity: [0, 1, 1, 0],
+                filter: [
+                  "blur(14px)",
+                  "blur(0px)",
+                  "blur(0px)",
+                  "blur(16px)",
+                ],
+              }}
+              transition={{
+                duration: (T_FRASE + T_DIFUMINA) / 1000,
+                times: [0, 0.3, 0.7, 1],
+                delay: T_CORTINA / 1000,
+                ease: "easeOut",
+              }}
+            >
+              <p
+                className="font-bold uppercase opacity-45"
+                style={{
+                  fontSize: "clamp(0.72rem, 2vw, 1.2rem)",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                <Line line={MANIFESTO.top} />
+              </p>
+              <p
+                className="mt-4 font-bold uppercase md:mt-6"
+                style={{
+                  fontSize: "clamp(2rem, 8vw, 6rem)",
+                  lineHeight: 0.95,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {MANIFESTO.bottom.map((linea, i) => (
+                  <span key={i} className="block">
+                    <Line line={linea} />
+                  </span>
+                ))}
+              </p>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </main>

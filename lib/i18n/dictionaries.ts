@@ -108,6 +108,38 @@ const en = {
     /** Este SÍ se traduce: es una instrucción, no voz de marca. */
     cta: "SEE DROP #1",
   },
+  /**
+   * LA CONVOCATORIA ("nuestros museos están vacíos"), al final del Nosotros.
+   * Aquí va solo la INTERFAZ del formulario; el título y la invitación viven
+   * en `config/convocatoria.ts`, junto con el resto de su configuración.
+   */
+  convocatoria: {
+    nameLabel: "Your name",
+    namePlaceholder: "Who are you?",
+    contactLabel: "Where we reach you",
+    contactPlaceholder: "email or @instagram",
+    messageLabel: "Your art",
+    messagePlaceholder: "What do you make, and why are you writing?",
+    fileLabel: "Attach a piece (optional)",
+    filePick: "Choose a file",
+    fileChange: "Change file",
+    fileRemove: "Remove",
+    fileHint: "JPG, PNG, WEBP, GIF or PDF · up to 4 MB",
+    submit: "Send it",
+    sending: "Sending...",
+    privacy:
+      "We keep what you send only to get back to you. Nothing goes anywhere else.",
+    doneTitle: "It's in.",
+    doneBody: "We read everything that comes through. If it clicks, we'll write back.",
+    again: "Send another",
+    errorTooBig: "That file is over 4 MB. Send a lighter one.",
+    errorType: "We can only take JPG, PNG, WEBP, GIF or PDF.",
+    errorFields: "Fill in your name, your contact and your message.",
+    errorTooMany: "Too many tries. Wait a few minutes.",
+    /** Cualquier otra falla: se ofrece el Linktree como salida. */
+    error: "It didn't go through. Try again, or find us here:",
+    fallback: "Linktree",
+  },
   order: {
     back: "← Back",
     title: "Track your order",
@@ -245,6 +277,32 @@ const es: typeof en = {
     tag: "Indego Studio",
     title: "Nosotros",
     cta: "VER DROP #1",
+  },
+  convocatoria: {
+    nameLabel: "Tu nombre",
+    namePlaceholder: "¿Quién eres?",
+    contactLabel: "Dónde te encontramos",
+    contactPlaceholder: "correo o @instagram",
+    messageLabel: "Tu arte",
+    messagePlaceholder: "¿Qué haces y por qué nos escribes?",
+    fileLabel: "Adjunta una pieza (opcional)",
+    filePick: "Elegir archivo",
+    fileChange: "Cambiar archivo",
+    fileRemove: "Quitar",
+    fileHint: "JPG, PNG, WEBP, GIF o PDF · hasta 4 MB",
+    submit: "Mandarlo",
+    sending: "Enviando...",
+    privacy:
+      "Guardamos lo que nos mandes solo para contestarte. No va a ningún otro lado.",
+    doneTitle: "Ya está.",
+    doneBody: "Leemos todo lo que llega. Si nos late, te escribimos.",
+    again: "Mandar otro",
+    errorTooBig: "Ese archivo pasa de 4 MB. Manda uno más ligero.",
+    errorType: "Solo podemos recibir JPG, PNG, WEBP, GIF o PDF.",
+    errorFields: "Llena tu nombre, tu contacto y tu mensaje.",
+    errorTooMany: "Demasiados intentos. Espera unos minutos.",
+    error: "No se pudo enviar. Inténtalo otra vez, o búscanos aquí:",
+    fallback: "Linktree",
   },
   order: {
     back: "← Volver",

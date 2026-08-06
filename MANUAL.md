@@ -91,6 +91,16 @@ proyecto → Settings → Environment Variables.
 | `DROP_ACCESS_KEY` | (Opcional) Clave para entrar a la tienda antes del drop. Default: `indego-preview`. |
 | `STRIPE_WEBHOOK_SECRET` | (Opcional) Secreto del webhook para confirmar pagos. |
 | `ADMIN_PASSWORD` | Contraseña del panel de administración (ruta secreta `/idg-hq-9f2a`). **Necesaria** para entrar. |
+| `CLOUDINARY_API_KEY` | Llave de tu cuenta de Cloudinary. **Necesaria** para que funcione la convocatoria ("nuestros museos están vacíos"). |
+| `CLOUDINARY_API_SECRET` | Secreto de esa misma cuenta. **Nunca compartir.** |
+| `CLOUDINARY_CLOUD_NAME` | (Opcional) Solo si algún día cambia la cuenta. Default: `dij60ghdf`. |
+
+> **Dónde salen las llaves de Cloudinary:** cloudinary.com → Settings → API Keys.
+> El *cloud name* es público (ya está en el código, es el de las URLs de las
+> fotos); la **API Secret no**, va solo en `.env.local` y en Vercel.
+> Mientras no estén puestas, el formulario de la convocatoria se ve pero al
+> enviar avisa que no se pudo y ofrece el Linktree — no se traga los envíos en
+> silencio, que sería lo peor que podría pasar.
 
 ---
 
@@ -249,6 +259,17 @@ indego/
   pago no existe hasta que el cliente entra a pagar (y Stripe tarda hasta un
   minuto en indexar lo nuevo), hay un respaldo que revisa las últimas 100
   sesiones para cubrir ese hueco.
+- **`convocatoria/route.ts`** — Recibe lo que manda la gente en "nuestros museos
+  están vacíos" y **lo guarda en Cloudinary**, que hace de buzón: hoy no hay
+  base de datos ni servicio de correo, y Cloudinary es lo único que ya está
+  pagado y en uso. Cada envío deja un `.txt` con nombre, contacto y mensaje
+  (siempre, aunque no adjunten nada) y, si hubo adjunto, el archivo al lado con
+  el mismo nombre base. **No es la solución definitiva y no pretende serlo**:
+  cuando entre Supabase esto se vuelve una tabla y solo cambia el interior de la
+  ruta; la sección y el formulario se quedan igual.
+  Frena hasta 5 envíos por IP cada 10 minutos, con el mismo tope tosco en
+  memoria de `order/route.ts` (se pierde en cada despliegue) — si algún día
+  llega spam de verdad, hace falta estado compartido o un captcha.
 
 ### Componentes (`components/`)
 
@@ -275,6 +296,36 @@ indego/
   traduce: es identidad de marca, no interfaz.
 - **`navbar.tsx`** — Barra superior. El ícono de bolsa abre el carrito y muestra
   cuántos productos hay.
+- **`dropTag.tsx`** — **PRUEBA (ago-2026)**: el sticker "SPECIAL DROP #1"
+  montado a caballo en el borde de abajo del navbar (la mayor parte adentro, el
+  resto colgando). Es la forma de llegar al catálogo desde que la puerta de
+  entrada es el Nosotros. Se esconde solo dentro de `/product`, que es donde
+  sobraría. Va **ladeada** y se endereza y crece al pasar el cursor, en medio
+  segundo — a 300 ms se sentía un tirón seco.
+  **Sale en UN SOLO lugar del sitio, y por eso pesa.** Se probó ponerla también
+  cerrando el Nosotros, en lugar del "VER DROP #1" de texto, y **se revirtió**
+  (6-ago-2026): repetida a los pocos segundos de scroll se leía como relleno y
+  le quitaba fuerza a la de arriba, que es la que tiene que llamar.
+  **Queda en distinto lugar según el tamaño:** en teléfono va más a la
+  izquierda (`left-[70px]`, encimándole 10 px al logo, sobre aire y no sobre
+  dibujo) y un poco más arriba, porque colgando media etiqueta se comía
+  demasiada pantalla; en computadora va después del logo (`left-[146px]`) y
+  centrada en el borde.
+  La imagen sale de `DROP_TAG_IMAGE` (`config/drop.ts`) y **es apaisada**
+  (1681 × 936). Se mide POR ALTURA y el ancho lo saca de la imagen, así que
+  cambiarla por otra no la deforma — pero sí cambia cuánto ocupa a lo ancho: si
+  algún día vuelve a ser cuadrada, hay que revisar ese `left-*`. Mientras esa
+  variable esté vacía se dibuja una etiqueta de respaldo en SVG con los colores
+  del tema, para que el navbar no quede con un hueco.
+- **`convocatoria.tsx`** — **"NUESTROS MUSEOS ESTÁN VACÍOS"**, la sección que
+  cierra el Nosotros: una puerta abierta para que quien haga algo lo mande y se
+  pueda colaborar. Va DESPUÉS de la banda que lleva al catálogo, a propósito —
+  la página termina pidiendo algo en vez de vendiendo algo. Formulario de
+  nombre, contacto (correo **o** @instagram, por eso no valida formato),
+  mensaje y **un adjunto opcional** (JPG/PNG/WEBP/GIF/PDF, hasta 4 MB). Trae
+  trampa para robots (un campo escondido que solo ellos llenan) y valida de los
+  dos lados. El título y la invitación se editan en `config/convocatoria.ts`,
+  que también trae el apagador (`activa: false` y desaparece).
 - **`footer.tsx`** — Pie con enlaces a Términos y Linktree.
 - **`productCard.tsx`** — Fila editorial del catálogo: cuadro de imagen (con
   número 01/02/03) y **nombre en grande** + descripción, alternando
@@ -570,9 +621,35 @@ Los textos entre **[corchetes]** son relleno (misma convención que los
 términos): están puestos como guion para ver la forma de la página, hay que
 reemplazarlos por los de verdad.
 
-**Ojo con el botón del cierre:** manda a `/product`, y antes del drop eso
-regresa al countdown a quien no tenga la clave de acceso. Es a propósito, la
+**Ojo con el "VER DROP #1" del cierre:** manda a `/product`, y antes del drop
+eso regresa al countdown a quien no tenga la clave de acceso. Es a propósito, la
 misma decisión que en las páginas por producto.
+
+### La convocatoria: "nuestros museos están vacíos"
+Es la sección de hasta abajo del Nosotros, donde la gente manda su arte para
+colaborar. Todo lo editable está en **`config/convocatoria.ts`**:
+
+| Qué | Para qué |
+|---|---|
+| `activa` | Ponlo en `false` y la sección desaparece y la ruta deja de recibir. Sirve para cerrarla sin borrar nada. |
+| `titulo` | El titular. Va **traducido** (`{ en, es }`), no en inglés fijo: es una invitación a que alguien escriba, y se pide en el idioma en el que está leyendo. |
+| `entrada` | La explicación corta de al lado. |
+| `carpeta` | La carpeta de Cloudinary donde caen los envíos. |
+| `maxMB` | Peso máximo del adjunto. **No lo subas de 4**: el archivo pasa por Vercel, que corta las peticiones de más de 4.5 MB. |
+| `formatos` | Tipos de archivo que se aceptan. |
+
+Los textos del formulario (etiquetas, botones, errores) están en
+`lib/i18n/dictionaries.ts` → bloque `convocatoria`, en los dos idiomas.
+
+**Para leer lo que llega:** entra a Cloudinary → Media Library → carpeta
+`indego-convocatoria`. Cada envío deja un `.txt` con el mensaje completo (y el
+adjunto al lado, si lo hubo), nombrados `AAAAMMDD-HHmm-nombre` para que la
+carpeta se lea en orden. También quedan etiquetados `convocatoria`, así que se
+pueden filtrar por tag.
+
+**Necesita `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`** (ver sección 4). Sin
+ellas el formulario se ve pero al enviar avisa que no se pudo y ofrece el
+Linktree.
 
 ### Poner el correo de contacto y el Instagram
 `config/brand.ts` → `CONTACT_EMAIL` e `INSTAGRAM_URL`. Mientras estén vacíos, el
@@ -805,12 +882,22 @@ la consulta de pedidos no filtra datos de más ni dice cuál dato falló.
 - **Fecha real del drop** (`DROP_DATE`), hoy placeholder 1-sep-2026.
 - **Stripe en modo LIVE** + activar **OXXO** + webhook live.
 - **Rellenar `/terms`** (textos entre `[corchetes]`, en los dos idiomas).
-- **Variables de entorno en Vercel** (STRIPE, NEXT_PUBLIC_URL, ADMIN_PASSWORD).
+- **Variables de entorno en Vercel** (STRIPE, NEXT_PUBLIC_URL, ADMIN_PASSWORD,
+  y **CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET** para la convocatoria).
+- **Probar la convocatoria de punta a punta** (6-ago-2026): se probó todo el
+  camino —formulario, validaciones, trampa de robots, límite de intentos y el
+  aviso de error con el Linktree— **menos la subida real a Cloudinary**, que no
+  se pudo correr porque las llaves todavía no están puestas. En cuanto estén,
+  mandar un envío de prueba con adjunto y confirmar que aparecen el `.txt` y el
+  archivo en la carpeta `indego-convocatoria`.
 
 ### Siguiente etapa técnica
 
 - **Base de datos (Supabase) + correos (Resend)** — guardar órdenes, descontar
   stock automático y confirmar por correo. Mostrar ventas/stock en el panel.
+  **Se lleva también la convocatoria**: hoy los envíos se guardan en Cloudinary
+  a falta de otro lado, y con Supabase pasan a ser una tabla (y con Resend, un
+  aviso por correo en vez de tener que entrar a revisar la carpeta).
 - **Login más robusto para el panel** (hoy es contraseña por variable de
   entorno; migrar a Supabase Auth cuando maneje datos de ventas).
 - **Tarifa de envío** — definir (gratis en el precio o tarifa plana).

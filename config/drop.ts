@@ -26,6 +26,29 @@ export const DROP_POSTER =
   "https://res.cloudinary.com/dij60ghdf/video/upload/so_1,w_1280,q_auto/v1785541329/caballos_etxysz.jpg";
 
 /**
+ * LA ETIQUETA DEL DROP (ver `components/dropTag.tsx`).
+ *
+ * Es el sticker "SPECIAL DROP #1", montado en el borde del navbar. Sale en un
+ * solo lugar del sitio a propósito (ver el componente).
+ *
+ * ES APAISADA (1681 × 936, casi 16:9) y con FONDO TRANSPARENTE, así que se
+ * apoya sola sobre cualquier fondo. El componente la mide POR ALTURA y el ancho
+ * lo saca de la imagen, así que cambiarla por otra de otra proporción no la
+ * deforma — pero sí cambia cuánto espacio ocupa a lo ancho. Si algún día vuelve
+ * a ser cuadrada, hay que revisar el `left-*` de la del navbar, que está
+ * calculado para que no le caiga encima al logo.
+ *
+ * Se sirve con `f_auto,q_auto,w_800` igual que las playeras. Sin eso es un PNG
+ * de más de 1 MB en el navbar de TODAS las páginas; con eso son unas decenas de
+ * KB en webp.
+ *
+ * MIENTRAS ESTÉ VACÍA se dibuja una etiqueta de respaldo en SVG, hecha con los
+ * colores del tema. Así el navbar nunca se queda con un hueco.
+ */
+export const DROP_TAG_IMAGE =
+  "https://res.cloudinary.com/dij60ghdf/image/upload/f_auto,q_auto,w_800/v1786033395/indego-drop1-banner-solo-etiqueta_xpslul.png";
+
+/**
  * CLAVE DE ACCESO para probar la tienda ANTES del lanzamiento.
  * Se comparte así:  https://indegostudio.com/product?access=LA_CLAVE
  * (queda en una cookie, así solo hace falta abrirlo una vez por dispositivo).
