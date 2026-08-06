@@ -13,12 +13,31 @@ export const DROP_DATE = new Date("2026-09-01T18:00:00-06:00");
 // Nombre del drop. Es el TÍTULO del catálogo (antes decía "The Collection").
 export const DROP_NAME = "DROP 1";
 
-// Video de fondo del countdown (bucle), servido por Cloudinary con q_auto
-// (optimiza peso y hace streaming, ideal para móvil).
-// Va SIN letras: solo los caballos. El texto lo pone `components/dropIntro.tsx`.
-// Dura 24.65 s (es el video viejo con los primeros 0.8 s recortados).
+/**
+ * VIDEO DE FONDO DEL COUNTDOWN (en bucle), servido por Cloudinary.
+ * Va SIN letras: solo los caballos. El texto lo pone `components/dropIntro.tsx`.
+ * Dura 24.65 s (es el video viejo con los primeros 0.8 s recortados).
+ *
+ * EL PESO IMPORTA MÁS AQUÍ QUE EN NINGÚN OTRO LADO: es lo primero que ve todo
+ * el mundo, y durante un buen rato fue lo más pesado del sitio con diferencia.
+ * Medido el 6-ago-2026 contra Cloudinary:
+ *
+ *   q_auto     , w_1280  ->  5.42 MB   (como estaba)
+ *   q_auto:eco , w_960   ->  2.70 MB   (lo de ahora: LA MITAD)
+ *   q_auto     , vc_vp9  ->  3.43 MB   (descartado: Safari lo reproduce a
+ *                                       medias según la versión, y el iPhone
+ *                                       es justo el caso que más importa)
+ *
+ * POR QUÉ `w_960` NO SE VE PEOR: el video va de fondo, a pantalla completa y
+ * con el texto encima; en teléfono —que es por donde entra casi todo el
+ * mundo— la pantalla ni siquiera llega a 960 px de ancho real.
+ *
+ * SI ALGÚN DÍA SE VE FEO: `q_auto:eco` es lo primero que hay que soltar
+ * (déjalo en `q_auto` y quédate con `w_960`), porque apretar la calidad se
+ * nota más en imagen con movimiento, y estos son caballos corriendo.
+ */
 export const DROP_VIDEO =
-  "https://res.cloudinary.com/dij60ghdf/video/upload/q_auto,vc_h264,w_1280/v1785541329/caballos_etxysz.mp4";
+  "https://res.cloudinary.com/dij60ghdf/video/upload/q_auto:eco,vc_h264,w_960/v1785541329/caballos_etxysz.mp4";
 
 // Imagen de respaldo (primer frame del video vía Cloudinary) que se muestra
 // mientras el video carga o si un dispositivo no lo reproduce.

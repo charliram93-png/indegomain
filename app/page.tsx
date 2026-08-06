@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import Countdown from "@/components/countdown";
 import DropIntro from "@/components/dropIntro";
 import { Line } from "@/components/manifesto";
@@ -13,13 +12,18 @@ import { MANIFESTO } from "@/config/brand";
 import { DROP_VIDEO, DROP_POSTER, isDropOpen } from "@/config/drop";
 
 /**
- * A DÓNDE LLEVA "ENTRAR" — PRUEBA (ago-2026)
- * Antes caía directo al catálogo. Ahora entra por la página de marca, y de ahí
- * se pasa a las playeras por la etiqueta del drop del navbar o por el
- * "VER DROP #1" que cierra el Nosotros. Para volver a lo de antes, aquí se
- * pone "/product".
+ * A DÓNDE LLEVA "ENTRAR"
+ *
+ * AL CATÁLOGO, derecho. Se probó durante unos días entrar por la página de
+ * marca (`/about`) y se echó para atrás el 6-ago-2026: quien acaba de aguantar
+ * el countdown viene a ver las playeras, y meterle una página de lectura antes
+ * era ponerle una puerta de más.
+ *
+ * El Nosotros no se perdió, cambió de puerta: ahora está en el navbar, junto al
+ * logo (antes solo en el pie). Para volver a probar la entrada por marca, aquí
+ * se pone "/about".
  */
-const DESTINO = "/about";
+const DESTINO = "/product";
 
 /*
   LA SALIDA DEL COUNTDOWN, EN TRES TIEMPOS (ms)
@@ -76,7 +80,7 @@ export default function Home() {
       setSaliendo(true);
       setTimeout(() => router.push(DESTINO), DURACION_SALIDA);
     },
-    [router, saliendo]
+    [router, saliendo],
   );
 
   return (
@@ -123,70 +127,66 @@ export default function Home() {
         )}
       </div>
 
-      {/* CORTINA DEL FUNDIDO + EL MANIFIESTO.
-          `bg-background` = el mismo color con el que abre la página siguiente,
-          por eso el corte no se nota. */}
-      <AnimatePresence>
-        {saliendo && (
-          <motion.div
-            className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-background px-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: T_CORTINA / 1000, ease: "easeInOut" }}
+      {/*
+        CORTINA DEL FUNDIDO + EL MANIFIESTO.
+        `bg-background` = el mismo color con el que abre la página siguiente,
+        por eso el corte no se nota.
+
+        AQUÍ NO HACE FALTA `usePresencia` (que es lo que reemplazó a
+        framer-motion en el carrito y el modal): esto solo ENTRA. Se enciende
+        con `saliendo`, corre, y para cuando termina ya se cambió de página —
+        no hay salida que animar, así que basta con dibujarlo o no.
+      */}
+      {saliendo && (
+        <div
+          className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-background px-6"
+          /* Los cuadros clave están en `globals.css` (`@keyframes cortina`);
+             los tiempos salen de las constantes de arriba. `both` deja el
+             elemento en su estado inicial antes de arrancar y en el final al
+             terminar, o si no parpadea en los bordes. */
+          style={{
+            animation: `cortina ${T_CORTINA}ms ease-in-out both`,
+          }}
+        >
+          {/*
+            La frase entra desenfocada, se aclara, se queda un momento y se
+            vuelve a desenfocar al irse. Va en UNA sola animación por cuadros
+            clave en vez de encadenar estados: así los tiempos se leen de
+            corrido y no hay forma de que se desincronicen.
+          */}
+          <div
+            className="w-full max-w-5xl text-center text-foreground"
+            style={{
+              fontFamily: HELVETICA,
+              animation: `frase-de-salida ${T_FRASE + T_DIFUMINA}ms ease-out ${T_CORTINA}ms both`,
+            }}
           >
-            {/*
-              La frase entra desenfocada, se aclara, se queda un momento y se
-              vuelve a desenfocar al irse. Va en un solo movimiento por cuadros
-              clave (`times`) en vez de encadenar estados: así los tiempos se
-              leen de corrido y no hay forma de que se desincronicen.
-            */}
-            <motion.div
-              className="w-full max-w-5xl text-center text-foreground"
-              style={{ fontFamily: HELVETICA }}
-              initial={{ opacity: 0, filter: "blur(14px)" }}
-              animate={{
-                opacity: [0, 1, 1, 0],
-                filter: [
-                  "blur(14px)",
-                  "blur(0px)",
-                  "blur(0px)",
-                  "blur(16px)",
-                ],
-              }}
-              transition={{
-                duration: (T_FRASE + T_DIFUMINA) / 1000,
-                times: [0, 0.3, 0.7, 1],
-                delay: T_CORTINA / 1000,
-                ease: "easeOut",
+            <p
+              className="font-bold uppercase opacity-45"
+              style={{
+                fontSize: "clamp(0.72rem, 2vw, 1.2rem)",
+                letterSpacing: "0.04em",
               }}
             >
-              <p
-                className="font-bold uppercase opacity-45"
-                style={{
-                  fontSize: "clamp(0.72rem, 2vw, 1.2rem)",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                <Line line={MANIFESTO.top} />
-              </p>
-              <p
-                className="mt-4 font-bold uppercase md:mt-6"
-                style={{
-                  fontSize: "clamp(2rem, 8vw, 6rem)",
-                  lineHeight: 0.95,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                {MANIFESTO.bottom.map((linea, i) => (
-                  <span key={i} className="block">
-                    <Line line={linea} />
-                  </span>
-                ))}
-              </p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <Line line={MANIFESTO.top} />
+            </p>
+            <p
+              className="mt-4 font-bold uppercase md:mt-6"
+              style={{
+                fontSize: "clamp(2rem, 8vw, 6rem)",
+                lineHeight: 0.95,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {MANIFESTO.bottom.map((linea, i) => (
+                <span key={i} className="block">
+                  <Line line={linea} />
+                </span>
+              ))}
+            </p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

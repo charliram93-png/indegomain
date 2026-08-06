@@ -28,7 +28,8 @@ import { useI18n } from "@/lib/i18n/context";
  */
 
 /** Mismo estilo de etiqueta que la página de pedido y el carrito. */
-const etiqueta = "block text-[10px] font-bold uppercase tracking-[0.08em] opacity-50";
+const etiqueta =
+  "block text-[10px] font-bold uppercase tracking-[0.08em] opacity-50";
 /** Campos sin recuadro: una línea abajo, como en todo el sitio. */
 const campo =
   "mt-2 w-full border-b border-foreground/20 bg-transparent pb-2 text-base outline-none transition-colors placeholder:opacity-25 focus:border-foreground";
@@ -125,10 +126,19 @@ export default function Convocatoria() {
   };
 
   return (
-    /* La línea de arriba es lo que la separa de la banda invertida que tiene
-       encima; sin ella las dos se leían como una sola cosa. */
-    <section className="border-t border-foreground/10 px-6 py-20 md:px-12 md:py-32">
-      <div className="mx-auto w-full max-w-6xl">
+    /*
+      ES UN PANEL DEL RIEL, no una franja al final de la página (6-ago-2026).
+      Por eso `h-full` + `items-center`: se centra a media altura como los
+      demás paneles, en vez de apoyarse en un `py-32` que aquí lo desbordaba.
+
+      EN COMPUTADORA TIENE QUE CABER SIN SCROLL. El aire de antes (80 y 128 px
+      arriba y abajo) sacaba el formulario de la pantalla y aparecía una segunda
+      barra de desplazamiento, vertical, encima de la del riel: dos barras a la
+      vez, que es exactamente lo que no se quiere. En teléfono sí se recorre por
+      dentro (el panel lo permite; ver `app/about/page.tsx`).
+    */
+    <section className="flex h-full items-center px-6 py-10 md:px-12 md:py-0">
+      <div className="w-full">
         <Reveal>
           {/*
             SIN ANTETÍTULO. Antes tenía un "CONVOCATORIA ABIERTA" chiquito
@@ -298,9 +308,7 @@ export default function Convocatoria() {
                     disabled={enviando}
                     className="w-fit cursor-pointer py-2 text-xs font-bold uppercase tracking-[0.08em] transition-opacity hover:opacity-50 disabled:cursor-not-allowed disabled:opacity-30"
                   >
-                    {enviando
-                      ? t.convocatoria.sending
-                      : t.convocatoria.submit}
+                    {enviando ? t.convocatoria.sending : t.convocatoria.submit}
                   </button>
 
                   <p className="mt-4 max-w-sm text-[10px] leading-relaxed opacity-30">

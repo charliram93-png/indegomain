@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Reveal from "@/components/reveal";
 import { Line } from "@/components/manifesto";
+import { MANIFESTO } from "@/config/brand";
 import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
 import type { AboutBlock } from "@/config/about";
@@ -45,24 +46,40 @@ import type { AboutBlock } from "@/config/about";
 /** Next reemplaza esto por `true`/`false` al compilar, no queda en el bundle. */
 const EN_DESARROLLO = process.env.NODE_ENV === "development";
 
-/** La rejilla de la página. Todo cuelga de aquí. */
-const SECCION = "border-t border-foreground/10 px-6 md:px-12";
-const REJILLA =
-  "mx-auto grid w-full max-w-6xl gap-6 py-14 md:grid-cols-12 md:gap-10 md:py-24";
+/*
+  LA REJILLA DE LA PÁGINA. Todo cuelga de aquí.
+
+  OJO, CAMBIÓ CON EL RECORRIDO HORIZONTAL (6-ago-2026): cada bloque ya no es
+  una franja apilada sino UN PANEL del riel, del alto de la ventana.
+
+  · `h-full` + `flex items-center` — el contenido se centra a media altura del
+    panel. Antes lo que ordenaba era el aire de arriba y abajo (`py-24`); ahora
+    los paneles miden todos lo mismo y lo que ordena es el centro.
+  · La separación pasó de LÍNEA DE ARRIBA a LÍNEA DE LA IZQUIERDA. Es la misma
+    idea girada 90°, junto con la página. La pone el panel, no el bloque, para
+    que las que ya trae el riel (portada, banda, pie) queden parejas: por eso
+    aquí ya no hay `border-*`.
+  · La rejilla de 12 columnas se queda, pero SIN `max-w-6xl`: el ancho ya lo
+    manda el panel, y un tope de más lo dejaba corto en los anchos.
+*/
+const SECCION = "flex h-full items-center px-6 md:px-12";
+const REJILLA = "grid w-full gap-6 md:grid-cols-12 md:gap-10";
 /** Columna del contenido: arranca en la 5 y llega al final. */
 const CONTENIDO = "md:col-span-8 md:col-start-5";
 
-function Hueco({
-  etiqueta,
-  proporcion = "aspect-[4/5] md:aspect-[16/9]",
-}: {
-  etiqueta: string;
-  proporcion?: string;
-}) {
+/**
+ * EL HUECO de un bloque sin archivo. Solo en `npm run dev`.
+ *
+ * `caja` entra tal cual como clases: es el MISMO tamaño que tendría la foto de
+ * verdad. Importa que sean idénticos porque desde que la página se recorre de
+ * lado, un hueco más alto que su panel le saca una barra de desplazamiento —y
+ * entonces estarías corrigiendo un problema que en producción no existe.
+ */
+function Hueco({ etiqueta, caja }: { etiqueta: string; caja: string }) {
   if (!EN_DESARROLLO) return null;
   return (
     <div
-      className={`flex w-full items-center justify-center border border-dashed border-foreground/25 bg-surface/30 ${proporcion}`}
+      className={`flex items-center justify-center border border-dashed border-foreground/25 bg-surface/30 ${caja}`}
     >
       <p className="px-6 text-center text-[10px] uppercase tracking-[0.06em] opacity-40">
         {etiqueta}
@@ -116,10 +133,56 @@ export default function AboutBlock({
 
   switch (block.tipo) {
     /*
+      EL MANIFIESTO DE LA MARCA, el mismo que abre el catálogo. El texto vive en
+      `config/brand.ts` y se lee de ahí: no se copia, para que no se puedan
+      separar nunca.
+
+      MISMA TIPOGRAFÍA QUE EN EL CATÁLOGO —línea de arriba chica y atenuada,
+      remate enorme, la misma Helvetica— pero SOBRE EL FONDO DEL TEMA, no
+      invertido. En el catálogo el manifiesto ES la banda invertida; aquí esa
+      carta ya la juega la banda de "GO TO DROP #1", y dos bandas invertidas en
+      un mismo recorrido se anulan entre ellas.
+
+      Va un poco más chico que en el catálogo (9rem -> 7rem de tope) porque
+      aquí vive dentro de un panel del riel, no a lo ancho de la pantalla.
+    */
+    case "manifiesto":
+      return (
+        <section className={SECCION} style={{ fontFamily: HELVETICA }}>
+          <div className="w-full">
+            <p
+              className="font-bold uppercase opacity-45"
+              style={{
+                fontSize: "clamp(0.8rem, 1.6vw, 1.2rem)",
+                letterSpacing: "0.04em",
+              }}
+            >
+              <Line line={MANIFESTO.top} />
+            </p>
+
+            <p
+              className="mt-6 font-bold uppercase md:mt-8"
+              style={{
+                fontSize: "clamp(2.4rem, 7vw, 7rem)",
+                lineHeight: 0.92,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {MANIFESTO.bottom.map((linea, i) => (
+                <span key={i} className="block">
+                  <Line line={linea} />
+                </span>
+              ))}
+            </p>
+          </div>
+        </section>
+      );
+
+    /*
       FRASE. Cita descolgada: grande, pero DENTRO de la columna de contenido y
-      sobre el fondo del tema. Antes era una banda invertida de lado a lado —
-      o sea, el manifiesto del catálogo otra vez. Indentada dice lo mismo con
-      voz propia, y le deja todo el peso a la banda del cierre.
+      sobre el fondo del tema. Ya no se usa en la página (el arranque lo tomó el
+      manifiesto), pero el tipo se queda: es la forma de meter una cita suelta
+      entre bloques cuando haga falta.
     */
     case "frase":
       return (
@@ -174,32 +237,31 @@ export default function AboutBlock({
     case "foto": {
       const alt = block.alt[lang];
 
+      /* Con `completo` llena el panel de orilla a orilla y de arriba abajo. */
       if (block.completo) {
         return (
-          <section className="border-t border-foreground/10">
+          <section className="flex h-full flex-col justify-center">
             {block.src ? (
-              <Reveal>
-                <figure>
-                  <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface md:aspect-[21/9]">
-                    <Image
-                      src={block.src}
-                      alt={alt}
-                      fill
-                      sizes="100vw"
-                      className="object-cover"
-                    />
-                  </div>
-                  {block.pie && (
-                    <figcaption className="px-6 pb-6 md:px-12">
-                      <Pie>{block.pie[lang]}</Pie>
-                    </figcaption>
-                  )}
-                </figure>
-              </Reveal>
+              <figure className="flex h-[86%] w-full flex-col">
+                <div className="relative flex-1 overflow-hidden bg-surface">
+                  <Image
+                    src={block.src}
+                    alt={alt}
+                    fill
+                    sizes="1000px"
+                    className="object-cover"
+                  />
+                </div>
+                {block.pie && (
+                  <figcaption className="shrink-0 px-6 pt-3 md:px-12">
+                    <Pie>{block.pie[lang]}</Pie>
+                  </figcaption>
+                )}
+              </figure>
             ) : (
               <Hueco
                 etiqueta={`Foto de orilla a orilla — ${alt}`}
-                proporcion="aspect-[4/5] md:aspect-[21/9]"
+                caja="h-[86%] w-full"
               />
             )}
           </section>
@@ -208,30 +270,30 @@ export default function AboutBlock({
 
       return (
         <section className={SECCION}>
-          <div className={REJILLA}>
-            <Etiqueta />
+          <div className="flex w-full items-center gap-6 md:gap-10">
+            <div className="hidden shrink-0 md:block md:w-1/4">
+              <Etiqueta />
+            </div>
             {block.src ? (
-              <Reveal className={CONTENIDO}>
-                <figure>
-                  <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface md:aspect-[3/2]">
-                    <Image
-                      src={block.src}
-                      alt={alt}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 780px"
-                      className="object-cover"
-                    />
-                  </div>
-                  {block.pie && (
-                    <figcaption>
-                      <Pie>{block.pie[lang]}</Pie>
-                    </figcaption>
-                  )}
-                </figure>
-              </Reveal>
+              <figure className="flex-1">
+                <div className="relative aspect-[3/2] w-full overflow-hidden bg-surface">
+                  <Image
+                    src={block.src}
+                    alt={alt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 720px"
+                    className="object-cover"
+                  />
+                </div>
+                {block.pie && (
+                  <figcaption>
+                    <Pie>{block.pie[lang]}</Pie>
+                  </figcaption>
+                )}
+              </figure>
             ) : (
-              <div className={CONTENIDO}>
-                <Hueco etiqueta={`Foto — ${alt}`} proporcion="aspect-[3/2]" />
+              <div className="flex-1">
+                <Hueco etiqueta={`Foto — ${alt}`} caja="aspect-[3/2] w-full" />
               </div>
             )}
           </div>
@@ -247,35 +309,51 @@ export default function AboutBlock({
     case "duo": {
       const fotos = [block.a, block.b];
       return (
+        /*
+          LAS DOS FOTOS SE MIDEN POR ALTURA, no por proporción sobre el ancho.
+
+          Antes eran `aspect-square` y `aspect-[3/4]` a todo el ancho de su
+          columna, más un `mt-24` para escalonarlas: en una página que bajaba
+          eso daba igual, crecía el alto y ya. En el riel el panel mide lo que
+          mide la pantalla, así que ese alto se salía y le sacaba una barra de
+          desplazamiento al panel — que es justo lo que se está quitando.
+
+          Ahora el alto es un PORCENTAJE del panel (siempre cabe) y el ancho lo
+          saca la proporción. El desnivel se hace corriendo cada una para su
+          lado con `translate-y`, que no ocupa espacio: es solo dibujo.
+        */
         <section className={SECCION}>
-          <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-4 py-14 md:gap-10 md:py-24">
+          {/* `h-full` NO es de adorno: los `h-[52%]` de abajo se miden contra
+              ESTE alto. Si el padre midiera "lo que ocupe su contenido", el
+              porcentaje no tendría contra qué resolverse y las fotos volverían
+              a crecer por el ancho — que es el problema que se está quitando. */}
+          <div className="flex h-full w-full items-center justify-center gap-4 md:gap-10">
             {fotos.map((foto, i) => {
-              // La segunda baja y se estira: ese desnivel es todo el efecto.
+              // La segunda es más alta y va más abajo: ese desnivel es el efecto.
               const baja = i === 1;
-              const proporcion = baja ? "aspect-[3/4]" : "aspect-square";
-              const desnivel = baja ? "md:mt-24" : undefined;
+              const caja = baja
+                ? "aspect-[3/4] h-[52%] translate-y-[6%]"
+                : "aspect-square h-[42%] -translate-y-[6%]";
 
               return foto.src ? (
-                <Reveal key={i} className={desnivel}>
-                  <div
-                    className={`relative w-full overflow-hidden bg-surface ${proporcion}`}
-                  >
-                    <Image
-                      src={foto.src}
-                      alt={foto.alt[lang]}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 550px"
-                      className="object-cover"
-                    />
-                  </div>
-                </Reveal>
-              ) : (
-                <div key={i} className={desnivel}>
-                  <Hueco
-                    etiqueta={`Foto — ${foto.alt[lang]}`}
-                    proporcion={proporcion}
+                <div
+                  key={i}
+                  className={`relative overflow-hidden bg-surface ${caja}`}
+                >
+                  <Image
+                    src={foto.src}
+                    alt={foto.alt[lang]}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 420px"
+                    className="object-cover"
                   />
                 </div>
+              ) : (
+                <Hueco
+                  key={i}
+                  etiqueta={`Foto — ${foto.alt[lang]}`}
+                  caja={caja}
+                />
               );
             })}
           </div>
@@ -291,32 +369,29 @@ export default function AboutBlock({
     case "video":
       return (
         <section className={SECCION}>
-          <div className={REJILLA}>
-            <Etiqueta />
+          {/* `h-full` por lo mismo que en el dúo: es contra lo que se mide el
+              alto del hueco. */}
+          <div className="flex h-full w-full items-center justify-center">
             {block.src ? (
-              <Reveal className={CONTENIDO}>
-                <figure>
-                  <video
-                    className="w-full bg-surface"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    poster={block.poster || undefined}
-                  >
-                    <source src={block.src} type="video/mp4" />
-                  </video>
-                  {block.pie && (
-                    <figcaption>
-                      <Pie>{block.pie[lang]}</Pie>
-                    </figcaption>
-                  )}
-                </figure>
-              </Reveal>
+              <figure className="w-full">
+                <video
+                  className="max-h-[70dvh] w-full bg-surface object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  poster={block.poster || undefined}
+                >
+                  <source src={block.src} type="video/mp4" />
+                </video>
+                {block.pie && (
+                  <figcaption>
+                    <Pie>{block.pie[lang]}</Pie>
+                  </figcaption>
+                )}
+              </figure>
             ) : (
-              <div className={CONTENIDO}>
-                <Hueco etiqueta="Video" proporcion="aspect-video" />
-              </div>
+              <Hueco etiqueta="Video" caja="aspect-video h-[52%]" />
             )}
           </div>
         </section>

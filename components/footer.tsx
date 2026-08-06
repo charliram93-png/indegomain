@@ -34,14 +34,17 @@ const Footer: React.FC = () => {
             {t.footer.order}
           </Link>
 
-          <Link href="/terms" className={linkClass}>
-            {t.footer.terms}
-          </Link>
-
-          {/* De aquí en adelante empieza lo de MARCA (ver el orden explicado
-              arriba): primero quién somos, después las redes. */}
+          {/* NOSOTROS, JUSTO DESPUÉS DEL SEGUIMIENTO. Se probó subirlo al navbar
+              (6-ago-2026) y se regresó aquí: en la barra competía con el logo y
+              el carrito por la misma mirada, y no es un enlace de esa jerarquía.
+              Va en segundo lugar y no al final porque, de todo lo de marca, es
+              lo único que alguien busca a propósito. */}
           <Link href="/about" className={linkClass}>
             {t.footer.about}
+          </Link>
+
+          <Link href="/terms" className={linkClass}>
+            {t.footer.terms}
           </Link>
 
           <Link href={LINKTREE_URL} target="_blank" className={linkClass}>

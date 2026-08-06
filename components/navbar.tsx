@@ -7,7 +7,6 @@ import React, { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useCart } from "@/store/cart";
 import ThemeToggle from "@/components/themeToggle";
-import DropTag from "@/components/dropTag";
 import LangToggle from "@/components/langToggle";
 import { useFlag } from "@/lib/flags";
 import { useI18n } from "@/lib/i18n/context";
@@ -29,8 +28,7 @@ const Navbar: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const count = mounted ? totalItems() : 0;
-  const logoSrc =
-    mounted && resolvedTheme === "dark" ? LOGO_LIGHT : LOGO_DARK;
+  const logoSrc = mounted && resolvedTheme === "dark" ? LOGO_LIGHT : LOGO_DARK;
 
   return (
     /*
@@ -53,7 +51,18 @@ const Navbar: React.FC = () => {
     >
       {/* LOGO */}
       <div className="flex select-none items-center">
-        <Link href="/" className="select-none">
+        {/*
+          EL LOGO LLEVA AL CATÁLOGO, no a la raíz (6-ago-2026).
+
+          La raíz es el countdown: los caballos a pantalla completa. Mandar ahí
+          a alguien que ya entró es sacarlo de la tienda y ponerlo otra vez en
+          la puerta. El logo tiene que llevar "a casa", y desde adentro la casa
+          son las playeras.
+
+          La raíz sigue siendo los caballos y nada más, a propósito: quien
+          escribe el dominio pelado ve el countdown.
+        */}
+        <Link href="/product" className="select-none">
           <Image
             src={logoSrc}
             width={100}
@@ -64,11 +73,23 @@ const Navbar: React.FC = () => {
         </Link>
       </div>
 
-      {/* ETIQUETA DEL DROP. Va FUERA de la fila del logo: está posicionada
-          contra la barra para poder montarse sobre su borde de abajo, la mayor
-          parte adentro y el resto colgando. Se esconde sola dentro del
-          catálogo. Ver `components/dropTag.tsx`. */}
-      <DropTag />
+      {/*
+        NOSOTROS NO VA AQUÍ. Se probó junto al logo (6-ago-2026) y se regresó al
+        pie: en la barra competía con el logo y con el carrito por la misma
+        mirada, y no es un enlace de esa jerarquía. En el pie va después de
+        "seguir pedido", que es lo que la gente busca primero.
+      */}
+
+      {/*
+        LA ETIQUETA DEL DROP NO VIVE AQUÍ (6-ago-2026). La dibuja la página que
+        la quiera (hoy solo `/about`), para que quede pegada a la PANTALLA y no
+        a la barra.
+
+        Y no es solo por orden: esta barra lleva `backdrop-blur`, y un elemento
+        con `position: fixed` dentro de algo desenfocado se posiciona contra ESE
+        elemento, no contra la ventana. Mientras colgara de aquí, no había forma
+        de fijarla a la pantalla. Ver `components/dropTag.tsx`.
+      */}
 
       {/* CONTROLES */}
       <div className="flex select-none items-center gap-1">

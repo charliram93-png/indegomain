@@ -85,7 +85,7 @@ proyecto → Settings → Environment Variables.
 
 | Variable | Qué es |
 |---|---|
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Llave pública de Stripe (frontend). |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Llave pública de Stripe. **HOY NO LA USA NADIE** (revisado 6-ago-2026): el pago no lo arma el navegador, el servidor crea la sesión y redirige a la URL de Stripe. Se deja puesta por si algún día se usa Stripe desde el cliente; ver la auditoría en la sección 11. |
 | `STRIPE_SECRET_KEY` | Llave secreta de Stripe (backend). **Nunca compartir.** |
 | `NEXT_PUBLIC_URL` | URL del sitio (ej. `https://indegostudio.com`). Se usa para redirigir tras el pago. |
 | `DROP_ACCESS_KEY` | (Opcional) Clave para entrar a la tienda antes del drop. Default: `indego-preview`. |
@@ -285,6 +285,13 @@ indego/
   vez que el elemento entró en pantalla (`IntersectionObserver`) y el movimiento
   lo hace una transición de CSS. Antes lo animaba framer-motion cuadro a cuadro
   con JavaScript y se sentía pesado al scrollear en el teléfono.
+- **`lib/usePresencia.ts`** (no es componente, pero va aquí porque es de lo
+  mismo) — Lo que permitió **sacar framer-motion del proyecto** el 6-ago-2026.
+  Resuelve lo único que el CSS no sabe hacer solo: animar algo que se está
+  DESMONTANDO. Mantiene el elemento en la página mientras dura la salida y lo
+  quita al terminar. Lo usan el carrito y el modal de producto. El porqué y las
+  trampas (el temporizador de respaldo, y por qué los cuadros se congelan en
+  pestañas ocultas) están en la auditoría de la sección 11.
 - **`productModal.tsx`** — La ventana de detalle. Al cambiar de playera reinicia
   foto, talla y cantidad; si no, se quedaba abriendo en la foto de la espalda de
   la playera anterior.
@@ -296,27 +303,40 @@ indego/
   traduce: es identidad de marca, no interfaz.
 - **`navbar.tsx`** — Barra superior. El ícono de bolsa abre el carrito y muestra
   cuántos productos hay.
-- **`dropTag.tsx`** — **PRUEBA (ago-2026)**: el sticker "SPECIAL DROP #1"
-  montado a caballo en el borde de abajo del navbar (la mayor parte adentro, el
-  resto colgando). Es la forma de llegar al catálogo desde que la puerta de
-  entrada es el Nosotros. Se esconde solo dentro de `/product`, que es donde
-  sobraría. Va **ladeada** y se endereza y crece al pasar el cursor, en medio
-  segundo — a 300 ms se sentía un tirón seco.
-  **Sale en UN SOLO lugar del sitio, y por eso pesa.** Se probó ponerla también
-  cerrando el Nosotros, en lugar del "VER DROP #1" de texto, y **se revirtió**
-  (6-ago-2026): repetida a los pocos segundos de scroll se leía como relleno y
-  le quitaba fuerza a la de arriba, que es la que tiene que llamar.
-  **Queda en distinto lugar según el tamaño:** en teléfono va más a la
-  izquierda (`left-[70px]`, encimándole 10 px al logo, sobre aire y no sobre
-  dibujo) y un poco más arriba, porque colgando media etiqueta se comía
-  demasiada pantalla; en computadora va después del logo (`left-[146px]`) y
-  centrada en el borde.
+  **EL LOGO LLEVA A `/product`, no a la raíz** (6-ago-2026). La raíz es el
+  countdown: mandar ahí a alguien que ya entró es sacarlo de la tienda y
+  ponerlo otra vez en la puerta. El logo lleva "a casa", y desde adentro la
+  casa son las playeras. La raíz sigue siendo los caballos y nada más, a
+  propósito: quien escribe el dominio pelado ve el countdown.
+  **NOSOTROS NO VA EN LA BARRA.** Se probó junto al logo y se regresó al pie:
+  competía con el logo y con el carrito por la misma mirada y no es un enlace
+  de esa jerarquía.
+- **`dropTag.tsx`** — **PRUEBA (ago-2026)**: el sticker "SPECIAL DROP #1", la
+  salida al catálogo desde la página de marca.
+  **Va PEGADO A LA PANTALLA** (derecha, `top-40` en teléfono y `top-48` en
+  computadora, o sea bastante más abajo del navbar), **derecho**, y solo crece
+  al pasar el cursor. Se esconde solo dentro de `/product`, que es donde
+  sobraría.
+
+  **NO SE DIBUJA DESDE EL NAVBAR, y no es por gusto:** la barra lleva
+  `backdrop-blur`, y un elemento con `position: fixed` dentro de algo
+  desenfocado se posiciona contra ESE elemento y no contra la ventana. Mientras
+  colgó del navbar no había forma de fijarlo a la pantalla. Ahora lo dibuja
+  `app/about/page.tsx`. **Tampoco va en el layout**, para que no se cuele en el
+  countdown, el pago, los términos ni el panel — hoy sale solo en Nosotros, que
+  es exactamente donde salía antes.
+
+  **Dos cosas que ya se probaron y se echaron para atrás**, para no volver a
+  proponerlas: (1) montarlo a caballo en el borde de la barra y **ladeado** —
+  ahí sí funcionaba, pero suelto en medio de la pantalla la inclinación se veía
+  como descuido; (2) repetirlo cerrando el Nosotros en lugar del "VER DROP #1"
+  de texto — repetido a los pocos segundos de scroll se leía como relleno.
+
   La imagen sale de `DROP_TAG_IMAGE` (`config/drop.ts`) y **es apaisada**
   (1681 × 936). Se mide POR ALTURA y el ancho lo saca de la imagen, así que
-  cambiarla por otra no la deforma — pero sí cambia cuánto ocupa a lo ancho: si
-  algún día vuelve a ser cuadrada, hay que revisar ese `left-*`. Mientras esa
-  variable esté vacía se dibuja una etiqueta de respaldo en SVG con los colores
-  del tema, para que el navbar no quede con un hueco.
+  cambiarla por otra no la deforma, pero sí cambia cuánto ocupa a lo ancho.
+  Mientras esa variable esté vacía se dibuja una de respaldo en SVG con los
+  colores del tema, para que nunca quede un hueco.
 - **`convocatoria.tsx`** — **"NUESTROS MUSEOS ESTÁN VACÍOS"**, la sección que
   cierra el Nosotros: una puerta abierta para que quien haga algo lo mande y se
   pueda colaborar. Va DESPUÉS de la banda que lleva al catálogo, a propósito —
@@ -326,7 +346,11 @@ indego/
   trampa para robots (un campo escondido que solo ellos llenan) y valida de los
   dos lados. El título y la invitación se editan en `config/convocatoria.ts`,
   que también trae el apagador (`activa: false` y desaparece).
-- **`footer.tsx`** — Pie con enlaces a Términos y Linktree.
+- **`footer.tsx`** — Pie con los enlaces del sitio, en este orden a propósito:
+  primero lo que resuelve un problema (**seguir pedido**), luego **Nosotros** —
+  que de todo lo de marca es lo único que alguien busca queriendo— y después
+  términos y redes. Contacto e Instagram solo salen si están puestos en
+  `config/brand.ts`.
 - **`productCard.tsx`** — Fila editorial del catálogo: cuadro de imagen (con
   número 01/02/03) y **nombre en grande** + descripción, alternando
   izquierda/derecha por producto. En **móvil**: título arriba de la imagen y
@@ -467,7 +491,15 @@ indego/
    - ¿No? → lo regresa a la home.
    - Esto **no se puede burlar** cambiando el reloj del navegador, porque la fecha
      se valida en el servidor.
-3. Cuando el countdown llega a cero, la home muestra el botón **ENTRAR**.
+3. Cuando el countdown llega a cero, la home muestra el botón **ENTRAR**, que
+   lleva **directo al catálogo** (`/product`). Antes de darle, la pantalla se
+   funde al color del tema y aparece el manifiesto un momento — el puente entre
+   el video y la tienda. Los tres tiempos de esa salida están en `app/page.tsx`
+   (`T_CORTINA`, `T_FRASE`, `T_DIFUMINA`).
+   Se probó unos días entrar por la página de marca (`/about`) y se echó para
+   atrás el 6-ago-2026: quien acaba de aguantar el countdown viene a ver las
+   playeras, y meterle una página de lectura antes era una puerta de más. Para
+   volver a probarlo, se cambia `DESTINO` en ese archivo.
 
 ---
 
@@ -579,6 +611,72 @@ Para rotarla: cambia el valor en Vercel y vuelve a desplegar. Las cookies de
 quienes ya habían entrado con la clave vieja dejan de servir solas, porque se
 comparan contra la nueva.
 
+### La página de Nosotros SE RECORRE HACIA LA DERECHA (6-ago-2026)
+
+Es el cambio más grande que ha tenido esta página: **ya no va hacia abajo**. Los
+bloques se ponen en fila y la página mide **exactamente una pantalla de alto**.
+Cada bloque de `config/about.ts` es ahora un **panel** del riel.
+
+**Cómo se recorre.** En teléfono, deslizando con el dedo (el navegador ya sabe
+hacerlo solo). En computadora hay que traducir la rueda del ratón, que gira en
+vertical — eso lo hace un `useEffect` en `app/about/page.tsx`, y respeta tres
+cosas para que no se sienta secuestrado:
+
+1. si el gesto ya es horizontal (trackpad, rueda lateral), no toca nada;
+2. si el panel bajo el cursor se puede recorrer hacia abajo —el del formulario,
+   por ejemplo— primero se recorre ÉSE, y solo al llegar a su tope el giro pasa
+   a mover el riel;
+3. el detector va con `passive: false`, que es obligatorio para poder cancelar
+   el gesto. Sin eso la página pelea consigo misma.
+
+**Lo que cambió de paso:**
+
+- **Las líneas separadoras giraron 90°**: eran `border-t` entre franjas, ahora
+  son `border-l` entre paneles. Las pone el panel, no el bloque.
+- **EL PIE DE PÁGINA YA NO ESTÁ** en esta página. Se probó como último panel y
+  se quitó: rematar el recorrido con un panel de puros enlaces de servicio le
+  quitaba el final a la convocatoria, que es lo que debe cerrar. Los enlaces del
+  pie siguen en todas las demás páginas.
+- **NINGUNA BARRA DE DESPLAZAMIENTO A LA VISTA.** Salían dos: la del riel y una
+  vertical del documento. La vertical no era contenido de más sino aritmética —
+  la página mide `h-dvh` pero la barra horizontal se comía ~15 px de ese alto,
+  así que sobresalía por quince píxeles. Se resolvieron por separado: el
+  desplazamiento del DOCUMENTO se apaga mientras se está en esta página
+  (tocando `documentElement` y no `body`, para no pelearse con
+  `lib/useScrollLock.ts`), y la del riel se esconde con la clase `.sin-barra`
+  de `globals.css`. **Se sigue recorriendo igual**, con el dedo, la rueda o el
+  teclado; lo único que no está es la barra gris cruzada abajo.
+  > OJO: esa barra era la única pista visual de que la página va de lado. Hoy
+  > se aguanta porque los paneles quedan cortados en la orilla y eso invita a
+  > seguir; si algún día se acomodan para que quepan justos, hay que poner otra
+  > pista en su lugar.
+- **Las fotos se miden POR ALTURA, no por proporción sobre el ancho.** Los
+  bloques `foto`, `duo` y `video` eran `aspect-*` a todo el ancho de su columna:
+  en una página que bajaba eso daba igual, crecía el alto y ya. En el riel el
+  panel mide lo que mide la pantalla, así que ese alto se salía y le sacaba una
+  barra de desplazamiento AL PANEL. Ahora el alto es un porcentaje del panel
+  (siempre cabe) y el ancho lo saca la proporción. **Si tocas esto, el padre
+  tiene que llevar `h-full`**: un porcentaje de alto necesita contra qué
+  medirse, y sin eso las fotos vuelven a crecer por el ancho.
+- **La convocatoria CABE SIN SCROLL en computadora.** Se le quitó el aire de
+  arriba y abajo (que venía de cuando era una franja al final de una página
+  vertical) y se centra a media altura como los demás paneles. En teléfono sí se
+  recorre por dentro.
+- **Los bloques sin archivo ya no ocupan lugar.** Antes una foto vacía
+  simplemente no ocupaba alto y no se notaba; en el riel reservaba un panel de
+  mil píxeles de nada. Ahora se filtran (`tieneContenido`), salvo en
+  `npm run dev`, donde se siguen viendo con su recuadro punteado.
+- **El ancho de cada panel depende del tipo**: los de leer van angostos (680 px)
+  porque una columna de texto ancha se lee mal, y los de ver van anchos
+  (1000 px).
+
+**PENDIENTE: el teléfono.** Está hecho y funciona, pero **todavía no se ha
+revisado en un celular de verdad** — se dejó para después a propósito, primero
+había que ver la forma. Lo que hay que mirar ahí: si los paneles de 92vw se
+sienten bien al deslizar, si el panel del formulario se puede llenar sin pelear
+con el riel, y si conviene poner algún aviso de que la página se recorre de
+lado (la barra de desplazamiento se esconde, ver arriba).
+
 ### Llenar la página de Nosotros (`/about`)
 
 > **Por qué NO se parece al catálogo.** La primera versión era la tienda con
@@ -589,24 +687,76 @@ comparan contra la nueva.
 > la derecha, nunca centrado), **la etiqueta se queda fija** mientras su texto
 > pasa de largo, **jerarquía al revés** (títulos chicos y espaciados, párrafos
 > grandes: esta página se viene a leer), **secciones numeradas** separadas por
-> líneas finas, y **una sola banda invertida**, al final. El manifiesto ABRE la
-> tienda; esta CIERRA el Nosotros. Si se toca el diseño, conviene no perder esas
-> cinco cosas: son lo que la distingue.
+> líneas finas, y **una sola banda invertida** — la de "GO TO DROP #1", que ya
+> no cierra la página sino que va pegada al manifiesto. Si se toca el diseño,
+> conviene no perder esas cinco cosas: son lo que la distingue.
+>
+> Ojo con una: la **rejilla asimétrica** y la **etiqueta fija** eran gestos de
+> una página que bajaba. Desde que se recorre de lado, la etiqueta ya no tiene
+> contra qué quedarse fija (el panel no se mueve por dentro) y la rejilla solo
+> sobrevive en los bloques de texto. Es deuda pendiente de esa mudanza, no un
+> descuido.
 
 Todo se edita en **`config/about.ts`**; la página (`app/about/page.tsx`) no se
 toca. Tres partes:
 
 1. **`ABOUT_PORTADA`** — la foto grande de arriba y el párrafo de entrada.
-2. **`BLOQUES`** — la lista que se pinta de arriba abajo, en ese orden. Agrega,
-   quita o reordena a gusto. Hay cinco tipos:
+2. **`BLOQUES`** — la lista que se pinta en orden (de izquierda a derecha, desde
+   que la página se recorre de lado). Agrega, quita o reordena a gusto. Hay
+   seis tipos:
+   - `manifiesto` — **EL manifiesto de la marca**, el mismo que abre el catálogo
+     ("YOU ARE NOT A CONTENT CREATOR / YOU ARE AN ARTIST") y con su misma
+     tipografía. **No lleva texto**: lo lee de `config/brand.ts`, que es donde
+     vive, así que cambiarlo allá lo cambia en los dos lados. Aquí va sobre el
+     fondo del tema y NO invertido — esa carta ya la juega la banda de "GO TO
+     DROP #1", y dos bandas invertidas en un mismo recorrido se anulan.
    - `frase` — una cita descolgada, grande, dentro de la columna de contenido.
      **Inglés fijo** (es voz de marca, no interfaz); lo que va entre
-     `*asteriscos*` sale en cursiva.
+     `*asteriscos*` sale en cursiva. Hoy no se usa —el arranque lo tomó el
+     manifiesto— pero se queda para meter una cita suelta entre bloques.
    - `texto` — párrafo con título. Este **sí se traduce** (`{ en, es }`).
    - `foto` — una imagen; con `completo: true` va de borde a borde.
    - `duo` — dos fotos al parejo (en el teléfono se apilan).
    - `video` — en bucle y sin sonido, como el del countdown.
-3. **`ABOUT_CIERRE`** — la última frase, arriba del botón al catálogo.
+3. **`ABOUT_CIERRE`** — lo que dice la banda invertida. Hoy `"GO TO DROP #1"`.
+   **La banda ENTERA es el enlace al catálogo**, así que esta frase es lo único
+   que se lee ahí y tiene que decir a dónde lleva; antes debajo había además un
+   "VER DROP #1" chiquito, que sobraba y se quitó. Inglés fijo, como el
+   manifiesto. Vacío = no se muestra la banda.
+
+**LA BANDA DEL CIERRE YA NO CIERRA (6-ago-2026).** Se subió: ahora sale **justo
+después de la frase ancla** (el bloque de tipo `frase`), cerca del arranque de
+la página. Antes iba al final y quedaba demasiado tarde — para cuando alguien
+llegaba, ya había leído todo y el empujón al catálogo aparecía cuando la visita
+estaba por terminar. El nombre `ABOUT_CIERRE` se quedó como estaba para no
+romper nada.
+
+Su lugar **se calcula por tipo de bloque**, no con un número escrito a mano, así
+que reordenar `BLOQUES` no la deja en un lugar absurdo: se pega a la primera
+`frase` que encuentre. Si algún día no hubiera ninguna, sale al final, como
+antes.
+
+**LA BANDA TRAE UN CARRUSEL DE FONDO**: **tres tiras** con las playeras del
+catálogo pasando despacio y en bucle detrás del texto (60 s por vuelta). Se
+alimenta de `config/products.ts`, así que si cambian las fotos del drop cambian
+solas aquí. Cuatro detalles que importan si se toca:
+
+- **La de en medio va para un lado y las de afuera para el otro**
+  (`animation-direction: reverse`, clase `.carrusel-al-reves`). Tres tiras al
+  mismo ritmo y en la misma dirección se leen como una sola cosa moviéndose y el
+  fondo se aplana; cruzadas se nota que son capas.
+
+- **El bucle no se nota** porque la lista va dos veces y la animación recorre
+  exactamente media tira. Para que esa mitad caiga justo en la copia, la
+  separación entre piezas va como `pr-*` en CADA pieza y **no** como `gap` en la
+  tira: con `gap`, seis piezas dejan cinco huecos y el salto se vería.
+- **En tema claro las playeras van aclaradas** (`grayscale` + `brightness`, en
+  la clase `.carrusel` de `globals.css`). La banda es olivo oscuro y las tres
+  prendas también son oscuras: subir la opacidad no las hacía aparecer, solo las
+  volvía una mancha del mismo tono. En tema oscuro la banda es crema y resaltan
+  solas, así que ahí va sin filtro.
+- **Respeta "menos movimiento"**: si el sistema lo pide, la tira se queda quieta
+  pero las playeras siguen ahí.
 
 **Las fotos y el video van a Cloudinary**, igual que el catálogo: se sube el
 archivo y se pega la URL con `f_auto,q_auto,w_1600` (o `q_auto,vc_h264,w_1280`
@@ -621,9 +771,9 @@ Los textos entre **[corchetes]** son relleno (misma convención que los
 términos): están puestos como guion para ver la forma de la página, hay que
 reemplazarlos por los de verdad.
 
-**Ojo con el "VER DROP #1" del cierre:** manda a `/product`, y antes del drop
-eso regresa al countdown a quien no tenga la clave de acceso. Es a propósito, la
-misma decisión que en las páginas por producto.
+**Ojo con la banda:** manda a `/product`, y antes del drop eso regresa al
+countdown a quien no tenga la clave de acceso. Es a propósito, la misma decisión
+que en las páginas por producto.
 
 ### La convocatoria: "nuestros museos están vacíos"
 Es la sección de hasta abajo del Nosotros, donde la gente manda su arte para
@@ -877,6 +1027,208 @@ Lo que se buscó: seguridad, rendimiento, código muerto y correctitud.
 tiene contraseñas escritas en el código; el webhook valida la firma de Stripe;
 la consulta de pedidos no filtra datos de más ni dice cuál dato falló.
 
+### Auditoría de peso y rendimiento (6-ago-2026)
+
+Todo lo de abajo está **medido** sobre el build de producción de ese día, no
+estimado. Están ordenados por lo que de verdad cambia, no por lo fácil.
+
+**Casi todo ya se aplicó el mismo día.** Lo que se ganó, en números:
+
+| | Antes | Ahora |
+|---|---|---|
+| Video del countdown | 5.42 MB | **2.70 MB** |
+| Primera carga de `/about` | 192 KB gzip | **153 KB** |
+| Primera carga de `/product` | 191 KB | **153 KB** |
+| Primera carga de la home | 179 KB | **140 KB** |
+| Recorrido home → nosotros → catálogo | bajaba framer-motion **dos veces** | ya no lo baja |
+
+**Lo único que NO se aplicó es el punto 3 (el idioma)**, y por una razón de
+peso que solo se vio al probarlo. Está explicado ahí.
+
+**Cómo se midió** (para poder repetirlo): `npm run build`, y luego sumar el
+tamaño gzip de los `.js` que cada página pide en su HTML ya generado
+(`.next/server/app/*.html`). El video se midió pidiéndolo a Cloudinary con
+distintas transformaciones y comparando `size_download`.
+
+**El piso del sitio son 125.7 KB gzip de JavaScript**, iguales en todas las
+páginas (React + el router de Next + los proveedores de tema e idioma). Es lo
+normal de Next 16 y ahí no hay mucho que rascar. Todo lo interesante está
+encima de ese piso.
+
+> **No te asustes con los números crudos.** Hay un chunk de 38.7 KB gzip que
+> parece cargarse en todas las páginas: son *polyfills* para navegadores viejos
+> y va marcado `noModule`, así que **ningún navegador moderno lo descarga**. No
+> cuenta. Si algún día mides y te sale ~165 KB de piso, es que lo estás
+> sumando de más.
+
+#### 1. El video del countdown pesaba 5.42 MB — HECHO, ahora pesa la mitad
+
+Es, con muchísima diferencia, lo más pesado del sitio, y es **lo primero que ve
+todo el mundo**. Medido contra Cloudinary:
+
+| Cómo se pide | Peso |
+|---|---|
+| Hoy (`q_auto,vc_h264,w_1280`) | **5.42 MB** |
+| `q_auto:eco,vc_h264,w_960` | **2.70 MB** (la mitad) |
+| `q_auto,vc_vp9,w_1280` (webm) | 3.43 MB |
+
+Se aplicó `q_auto:eco,vc_h264,w_960` en `DROP_VIDEO` (`config/drop.ts`). El de
+webm se descartó: Safari lo reproduce a medias según la versión, y el countdown
+en iPhone es el caso que más importa.
+
+> **FALTA VERLO EN UN TELÉFONO.** Esto se midió, no se juzgó a ojo: `q_auto:eco`
+> aprieta la calidad y el video es de caballos corriendo, que es justo donde se
+> nota. Si se ve feo, lo primero que hay que soltar es `q_auto:eco` (déjalo en
+> `q_auto` y quédate con `w_960`, que sigue ahorrando bastante). Está anotado
+> también en el comentario de `config/drop.ts`.
+
+#### 2. framer-motion costaba 39 KB gzip por página y viajaba DOS VECES — HECHO, ya no está
+
+Es lo más caro del JavaScript. Y está **duplicado**: hay dos copias distintas del
+mismo paquete, una para la home y otra para el resto. Un recorrido normal
+(countdown → Nosotros → catálogo) descarga **78 KB gzip de la misma librería**.
+
+Se usa para exactamente **tres cosas**, y las tres son transiciones de entrada y
+salida que el CSS hace solo:
+
+| Dónde | Qué anima |
+|---|---|
+| `app/page.tsx` | la cortina de salida y el manifiesto que se desenfoca |
+| `components/cartDrawer.tsx` | el fondo que se oscurece y el cajón que entra de lado |
+| `components/productModal.tsx` | el fondo y el panel que aparece creciendo |
+
+**CÓMO QUEDÓ.** Lo único que framer resolvía gratis es **animar algo que se está
+desmontando** (`AnimatePresence`): cuando un elemento desaparece del árbol, ya
+no hay a qué aplicarle una transición. Eso ahora lo hace **`lib/usePresencia.ts`**,
+un enganche de ~30 líneas que mantiene el elemento montado el tiempo que dura la
+salida y lo quita al terminar. El carrito y el modal lo usan; la cortina de la
+home no lo necesita, porque solo entra (para cuando termina, ya se cambió de
+página) y le bastan unos `@keyframes` en `globals.css`.
+
+**Ya había precedente:** `components/reveal.tsx` hacía esto mismo con framer y se
+pasó a CSS justo porque se sentía pesado al scrollear en iPhone.
+
+> **Lo que se aprendió haciéndolo, y por qué `usePresencia` trae un temporizador
+> de respaldo:** para que una transición de CSS corra, el navegador tiene que
+> haber pintado ANTES el estado apagado, y eso normalmente se consigue esperando
+> dos cuadros (`requestAnimationFrame`). Pero **los navegadores CONGELAN los
+> cuadros cuando la pestaña no se está viendo** — comprobado: en una pestaña
+> oculta `requestAnimationFrame` no dispara ni en medio segundo. Sin respaldo,
+> algo que se abriera con la pestaña en segundo plano quedaría montado pero
+> invisible para siempre. Por eso hay además un `setTimeout` de 80 ms: gana el
+> que llegue primero y los dos terminan en el mismo lugar.
+>
+> Ese mismo congelamiento es la razón de que **la animación no se pueda
+> comprobar con el navegador automatizado**: se puede verificar que las clases
+> cambian y que el elemento se monta y se desmonta cuando debe (eso sí se
+> probó), pero el movimiento en sí hay que verlo con los ojos.
+
+#### 3. El idioma parpadea, y Google solo ve el sitio en inglés — SE PROBÓ Y SE ECHÓ PARA ATRÁS
+
+`lib/i18n/context.tsx` arranca **siempre** en inglés y corrige después de
+hidratar, leyendo `localStorage`. Eso trae tres cosas:
+
+1. Quien eligió español **ve la página en inglés un instante** y luego cambia.
+2. El HTML que sirve el servidor está siempre en inglés, así que **el buscador
+   nunca ve la versión en español**.
+3. El `<html lang>` inicial dice `en` aunque el texto acabe en español (el
+   contexto lo corrige después, pero el HTML servido ya salió mal).
+
+**El arreglo obvio** era guardar el idioma en una **cookie** en vez de
+`localStorage` y leerla en `app/layout.tsx`, que es de servidor.
+
+**SE IMPLEMENTÓ, SE MIDIÓ Y SE REVIRTIÓ.** Leer una cookie en el layout raíz
+**vuelve DINÁMICAS todas las páginas del sitio**: en el build, las diez páginas
+que hoy salen como `○` (HTML estático, servido desde la red de Vercel sin
+ejecutar nada) pasaron todas a `ƒ` (se arman en un servidor en cada visita).
+
+No vale la pena, y menos ahora: el día del drop es justo cuando llega el pico de
+tráfico y cuando más importa que las páginas salgan de la caché y no de una
+función. Se cambiaba un parpadeo de medio segundo por perder el HTML estático en
+el peor momento posible.
+
+**Queda pendiente, con la salida buena identificada:** si algún día importa de
+verdad, la forma correcta es **rutas por idioma** (`/es/...` y `/en/...`) con el
+proxy redirigiendo según la cookie. Así hay dos versiones estáticas en vez de
+una dinámica: se arregla el parpadeo Y el SEO **sin** perder el HTML estático.
+Es más trabajo, pero es el único camino que no cambia una cosa por otra.
+
+Mientras tanto: el `<html lang>` sí se corrige después de hidratar
+(`lib/i18n/context.tsx` lo hace), así que un lector de pantalla acaba con el
+idioma bueno; lo que queda mal es el HTML inicial que ve el buscador.
+
+#### 4. Dos dependencias que no usaba nadie — HECHO, fuera
+
+- **`@stripe/stripe-js`** — cero imports. El pago no lo hace el navegador: el
+  servidor crea la sesión y se redirige a la URL que devuelve Stripe.
+- **`next-cloudinary`** — cero imports. Las fotos se piden con URLs armadas a
+  mano (el helper `foto()` de `config/products.ts`), que es más simple.
+
+**OJO, esto NO adelgazó el sitio:** como nadie las importaba, nunca llegaron al
+navegador. Lo que se ganó es instalación más ligera, menos superficie de
+supply chain y documentación que deja de mentir — porque de paso se descubrió
+que **`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` tampoco la usa nadie**, aunque la
+sección 4 la listaba como necesaria. Esa tabla ya quedó corregida; la variable
+se puede borrar de Vercel cuando quieras.
+
+#### 5. Restos que había que barrer — HECHO
+
+- **`png.pngtree.com` en `next.config.ts`** — un host de imágenes de relleno que
+  quedó de las pruebas. Mientras estuviera en `remotePatterns`, el optimizador
+  de Next aceptaba traer y servir cualquier imagen de ese dominio. Quitado.
+- **`public/` tenía los 5 SVG del starter de Next** (`file`, `globe`, `next`,
+  `vercel`, `window`). Borrados; la carpeta quedó vacía.
+
+#### 6. El grano se abarató — HECHO
+
+Lo caro de verdad —`mix-blend-mode` y los `backdrop-filter`— ya se quitó, y eso
+está bien. Lo que queda es que la textura la dibuja un filtro `feTurbulence`
+sobre un rectángulo **del tamaño completo de la pantalla**: rasterizar eso una
+vez a resolución de teléfono no es gratis, y se vuelve a rasterizar cada vez que
+alguien gira el aparato.
+
+**Cómo quedó:** el ruido se genera **una sola vez en un cuadrito de 256 px** y
+se repite como `background-image` (`stitchTiles="stitch"` es lo que hace que las
+orillas empaten y no se note la cuadrícula). El `<svg>` desapareció de la
+página: `components/grain.tsx` ahora solo dibuja un `<div class="grain">` y todo
+el filtro vive dentro de la clase, en `globals.css`.
+
+> Comprobado en el **build de producción**, no en `npm run dev`: el servidor de
+> desarrollo puede quedarse una edición atrás con el CSS y hacerte creer que no
+> aplicó. Si vuelves a tocar esta clase y "no pasa nada", levanta
+> `npm run build && npx next start` antes de perseguir un fantasma.
+
+#### 7. Cosas que parecen problema y no lo son
+
+Anotadas para que nadie las "arregle" pensando que urgen:
+
+- **Los logos del navbar se piden a Cloudinary sin `f_auto,q_auto`** (18 KB y
+  7 KB en crudo). Da igual: pasan por `/_next/image`, que los vuelve a optimizar
+  antes de mandarlos. El navegador no paga de más; lo único que cambia es un
+  poco de trabajo del optimizador la primera vez.
+- **Los dos diccionarios (inglés y español) viajan siempre**, completos: 5.4 KB
+  gzip. Partirlos costaría más complejidad de lo que ahorra.
+- **Todas las `<Image>` con `fill` ya traen su `sizes`.** Revisadas una por una;
+  no hay ninguna sirviendo una foto más grande de la que cabe.
+- **En el CSS ya compilado vas a ver `filter: blur()`, sin número.** No está
+  roto: el argumento de `blur()` es opcional y vale 0, y el minificador lo
+  acorta. Comprobado en el navegador — `blur()` se calcula como `blur(0px)`.
+
+#### 8. Lo que queda pendiente de esta auditoría
+
+- **El idioma** (punto 3), por la vía de rutas `/es` y `/en`.
+- **`npm audit` reporta 9 vulnerabilidades, 8 de ellas altas**, todas heredadas
+  de **`sharp`/libvips**, que es la librería con la que Next optimiza las
+  imágenes. `npm audit fix --force` las arregla pero **sube Next de 16.1.6 a
+  16.3.0**, y subir de versión el sitio de una tienda a días de un lanzamiento
+  es una decisión tuya, no algo que se deba hacer de pasada. Anotado para que
+  no se olvide.
+- **`npx eslint` marca dos errores que ya venían de antes** y que nadie ha
+  tocado: `app/page.tsx:49` y `components/countdown.tsx:49`, los dos por llamar
+  a `setState` directo dentro de un `useEffect`. Funcionan bien; la regla avisa
+  de dibujados en cascada. No se arreglaron aquí para no mezclar cambios de
+  rendimiento con cambios de comportamiento del countdown.
+
 ### Antes de abrir la tienda
 
 - **Fecha real del drop** (`DROP_DATE`), hoy placeholder 1-sep-2026.
@@ -893,6 +1245,9 @@ la consulta de pedidos no filtra datos de más ni dice cuál dato falló.
 
 ### Siguiente etapa técnica
 
+- **Lo que quedó pendiente de la auditoría de peso** (sección de arriba,
+  6-ago-2026): las rutas por idioma (`/es` y `/en`) y la actualización de Next
+  que cierra las alertas de `sharp`. El resto ya se aplicó ese mismo día.
 - **Base de datos (Supabase) + correos (Resend)** — guardar órdenes, descontar
   stock automático y confirmar por correo. Mostrar ventas/stock en el panel.
   **Se lleva también la convocatoria**: hoy los envíos se guardan en Cloudinary

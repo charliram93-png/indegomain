@@ -242,13 +242,31 @@ body {
     Sube o baja SOLO este número para que el grano se note más o menos.
     Ojo: pasando de ~0.12 empieza a comerse el contraste del texto.
 
-    NOTA de rendimiento: antes esta capa usaba `mix-blend-mode: overlay`, que
-    obliga al navegador a recombinar TODA la pantalla en cada cuadro mientras
-    se hace scroll. Se quitó: ahora es una capa normal, que la GPU dibuja una
-    vez y reutiliza. El ruido trae motas claras y oscuras, así que sigue
-    funcionando igual en tema claro y en oscuro.
+    NOTA de rendimiento, en dos tiempos:
+
+    1. Antes esta capa usaba `mix-blend-mode: overlay`, que obliga al navegador
+       a recombinar TODA la pantalla en cada cuadro mientras se hace scroll. Se
+       quitó: ahora es una capa normal, que la GPU dibuja una vez y reutiliza.
+       El ruido trae motas claras y oscuras, así que sigue funcionando igual en
+       tema claro y en oscuro.
+
+    2. (6-ago-2026) Antes el ruido se calculaba sobre un rectángulo DEL TAMAÑO
+       DE LA PANTALLA. Generar ruido no es gratis, y a resolución de teléfono
+       moderno son millones de píxeles — y se rehacía cada vez que alguien
+       giraba el aparato. Ahora se calcula UNA VEZ en un cuadrito de 256 px y
+       se repite (`stitchTiles="stitch"` es justo lo que hace que las orillas
+       empaten y no se vea la cuadrícula). Se ve igual y cuesta ~1/100.
   */
   opacity: 0.05;
+  /*
+    El ruido va aquí y no en un <svg> en la página: como fondo, el navegador lo
+    dibuja una sola vez y lo repite solo. Es el mismo filtro de antes, palabra
+    por palabra, solo que metido en la URL (por eso los `%3C` y `%3E`: son `<`
+    y `>` escapados, y `%23` es el `#` de `url(#ruido)`).
+  */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='3' intercept='-1'/%3E%3CfeFuncG type='linear' slope='3' intercept='-1'/%3E%3CfeFuncB type='linear' slope='3' intercept='-1'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23r)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 /*
@@ -257,3 +275,157 @@ body {
   el video llena en vertical con `object-cover` (hace zoom a los caballos) y el
   texto, al estar hecho en HTML, se acomoda solo al formato vertical.
 */
+
+/*
+  LA SALIDA DEL COUNTDOWN (ver `app/page.tsx`)
+  --------------------------------------------
+  Antes esto lo animaba framer-motion cuadro a cuadro con JavaScript. Se pasó a
+  CSS el 6-ago-2026: framer costaba 39 KB comprimidos por página y viajaba
+  duplicado, y esto son dos animaciones que corren solas en la GPU.
+
+  LOS TIEMPOS NO ESTÁN AQUÍ, a propósito: salen de las constantes `T_CORTINA`,
+  `T_FRASE` y `T_DIFUMINA` de `app/page.tsx` y entran como `animation-duration`
+  y `animation-delay`. Así se siguen ajustando en un solo lugar, que era la
+  gracia del arreglo anterior.
+*/
+
+/* 1. La cortina: la pantalla se llena del color del tema y se traga el video. */
+@keyframes cortina {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+  2. La frase entra desenfocada, se aclara, se queda un momento y se vuelve a
+  desenfocar al irse. Los porcentajes son los mismos cuadros clave que tenía la
+  versión con framer (0 / 0.3 / 0.7 / 1).
+*/
+@keyframes frase-de-salida {
+  0% {
+    opacity: 0;
+    filter: blur(14px);
+  }
+  30% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  70% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(16px);
+  }
+}
+
+/*
+  CARRUSEL DE FONDO de la banda del cierre (ver `app/about/page.tsx`).
+  --------------------------------------------------------------------
+  Una tira con las playeras repetidas DOS VECES que se recorre media tira y
+  vuelve a empezar. Como la segunda mitad es idéntica a la primera, el salto
+  del final al principio cae en un punto donde se ve exactamente lo mismo:
+  parece que nunca termina. Ese es todo el truco, no hay JavaScript.
+
+  Solo se anima `transform`, que el navegador mueve en la GPU sin volver a
+  calcular la página.
+*/
+.carrusel {
+  /* Lento a propósito: es un fondo, no algo que quiera que lo mires. */
+  animation: carrusel 60s linear infinite;
+
+  /*
+    POR QUÉ LAS PLAYERAS VAN ACLARADAS EN TEMA CLARO, y no simplemente con una
+    opacidad más alta:
+
+    La banda invertida es OLIVO OSCURO en tema claro, y las tres playeras
+    también son oscuras (medidas en su momento: 46, 57 y 67 de luminancia,
+    contra un fondo de ~50). O sea que están casi en el mismo tono que su
+    fondo: subir la opacidad no las hacía aparecer, solo las volvía una mancha
+    del mismo color. Había que MOVERLAS DE TONO, no de intensidad.
+
+    `grayscale` les quita el color (que ahí abajo tampoco se distinguía) y
+    `brightness` las sube hasta un gris claro que sí despega del olivo. Quedan
+    como fantasmas, que es justo lo que se quiere de un fondo.
+
+    Es un filtro FIJO, no animado: el navegador dibuja la tira filtrada una vez
+    y luego solo la desliza. Eso es barato. Un `mix-blend-mode` habría dado un
+    resultado parecido pero recombinando contra el fondo en CADA cuadro, y
+    encima de algo que se mueve sin parar — que es exactamente el tipo de cosa
+    que ya se sacó de este proyecto por pesada.
+  */
+  filter: grayscale(1) brightness(2.4);
+  opacity: 0.16;
+}
+
+/*
+  LA TIRA DE EN MEDIO VA PARA UN LADO Y LAS DE ARRIBA Y ABAJO PARA EL OTRO.
+
+  `animation-direction: reverse` recorre los mismos cuadros clave al revés, así
+  que no hace falta una segunda animación: es la misma, andando de vuelta. Y el
+  bucle sigue siendo invisible en las dos direcciones, porque la tira lleva las
+  playeras dos veces y el punto de empalme se ve idéntico se llegue por donde se
+  llegue.
+
+  Por qué en sentidos contrarios: tres tiras al mismo ritmo y en la misma
+  dirección se leen como UNA sola cosa moviéndose, y el fondo se aplana.
+  Cruzadas se nota que son capas, y la banda gana profundidad sin que nada
+  llame más la atención que la frase.
+*/
+.carrusel-al-reves {
+  animation-direction: reverse;
+}
+
+/*
+  En OSCURO la banda es CREMA y las playeras oscuras resaltan solas: no hace
+  falta aclararlas, al contrario, aclararlas las borraría.
+*/
+.dark .carrusel {
+  filter: none;
+  opacity: 0.14;
+}
+
+@keyframes carrusel {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Menos movimiento: la tira se queda quieta, pero las playeras siguen ahí. */
+@media (prefers-reduced-motion: reduce) {
+  .carrusel {
+    animation: none;
+  }
+}
+
+/*
+  RIEL SIN BARRA DE DESPLAZAMIENTO (ver `app/about/page.tsx`).
+  --------------------------------------------------------------
+  Se sigue pudiendo recorrer igual —con el dedo, con la rueda, con el teclado—;
+  lo único que se esconde es la barra. En una página que es puro recorrido, esa
+  barra gris cruzada abajo se leía como un elemento de la interfaz metido en
+  medio del diseño.
+
+  Van las dos formas porque no hay una sola que sirva en todos lados:
+  `scrollbar-width` es la estándar (Firefox y Chrome nuevo) y el
+  `::-webkit-scrollbar` cubre a Safari y a los Chrome viejos.
+
+  OJO SI SE TOCA: al esconderla también se esconde la ÚNICA pista visual de que
+  la página se recorre de lado. Hoy se aguanta porque los paneles quedan
+  cortados a la orilla y eso ya invita a seguir; si se acomodan para que quepan
+  justos, hay que poner otra pista en su lugar.
+*/
+.sin-barra {
+  scrollbar-width: none;
+}
+
+.sin-barra::-webkit-scrollbar {
+  display: none;
+}

@@ -1,20 +1,32 @@
 "use client";
 
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useCart, precioVigente } from "@/store/cart";
 import { formatMXN } from "@/lib/format";
 import { HELVETICA } from "@/lib/fonts";
 import { useScrollLock } from "@/lib/useScrollLock";
+import { usePresencia } from "@/lib/usePresencia";
 import { useI18n } from "@/lib/i18n/context";
+
+/** Lo que tarda el cajón en entrar y en salir. Tiene que ser el MISMO número
+ *  que la `duration-` de las clases de abajo (ver `lib/usePresencia.ts`). */
+const MS = 300;
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, subtotal } =
     useCart();
   const { t, lang } = useI18n();
   const [loading, setLoading] = useState(false);
+
+  /*
+    ENTRAR Y SALIR SIN framer-motion (6-ago-2026). Antes esto era
+    `<AnimatePresence>`; ahora `usePresencia` mantiene el cajón montado
+    mientras se va y la animación la hace una transición de CSS. framer
+    costaba 39 KB comprimidos por página y solo servía para esto.
+  */
+  const { montado, dentro } = usePresencia(isOpen, MS);
 
   const total = subtotal();
 
@@ -62,166 +74,165 @@ export default function CartDrawer() {
     }
   };
 
+  if (!montado) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/*
-            Fondo. SIN `backdrop-blur`: desenfocar el fondo obliga al navegador
-            a volver a desenfocarlo en cada cuadro mientras el panel se desliza
-            encima, y eso era el tirón al abrir el carrito. Ahora es una capa
-            de color plana, más opaca para que siga separando del contenido.
-          */}
-          <motion.div
-            className="fixed inset-0 z-[60] bg-foreground/40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+    <>
+      {/*
+        Fondo. SIN `backdrop-blur`: desenfocar el fondo obliga al navegador
+        a volver a desenfocarlo en cada cuadro mientras el panel se desliza
+        encima, y eso era el tirón al abrir el carrito. Ahora es una capa
+        de color plana, más opaca para que siga separando del contenido.
+      */}
+      <div
+        className={`fixed inset-0 z-[60] bg-foreground/40 transition-opacity duration-300 ease-in-out ${
+          dentro ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={closeCart}
+      />
+
+      {/* Panel */}
+      <aside
+        /* Todo el carrito en la Helvetica del sitio (se hereda hacia adentro) */
+        style={{ fontFamily: HELVETICA }}
+        /*
+          `h-svh` (no `h-dvh`): mide la ventana en su estado MÁS CHICO, con
+          las barras del navegador visibles. Así el panel siempre cabe,
+          aunque Safari muestre u oculte su barra a media animación.
+
+          Entra deslizándose desde la derecha. Se anima `transform` y nada
+          más: es de las dos cosas que el navegador mueve en la GPU sin tener
+          que recalcular la página (la otra es `opacity`).
+        */
+        className={`fixed top-0 right-0 z-[70] flex h-svh w-full max-w-md flex-col bg-surface text-foreground shadow-2xl transition-transform duration-300 ease-in-out ${
+          dentro ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {/* Encabezado */}
+        <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-5">
+          <h2 className="text-xs font-bold uppercase italic tracking-[0.08em]">
+            {t.cart.title}
+          </h2>
+          <button
             onClick={closeCart}
-          />
-
-          {/* Panel */}
-          <motion.aside
-            /* Todo el carrito en la Helvetica del sitio (se hereda hacia adentro) */
-            style={{ fontFamily: HELVETICA }}
-            /*
-              `h-svh` (no `h-dvh`): mide la ventana en su estado MÁS CHICO, con
-              las barras del navegador visibles. Así el panel siempre cabe,
-              aunque Safari muestre u oculte su barra a media animación.
-            */
-            className="fixed top-0 right-0 z-[70] flex h-svh w-full max-w-md flex-col bg-surface text-foreground shadow-2xl"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+            aria-label={t.cart.close}
+            className="transition-opacity hover:opacity-40"
           >
-            {/* Encabezado */}
-            <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-5">
-              <h2 className="text-xs font-bold uppercase italic tracking-[0.08em]">
-                {t.cart.title}
-              </h2>
-              <button
-                onClick={closeCart}
-                aria-label={t.cart.close}
-                className="transition-opacity hover:opacity-40"
-              >
-                <X size={22} strokeWidth={1.5} />
-              </button>
+            <X size={22} strokeWidth={1.5} />
+          </button>
+        </div>
+
+        {/* Items */}
+        <div className="flex-1 overflow-y-auto px-6">
+          {items.length === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-[11px] uppercase tracking-[0.03em] opacity-40">
+                {t.cart.empty}
+              </p>
             </div>
+          ) : (
+            <ul className="divide-y divide-foreground/10">
+              {items.map((item) => (
+                <li key={item.id} className="flex gap-4 py-5">
+                  <div className="relative h-24 w-20 shrink-0 overflow-hidden">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      sizes="80px"
+                      className="object-contain"
+                    />
+                  </div>
 
-            {/* Items */}
-            <div className="flex-1 overflow-y-auto px-6">
-              {items.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <p className="text-[11px] uppercase tracking-[0.03em] opacity-40">
-                    {t.cart.empty}
-                  </p>
-                </div>
-              ) : (
-                <ul className="divide-y divide-foreground/10">
-                  {items.map((item) => (
-                    <li key={item.id} className="flex gap-4 py-5">
-                      <div className="relative h-24 w-20 shrink-0 overflow-hidden">
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          sizes="80px"
-                          className="object-contain"
-                        />
+                  <div className="flex flex-1 flex-col justify-between">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-tight">
+                          {item.name}
+                        </p>
+                        <p className="mt-1 text-[10px] uppercase tracking-[0.02em] opacity-50">
+                          {t.cart.size} {item.size}
+                        </p>
                       </div>
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        aria-label={t.cart.remove}
+                        className="cursor-pointer p-1 opacity-30 transition-opacity hover:opacity-100"
+                      >
+                        <Trash2 size={14} strokeWidth={1.5} />
+                      </button>
+                    </div>
 
-                      <div className="flex flex-1 flex-col justify-between">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-xs font-bold uppercase tracking-tight">
-                              {item.name}
-                            </p>
-                            <p className="mt-1 text-[10px] uppercase tracking-[0.02em] opacity-50">
-                              {t.cart.size} {item.size}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            aria-label={t.cart.remove}
-                            className="cursor-pointer p-1 opacity-30 transition-opacity hover:opacity-100"
-                          >
-                            <Trash2 size={14} strokeWidth={1.5} />
-                          </button>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          {/*
+                    <div className="flex items-center justify-between">
+                      {/*
                             CANTIDAD, igual que en el modal de producto: sin
                             recuadro ni fondo, solo los signos y el número.
                           */}
-                          <div className="flex w-fit items-center gap-5">
-                            <button
-                              onClick={() =>
-                                updateQuantity(item.id, item.quantity - 1)
-                              }
-                              aria-label={t.cart.less}
-                              className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100"
-                            >
-                              <Minus size={16} />
-                            </button>
-                            <span className="min-w-6 text-center text-sm font-bold">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() =>
-                                updateQuantity(item.id, item.quantity + 1)
-                              }
-                              aria-label={t.cart.more}
-                              className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100"
-                            >
-                              <Plus size={16} />
-                            </button>
-                          </div>
-                          <p className="text-xs font-bold">
-                            {/* `precioVigente` y no `item.price`: el carrito
-                                guardado puede traer un precio viejo. */}
-                            {formatMXN(precioVigente(item) * item.quantity)}
-                          </p>
-                        </div>
+                      <div className="flex w-fit items-center gap-5">
+                        <button
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity - 1)
+                          }
+                          aria-label={t.cart.less}
+                          className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100"
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <span className="min-w-6 text-center text-sm font-bold">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity + 1)
+                          }
+                          aria-label={t.cart.more}
+                          className="cursor-pointer py-2 opacity-50 transition-opacity hover:opacity-100"
+                        >
+                          <Plus size={16} />
+                        </button>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                      <p className="text-xs font-bold">
+                        {/* `precioVigente` y no `item.price`: el carrito
+                                guardado puede traer un precio viejo. */}
+                        {formatMXN(precioVigente(item) * item.quantity)}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-            {/*
+        {/*
               Pie / checkout.
               `pb-[env(safe-area-inset-bottom)]` deja libre la franja de la
               barra de gestos del iPhone: sin eso, el botón queda debajo de
               ella y se ve mochado.
             */}
-            {items.length > 0 && (
-              <div className="border-t border-foreground/10 px-6 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
-                <div className="mb-1 flex items-center justify-between text-sm font-bold uppercase tracking-[0.02em]">
-                  <span>{t.cart.subtotal}</span>
-                  <span>{formatMXN(total)}</span>
-                </div>
-                <p className="mb-4 text-[10px] uppercase tracking-[0.02em] opacity-40">
-                  {t.cart.shippingNote}
-                </p>
-                {/*
+        {items.length > 0 && (
+          <div className="border-t border-foreground/10 px-6 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+            <div className="mb-1 flex items-center justify-between text-sm font-bold uppercase tracking-[0.02em]">
+              <span>{t.cart.subtotal}</span>
+              <span>{formatMXN(total)}</span>
+            </div>
+            <p className="mb-4 text-[10px] uppercase tracking-[0.02em] opacity-40">
+              {t.cart.shippingNote}
+            </p>
+            {/*
                   PAGAR: solo texto, como "Agregar al carrito" en el modal.
                   Sin fondo sólido, sin borde, sin sombra.
                 */}
-                <button
-                  onClick={handleCheckout}
-                  disabled={loading}
-                  className="w-fit cursor-pointer py-2 text-left text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-opacity hover:opacity-50 disabled:cursor-not-allowed disabled:opacity-30"
-                >
-                  {loading ? t.cart.connecting : t.cart.pay}
-                </button>
-              </div>
-            )}
-          </motion.aside>
-        </>
-      )}
-    </AnimatePresence>
+            <button
+              onClick={handleCheckout}
+              disabled={loading}
+              className="w-fit cursor-pointer py-2 text-left text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-opacity hover:opacity-50 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              {loading ? t.cart.connecting : t.cart.pay}
+            </button>
+          </div>
+        )}
+      </aside>
+    </>
   );
 }

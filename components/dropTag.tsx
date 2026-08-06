@@ -19,29 +19,40 @@ import { HELVETICA } from "@/lib/fonts";
  * (6-ago-2026): repetida a los pocos segundos de scroll se leía como relleno y
  * le quitaba fuerza a esta, que es la que tiene que llamar.
  *
- * VA MONTADA SOBRE EL BORDE DE LA BARRA, a caballo: la mayor parte dentro del
- * navbar y el resto colgando sobre la página. Por eso está posicionada
- * `absolute` contra la barra (`top-full` la baja hasta el borde y el
- * `-translate-y-*` la vuelve a subir) y NO va en la fila del logo: en la fila
- * quedaría contenida y no podría asomarse. Se ve como una etiqueta pegada
- * encima, no como un botón más de la barra.
+ * VA PEGADA A LA PANTALLA, no a la página: se queda quieta a la derecha,
+ * bastante más abajo del navbar, mientras todo lo demás pasa por detrás. Antes
+ * iba montada a caballo sobre el borde de la barra; se cambió el 6-ago-2026
+ * para que acompañe toda la lectura y no solo el arranque.
  *
- * VA LADEADA a propósito: derecha se leería como un botón más de la barra, que
- * es justo lo que no es.
+ * NO SE DIBUJA DESDE EL NAVBAR, y no es por orden: la barra lleva
+ * `backdrop-blur`, y un elemento `fixed` dentro de algo desenfocado se
+ * posiciona contra ESE elemento en vez de contra la ventana. Colgando del
+ * navbar, sencillamente no se podía fijar a la pantalla.
  *
- * NO SE MUESTRA EN `/product`: ahí ya estás en el catálogo, y una etiqueta que
- * te lleva a donde ya estás sobra. Cubre también `/product/idg-01` y demás.
+ * QUIÉN DECIDE DÓNDE SALE: la página que la dibuje. Hoy solo `/about`, que es
+ * exactamente donde salía antes (era la única con navbar que no la escondía).
+ * Como está posicionada contra la ventana, da igual en qué parte del árbol se
+ * ponga — mientras no cuelgue de algo con `backdrop-filter` o `transform`.
+ *
+ * VA DERECHA, sin inclinar. Se probó ladeada mientras estaba montada en la
+ * barra, donde funcionaba —ahí se leía como calcomanía pegada al borde—, pero
+ * suelta en medio de la pantalla la inclinación se veía como un descuido.
  *
  * LA IMAGEN sale de `DROP_TAG_IMAGE` (`config/drop.ts`) y es APAISADA (el PNG
  * mide 1681 × 936, con fondo transparente): el tamaño se manda POR ALTURA y el
  * ancho lo saca de la imagen, o sea que ocupa casi el doble de ancho que de
  * alto. Mientras esa variable esté vacía se dibuja la de respaldo en SVG, que
- * toma los colores del tema, para que el navbar no quede con un hueco.
+ * toma los colores del tema, para que nunca quede un hueco.
  */
 export default function DropTag() {
   const pathname = usePathname();
 
-  // Fuera del catálogo y de las páginas por producto.
+  /*
+    NUNCA DENTRO DEL CATÁLOGO, aunque alguien la ponga ahí por descuido: una
+    etiqueta que te lleva a donde ya estás sobra. Cubre `/product` y también
+    `/product/idg-01` y demás. El resto de "dónde sale" lo decide quien la
+    dibuje (ver el comentario de arriba).
+  */
   if (pathname === "/product" || pathname.startsWith("/product/")) return null;
 
   return (
@@ -49,34 +60,31 @@ export default function DropTag() {
       href="/product"
       aria-label="Drop #1"
       /*
-        DÓNDE QUEDA, que es distinto en cada tamaño (ajustado 6-ago-2026):
+        DÓNDE QUEDA: pegada a la ventana, a la derecha y MUY por debajo del
+        navbar — no colgando de él.
 
-        · TELÉFONO — `left-[70px]`. El logo mide 56 px y arranca en el margen de
-          24, o sea que termina en 80: la etiqueta le monta los últimos 10 px a
-          propósito, para que se lea PEGADA ENCIMA del logo y no acomodada a un
-          lado. La parte del logo que tapa es aire, no dibujo.
-          Y sube un poco más de lo normal (`-translate-y-[64%]` en vez de la
-          mitad): en pantalla chica, colgando media etiqueta se comía demasiado
-          de lo que hay debajo.
+        · La barra mide 80 px. `top-40` la deja en 160, o sea a otro navbar
+          entero de distancia; en computadora baja a 192 (`md:top-48`), que
+          ahí sobra pantalla. La separación es el punto: pegada al borde volvía
+          a leerse como parte de la barra, que es justo lo que se quiso quitar.
+        · `right-6` / `md:right-12` son los MISMOS márgenes que usa el navbar,
+          para que quede a plomo con el botón del carrito.
+        · `z-40` la deja debajo de la barra (z-50), del modal (z-50) y del
+          carrito (z-60/70): nunca estorba a algo que se abra encima.
 
-        · COMPUTADORA — `left-[146px]` y centrada en el borde. Ahí sí hay lugar
-          de sobra (el logo mide 80 y el margen es 48), así que la etiqueta va
-          después del logo, sin encimarse.
-
-        EL MOVIMIENTO al pasar el cursor: se endereza un poco y crece. Es el
-        único que tiene, y basta para que se lea como algo con lo que se puede
-        jugar. MEDIO SEGUNDO, no un tercio: a 300 ms se sentía un tirón seco,
+        AL PASAR EL CURSOR solo crece. Ya no se endereza, porque ya está
+        derecha. Medio segundo, no un tercio: a 300 ms se sentía un tirón seco,
         más un cambio de estado que un movimiento.
       */
-      className="group absolute left-[70px] top-full z-10 -translate-y-[64%] -rotate-[7deg] select-none drop-shadow-sm transition-transform duration-500 ease-out hover:-rotate-[3deg] hover:scale-105 md:left-[146px] md:-translate-y-1/2"
+      className="fixed right-6 top-40 z-40 select-none drop-shadow-sm transition-transform duration-500 ease-out hover:scale-105 md:right-12 md:top-48"
     >
       {DROP_TAG_IMAGE ? (
         /* 44 px de alto en teléfono y 64 en computadora — o sea unos 79 y 115
-           de ANCHO, porque es apaisada. Cabe montada en la barra de 80 px sin
-           alcanzar los controles de la derecha.
+           de ANCHO, porque es apaisada.
            `alt` vacío porque el `aria-label` del enlace ya la nombra: si los
            dos hablaran, un lector de pantalla la diría dos veces.
-           `priority` porque está arriba de todo y en todas las páginas. */
+           `priority` porque está a la vista desde el primer momento y en todas
+           las páginas. */
         <Image
           src={DROP_TAG_IMAGE}
           alt=""
