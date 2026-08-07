@@ -59,9 +59,17 @@ import { useMontado } from "@/lib/useMontado";
  * la cascada. Los dos terminan en 100% —o sea, en el borde de la caja— para que
  * no quede ningún escalón: si acabaran antes, el vidrio se cortaría a filo
  * dentro del recuadro, que es exactamente lo que se está quitando.
+ *
+ * EL VERTICAL SUBIÓ DE 50% A 56% al estrechar el recuadro (7-ago-2026). Con el
+ * recuadro más bajo, el techo del renglón quedaba en el 47% contra un tope del
+ * 50%: metro y medio de píxel de margen, y basta con que una fuente de respaldo
+ * dibuje la línea un pelo más alta para que el degradado empiece a comerse el
+ * tinte por encima del texto. Subirlo NO cambia el contraste hacia peor —deja
+ * MÁS vidrio macizo, no menos— y solo acorta un par de píxeles el tramo del
+ * desvanecido.
  */
 const DIFUMINADO =
-  "linear-gradient(to top, #000 50%, transparent 100%), " +
+  "linear-gradient(to top, #000 56%, transparent 100%), " +
   "linear-gradient(to right, #000 68%, transparent 100%)";
 
 export default function ComoRecorrer() {
@@ -204,8 +212,19 @@ export default function ComoRecorrer() {
             IDIOMAS. Aquí se elige por aparato, y el aparato no cambia mientras
             alguien mira la página; el idioma sí, con un botón que está a la
             vista.
+
+            EL DEL DEDO NO PUEDE ENCOGER MUCHO MÁS. Bajó dos veces (pr-32 →
+            pr-20 → pr-14) sin tocar el tamaño de letra, y ese relleno es
+            justamente el sitio por donde el vidrio se desvanece: el texto tiene
+            que quedar dentro del primer 68% del ancho, que es hasta donde la
+            máscara va maciza (ver `DIFUMINADO`). Con "Desliza →" el texto cae
+            hoy en el 61%, o sea que queda poco margen — y ese margen es el que
+            absorbe una traducción más larga, porque el recuadro crece con el
+            texto pero el relleno no. **Si hay que estrecharlo más, no basta con
+            bajar este número: hay que subir también el 68% del degradado, y
+            entonces vuelve a medirse el contraste.**
           */
-          conDedo ? "pr-20 pt-8" : "pr-28 pt-10"
+          conDedo ? "pr-14 pt-7" : "pr-28 pt-10"
         }`}
       >
         {/*

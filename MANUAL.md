@@ -928,12 +928,24 @@ antes que el texto.
 - **ESE AIRE SE MIDE POR VARIANTE, no una sola vez para las dos** (7-ago-2026).
   El renglón táctil ("Desliza →") es como un tercio de largo que el de cursor
   ("Arrastra | Rueda | ←→"), así que con un relleno único el recuadro del
-  teléfono quedaba enorme y medio vacío. Con el relleno por variante bajó de
-  222 × 83 a **166 × 57** en táctil y de 319 × 83 a **295 × 65** con cursor, y
-  la máscara sigue valiendo 1.000 bajo todo el texto en los dos casos.
+  teléfono quedaba enorme y medio vacío. El táctil bajó en dos pasos —222 × 83 →
+  166 × 57 → **142 × 53**— y el de cursor de 319 × 83 a **295 × 65**, todo **sin
+  tocar el tamaño de letra** (10 px). La máscara sigue valiendo 1.000 bajo todo
+  el texto en los dos casos.
   > Esto **no** rompe lo del idioma: aquí se elige por APARATO, y el aparato no
   > cambia mientras alguien mira la página; el idioma sí, con un botón que está
   > a la vista. El tamaño sigue siendo fijo entre idiomas.
+  > **EL TÁCTIL YA NO PUEDE ENCOGER MUCHO MÁS.** Ese relleno es justo el sitio
+  > por donde el vidrio se desvanece, y el texto tiene que quedar dentro del
+  > primer 68% del ancho. Hoy cae en el 61%: queda poco margen, y ese margen es
+  > el que absorbería una traducción más larga (el recuadro crece con el texto,
+  > el relleno no). **Para estrecharlo más no basta con bajar el relleno: hay
+  > que subir también el 68% del degradado y volver a medir el contraste.**
+  > **El tope vertical subió de 50% a 56%** al estrechar: con el recuadro más
+  > bajo, el techo del renglón quedaba en el 47% contra un tope del 50% —metro y
+  > medio de píxel—, y basta con que una fuente de respaldo dibuje la línea un
+  > pelo más alta para que el degradado se coma el tinte por encima del texto.
+  > Subirlo deja MÁS vidrio macizo, así que no empeora el contraste.
 - **Los dos degradados terminan en 100%**, o sea en el borde de la caja. Si
   acabaran antes, el vidrio se cortaría a filo dentro del recuadro — que es
   exactamente lo que se está quitando.
