@@ -548,10 +548,13 @@ indego/
   > **Va pegado al filo de la pantalla, NO alineado con la columna de lectura**
   > del panel (que va en 24 y 48 px). Es a propósito: no es contenido de la
   > página sino un aviso pegado a la orilla, y alinearlo con el texto lo hacía
-  > parecer un párrafo más. Su relleno de abajo lleva
-  > `env(safe-area-inset-bottom)` **por lo mismo que el botón de pagar del
-  > carrito**: a diez píxeles del filo, en un iPhone caería debajo de la barra
-  > de gestos y se vería mochado.
+  > parecer un párrafo más.
+  > **El `env(safe-area-inset-bottom)` va en el RECUADRO ENTERO, no en el
+  > relleno del texto.** Puesto en el relleno, en un iPhone la caja crecía hacia
+  > abajo y el renglón se subía dentro de ella — o sea que dejaba de estar
+  > centrado justo en los aparatos con barra de gestos, y encima el techo del
+  > texto se metía en la zona del desvanecido. En el recuadro, las medidas de
+  > dentro no cambian nunca y simplemente se levanta lo que haga falta.
 - **`cartDrawer.tsx`** — Carrito lateral: lista de productos, cantidades,
   subtotal y botón para pagar. Va **al mismo estilo minimalista del modal**:
   sin recuadro en la cantidad y con el botón de pagar en puro texto. Mientras
@@ -922,30 +925,43 @@ antes que el texto.
   volvía el problema de contraste ya resuelto. Taparlo pedía una caja de casi
   500 px, más ancha que un teléfono. Con dos degradados cada eje se ajusta por
   separado, que es justo lo que hacía falta.
-- **El relleno de arriba y de la derecha es MUCHO mayor que el de abajo y la
-  izquierda**, y no es por gusto: ahí es donde el vidrio tiene que
-  desvanecerse. Sin ese aire el degradado empezaría encima de las letras.
-- **ESE AIRE SE MIDE POR VARIANTE, no una sola vez para las dos** (7-ago-2026).
-  El renglón táctil ("Desliza →") es como un tercio de largo que el de cursor
-  ("Arrastra | Rueda | ←→"), así que con un relleno único el recuadro del
-  teléfono quedaba enorme y medio vacío. El táctil bajó en dos pasos —222 × 83 →
-  166 × 57 → **142 × 53**— y el de cursor de 319 × 83 a **295 × 65**, todo **sin
-  tocar el tamaño de letra** (10 px). La máscara sigue valiendo 1.000 bajo todo
-  el texto en los dos casos.
-  > Esto **no** rompe lo del idioma: aquí se elige por APARATO, y el aparato no
-  > cambia mientras alguien mira la página; el idioma sí, con un botón que está
-  > a la vista. El tamaño sigue siendo fijo entre idiomas.
-  > **EL TÁCTIL YA NO PUEDE ENCOGER MUCHO MÁS.** Ese relleno es justo el sitio
-  > por donde el vidrio se desvanece, y el texto tiene que quedar dentro del
-  > primer 68% del ancho. Hoy cae en el 61%: queda poco margen, y ese margen es
-  > el que absorbería una traducción más larga (el recuadro crece con el texto,
-  > el relleno no). **Para estrecharlo más no basta con bajar el relleno: hay
-  > que subir también el 68% del degradado y volver a medir el contraste.**
-  > **El tope vertical subió de 50% a 56%** al estrechar: con el recuadro más
-  > bajo, el techo del renglón quedaba en el 47% contra un tope del 50% —metro y
-  > medio de píxel—, y basta con que una fuente de respaldo dibuje la línea un
-  > pelo más alta para que el degradado se coma el tinte por encima del texto.
-  > Subirlo deja MÁS vidrio macizo, así que no empeora el contraste.
+- **EL RENGLÓN VA CENTRADO EN LOS DOS EJES** y el relleno es parejo por los
+  cuatro lados (7-ago-2026). Antes era muy desigual —mínimo abajo y a la
+  izquierda, mucho arriba y a la derecha— porque ese aire es el sitio por donde
+  el vidrio se desvanece, y el renglón acababa arrinconado en su esquina.
+  > **AL EMPAREJARLO, EL DESVANECIDO SE QUEDÓ SIN SITIO** y hubo que devolvérselo
+  > por otro lado: **subiendo los topes de `MACIZO`**, o sea dejando más vidrio
+  > entero y desvaneciendo en una franja más angosta. Mismo aspecto, menos caja.
+  > **Los dos ajustes van juntos: si se toca el relleno hay que revisar esos
+  > topes, y al revés.**
+- **LOS TOPES DEL DEGRADADO SON DISTINTOS POR VARIANTE**, y eso llegó justo al
+  centrar. Mientras el renglón vivía pegado a la esquina sobraba sitio a la
+  derecha y un solo par servía para las dos; centrado, el texto se acerca al
+  borde derecho y **cuánto se acerca depende de lo largo que sea**: "Desliza →"
+  acaba en el 80% del ancho y "Arrastra | Rueda | ←→" en el 89%. Con un tope
+  único, o se le comía el tinte al largo o el corto se quedaba sin desvanecido.
+  > **Lo que se mantiene igual en las dos no es el porcentaje sino los PÍXELES
+  > de desvanecido** (unos veinte), que es lo que de verdad se ve. Por eso el de
+  > cursor, con una caja mucho más ancha, lleva un porcentaje más alto.
+
+  **Cómo ha ido encogiendo**, todo **sin tocar el tamaño de letra** (10 px):
+
+  | | táctil | cursor |
+  |---|---|---|
+  | al nacer | 222 × 83 | 319 × 83 |
+  | relleno por variante | 166 × 57 | 295 × 65 |
+  | más estrecho | 142 × 53 | — |
+  | **centrado** | **118 × 55** | **215 × 55** |
+
+  Medido después de centrar: márgenes 24/24 y 20/20 en las dos, la máscara vale
+  **1.000 en la esquina superior derecha del texto** (que es el punto más
+  expuesto) y **0.000 en los dos bordes libres**.
+  > Esto **no** rompe lo del idioma: la variante se elige por APARATO, y el
+  > aparato no cambia mientras alguien mira la página; el idioma sí, con un
+  > botón que está a la vista. El tamaño sigue siendo fijo entre idiomas, y
+  > ahora además el texto va `justify-center` **porque los idiomas no miden lo
+  > mismo**: sin eso, el más corto quedaría pegado a la izquierda dentro de un
+  > recuadro dimensionado para el otro.
 - **Los dos degradados terminan en 100%**, o sea en el borde de la caja. Si
   acabaran antes, el vidrio se cortaría a filo dentro del recuadro — que es
   exactamente lo que se está quitando.

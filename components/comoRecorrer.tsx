@@ -53,24 +53,32 @@ import { useMontado } from "@/lib/useMontado";
  * Con dos degradados cada eje se ajusta por separado, que es justo lo que hacía
  * falta: mucho recorrido para desvanecerse a lo ancho y poco a lo alto.
  *
- * LOS DOS PRIMEROS NÚMEROS SON LOS QUE PROTEGEN EL CONTRASTE: hasta ahí el
- * vidrio va MACIZO, y ahí es donde vive el texto. Si se bajan, el degradado
- * empieza debajo de las letras y se lleva el tinte que las hace legibles sobre
- * la cascada. Los dos terminan en 100% —o sea, en el borde de la caja— para que
- * no quede ningún escalón: si acabaran antes, el vidrio se cortaría a filo
- * dentro del recuadro, que es exactamente lo que se está quitando.
+ * ESTOS NÚMEROS SON LOS QUE PROTEGEN EL CONTRASTE: hasta ahí el vidrio va
+ * MACIZO, y ahí es donde vive el texto. Si se bajan, el degradado empieza
+ * debajo de las letras y se lleva el tinte que las hace legibles sobre la
+ * cascada. Los dos degradados terminan en 100% —o sea, en el borde de la caja—
+ * para que no quede ningún escalón: si acabaran antes, el vidrio se cortaría a
+ * filo dentro del recuadro, que es exactamente lo que se está quitando.
  *
- * EL VERTICAL SUBIÓ DE 50% A 56% al estrechar el recuadro (7-ago-2026). Con el
- * recuadro más bajo, el techo del renglón quedaba en el 47% contra un tope del
- * 50%: metro y medio de píxel de margen, y basta con que una fuente de respaldo
- * dibuje la línea un pelo más alta para que el degradado empiece a comerse el
- * tinte por encima del texto. Subirlo NO cambia el contraste hacia peor —deja
- * MÁS vidrio macizo, no menos— y solo acorta un par de píxeles el tramo del
- * desvanecido.
+ * SON DISTINTOS POR VARIANTE, y eso llegó al CENTRAR el texto (7-ago-2026).
+ * Mientras el renglón vivía pegado a la esquina, sobraba sitio a la derecha y un
+ * solo par de topes servía para las dos. Centrado, el texto se acerca al borde
+ * derecho, y cuánto se acerca depende de lo largo que sea: "Desliza →" acaba en
+ * el 80% del ancho y "Arrastra | Rueda | ←→" en el 89%. Con un tope único, o se
+ * le comía el tinte al largo o el corto se quedaba sin desvanecido.
+ *
+ * LO QUE SE MANTIENE IGUAL EN LAS DOS no es el porcentaje sino los PÍXELES de
+ * desvanecido (unos veinte), que es lo que de verdad se ve. Por eso el de
+ * cursor, que tiene una caja mucho más ancha, lleva un porcentaje más alto.
  */
-const DIFUMINADO =
-  "linear-gradient(to top, #000 56%, transparent 100%), " +
-  "linear-gradient(to right, #000 68%, transparent 100%)";
+const MACIZO = {
+  dedo: { x: 82, y: 70 },
+  cursor: { x: 91, y: 70 },
+};
+
+const difuminado = ({ x, y }: { x: number; y: number }) =>
+  `linear-gradient(to top, #000 ${y}%, transparent 100%), ` +
+  `linear-gradient(to right, #000 ${x}%, transparent 100%)`;
 
 export default function ComoRecorrer() {
   const { lang } = useI18n();
@@ -89,6 +97,9 @@ export default function ComoRecorrer() {
     typeof window !== "undefined" &&
     window.matchMedia("(pointer: coarse)").matches &&
     !window.matchMedia("(pointer: fine)").matches;
+
+  /* Cada variante desvanece a su ritmo: ver `MACIZO`. */
+  const mascara = difuminado(conDedo ? MACIZO.dedo : MACIZO.cursor);
 
   if (!montado) return null;
 
@@ -139,8 +150,17 @@ export default function ComoRecorrer() {
       márgenes. No es una pastilla flotando en el panel sino un pedazo de la
       esquina que está esmerilado. Por eso tampoco lleva esquinas redondeadas:
       el que se difumina es el propio recuadro.
+
+      EL `env(safe-area-inset-bottom)` VA AQUÍ, EN EL RECUADRO ENTERO, y no en
+      el relleno del texto como estaba antes (7-ago-2026). Puesto en el relleno,
+      en un iPhone la caja CRECÍA hacia abajo y el renglón se subía dentro de
+      ella — o sea que dejaba de estar centrado justo en los aparatos que tienen
+      barra de gestos, y encima el techo del texto se metía en la zona del
+      desvanecido. Aquí el recuadro conserva siempre las mismas medidas por
+      dentro y simplemente se levanta lo que haga falta. En lo que no tiene esa
+      barra, `env()` vale cero y queda pegado al filo como siempre.
     */
-    <div className="pointer-events-none absolute bottom-0 left-0 z-10">
+    <div className="pointer-events-none absolute bottom-[env(safe-area-inset-bottom)] left-0 z-10">
       {/*
         EL VIDRIO VA EN SU PROPIA CAPA, DEBAJO DEL TEXTO, y esto es lo que hace
         que el difuminado funcione: la máscara se come esta capa por las orillas
@@ -153,8 +173,8 @@ export default function ComoRecorrer() {
         aria-hidden
         className="absolute inset-0 bg-surface/80 backdrop-blur-md"
         style={{
-          maskImage: DIFUMINADO,
-          WebkitMaskImage: DIFUMINADO,
+          maskImage: mascara,
+          WebkitMaskImage: mascara,
           /*
             `intersect` MULTIPLICA las dos máscaras; sin esto se SUMAN, que es
             lo contrario de lo que se quiere (saldría más opaco donde debería
@@ -174,58 +194,27 @@ export default function ComoRecorrer() {
 
       <p
         /*
-          EL RELLENO ES LO QUE LE DA SITIO AL DIFUMINADO. Por arriba y por la
-          derecha va MUCHO, y no es por gusto: ahí es donde el vidrio tiene que
-          desvanecerse. Sin ese aire, el degradado empezaría encima de las
-          letras y se comería el tinte justo debajo del texto — que es lo único
-          que lo hace legible sobre la cascada.
+          EL RELLENO ES PAREJO POR LOS CUATRO LADOS (7-ago-2026), y eso es lo
+          que centra el renglón dentro del recuadro. Antes era muy desigual
+          —mínimo abajo y a la izquierda, mucho arriba y a la derecha— porque
+          ese aire era el sitio por donde el vidrio se desvanece; el renglón
+          acababa arrinconado en su esquina.
 
-          POR ABAJO Y POR LA IZQUIERDA VA EL MÍNIMO, y los dos bajaron a
-          propósito (7-ago-2026). El renglón se veía trepado y despegado de la
-          esquina. Ahora se arrima al filo de la pantalla y se asienta en la
-          mitad de abajo del recuadro, que es la parte del vidrio que va MACIZA
-          (ver `DIFUMINADO`) — centrarlo ahí, y no en la caja entera (que
-          incluye todo el aire del desvanecido), es lo que lo hace ver asentado
-          en vez de flotando.
+          AL EMPAREJARLO, EL DESVANECIDO SE QUEDÓ SIN SITIO y hubo que
+          devolvérselo por otro lado: subiendo los topes de `MACIZO`, o sea
+          dejando más vidrio entero y desvaneciendo en una franja más angosta.
+          Es el mismo aspecto con menos caja. **Los dos ajustes van juntos: si
+          se toca este relleno hay que revisar aquellos topes, y al revés.**
 
-          POR LA IZQUIERDA YA NO SIGUE LA COLUMNA DE LECTURA del panel (que va
-          en 24 y 48 px). Es a propósito: esto no es contenido de la página sino
-          un aviso pegado a la orilla, y alinearlo con el texto lo hacía parecer
-          un párrafo más.
+          NO SE ALINEA CON LA COLUMNA DE LECTURA del panel (24 y 48 px), a
+          propósito: esto no es contenido de la página sino un aviso pegado a la
+          orilla, y alinearlo con el texto lo hacía parecer un párrafo más.
 
-          EL `env(safe-area-inset-bottom)` DEL RELLENO DE ABAJO NO ES DE ADORNO:
-          a diez píxeles del filo, en un iPhone el renglón cae justo debajo de
-          la barra de gestos y se ve mochado. Con esto conserva sus diez píxeles
-          en los aparatos que no tienen esa barra y se levanta lo necesario en
-          los que sí. Es el mismo recurso que usa el botón de pagar del carrito,
-          por la misma razón.
+          El `env(safe-area-inset-bottom)` ya NO va aquí sino en el recuadro
+          entero (ver arriba): metido en el relleno descentraba el texto justo
+          en los aparatos con barra de gestos.
         */
-        className={`relative grid pb-[calc(0.625rem+env(safe-area-inset-bottom))] pl-4 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground ${
-          /*
-            EL AIRE DEL DESVANECIDO SE MIDE POR VARIANTE, no una sola vez para
-            las dos (7-ago-2026). El renglón táctil ("Desliza →") es como un
-            tercio de largo que el de cursor ("Arrastra | Rueda | ←→"), así que
-            con un relleno único el recuadro del teléfono quedaba enorme y
-            medio vacío — que fue justo lo que se vio en pantalla.
-
-            Lo que NO cambia con esto: el tamaño sigue siendo FIJO ENTRE
-            IDIOMAS. Aquí se elige por aparato, y el aparato no cambia mientras
-            alguien mira la página; el idioma sí, con un botón que está a la
-            vista.
-
-            EL DEL DEDO NO PUEDE ENCOGER MUCHO MÁS. Bajó dos veces (pr-32 →
-            pr-20 → pr-14) sin tocar el tamaño de letra, y ese relleno es
-            justamente el sitio por donde el vidrio se desvanece: el texto tiene
-            que quedar dentro del primer 68% del ancho, que es hasta donde la
-            máscara va maciza (ver `DIFUMINADO`). Con "Desliza →" el texto cae
-            hoy en el 61%, o sea que queda poco margen — y ese margen es el que
-            absorbe una traducción más larga, porque el recuadro crece con el
-            texto pero el relleno no. **Si hay que estrecharlo más, no basta con
-            bajar este número: hay que subir también el 68% del degradado, y
-            entonces vuelve a medirse el contraste.**
-          */
-          conDedo ? "pr-14 pt-7" : "pr-28 pt-10"
-        }`}
+        className="relative grid px-6 py-5 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground"
       >
         {/*
           SE DIBUJAN TODOS LOS IDIOMAS, UNO ENCIMA DE OTRO, y solo se ve el
@@ -258,7 +247,11 @@ export default function ComoRecorrer() {
               key={idioma}
               aria-hidden={!activo}
               lang={idioma}
-              className={`col-start-1 row-start-1 flex items-center gap-2 ${
+              /* `justify-center`: los idiomas no miden lo mismo, y la celda de
+                 la retícula la fija el más ancho. Sin esto, el más corto
+                 quedaría pegado a la izquierda dentro de un recuadro pensado
+                 para el otro — o sea, descentrado según el idioma. */
+              className={`col-start-1 row-start-1 flex items-center justify-center gap-2 ${
                 activo ? "" : "invisible"
               }`}
             >
