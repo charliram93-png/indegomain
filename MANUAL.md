@@ -1091,6 +1091,21 @@ el mismo gesto contando dos cosas distintas.
   tema claro y el oscuro, para que las dos bandas se parezcan. No cuesta
   cuadros: el filtro se aplica a la tira, el navegador la dibuja desenfocada una
   vez y de ahí solo la desliza. Lo caro sería animar el desenfoque.
+- **EL REBOTE VERTICAL TAMBIÉN ESTÁ APAGADO, y SOLO en esta página**
+  (7-ago-2026). Es el mismo problema del riel pero de lado: la página mide
+  exactamente una pantalla, así que no hay a dónde bajar — y aun así el teléfono
+  dejaba tirar hacia abajo, estiraba el documento y enseñaba el fondo por encima
+  de la barra, igual de roto que la franja que salía por la izquierda.
+  > **VA EN `documentElement` Y SE QUITA AL SALIR.** El que rebota es el
+  > DOCUMENTO, no el riel, y el valor del `html` es el que manda sobre el rebote
+  > de la ventana — por eso no sirve ponerlo en un nodo de la página. Y por eso
+  > hay que retirarlo al desmontar: si se quedara puesto se llevaría también el
+  > rebote del catálogo, donde sí es el comportamiento normal de una página que
+  > se recorre. Comprobado: en `/about` sale `none` y al salir vuelve a `auto`.
+  > **NO ES lo mismo que congelar el scroll** (`overflow: hidden`), que es lo
+  > que se probó en su día y dejó la página trabada en Android:
+  > `overscroll-behavior` solo quita el estirón elástico, no toca la posición ni
+  > bloquea nada.
 - **EL REBOTE DEL RIEL ESTÁ APAGADO** (`overscroll-x-none`, 7-ago-2026). Al
   arrastrar más allá del primer panel, el teléfono estiraba el riel y dejaba ver
   una franja del fondo de la página por la izquierda, como si al diseño le

@@ -369,9 +369,33 @@ export default function AboutPage() {
     nada y sí dejaba el documento congelado en una posición heredada, que es
     parte de lo que se veía roto en Android. Si algún día reaparece esa barrita
     de más, el arreglo NO es volver a congelar el documento.
+
+    Y AQUÍ SE APAGA EL REBOTE VERTICAL (7-ago-2026), que NO es lo mismo que
+    congelar el scroll: `overscroll-behavior-y` solo quita el estirón elástico
+    del final del recorrido, no toca la posición ni bloquea nada.
+
+    EL PROBLEMA QUE RESUELVE es el mismo que ya se arregló a lo ancho, pero de
+    lado: esta página mide EXACTAMENTE una pantalla, así que no hay a dónde
+    bajar — y aun así el teléfono deja tirar hacia abajo, estira el documento y
+    enseña el fondo de la página por encima de la barra. Se ve como si al diseño
+    le faltara un pedazo, igual que la franja que salía por la izquierda.
+
+    VA EN `documentElement` Y NO EN UN NODO DE ESTA PÁGINA porque el que rebota
+    es el DOCUMENTO, no el riel; el valor del `html` es el que manda sobre el
+    rebote de la ventana. Por eso hay que quitarlo al salir: si se quedara
+    puesto, se llevaría también el rebote del catálogo, donde sí es el
+    comportamiento normal y esperado de una página que se recorre.
   */
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const raiz = document.documentElement;
+    const antes = raiz.style.overscrollBehaviorY;
+    raiz.style.overscrollBehaviorY = "none";
+
+    return () => {
+      raiz.style.overscrollBehaviorY = antes;
+    };
   }, []);
 
   /*
