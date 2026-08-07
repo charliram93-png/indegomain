@@ -1627,6 +1627,63 @@ agrega y persiste, y no sale ni un aviso de hidratación en la consola.
   mandar un envío de prueba con adjunto y confirmar que aparecen el `.txt` y el
   archivo en la carpeta `indego-convocatoria`.
 
+### ⚠️ EL REPO ES PÚBLICO — la decisión pendiente antes del lanzamiento
+
+`github.com/charliram93-png/indegomain` está **en público**. Se planteó el
+6-ago-2026 quitar todos los comentarios del código y dejarlos solo en este
+manual, o bien poner el repo en privado. **No son dos formas de lo mismo**, así
+que aquí queda el debate con lo que se midió.
+
+#### El dato que decide casi todo
+
+**Los comentarios NO se publican con el sitio.** `next build` los borra: se
+comprobó buscándolos dentro de `.next/static/chunks/*.js` y no aparece ni uno.
+Quien entra a indegostudio.com **no puede leerlos por ningún medio**.
+
+O sea que la única puerta por la que se ven es **el repo de GitHub**. Y esa
+puerta se cierra con un botón.
+
+#### Opción A — Quitar los comentarios, repo sigue público
+
+| A favor | En contra |
+|---|---|
+| Nadie lee las decisiones internas al pasar por el repo | **No resuelve casi nada**: lo delicado no son los comentarios, es el CÓDIGO, y ese se queda igual de visible |
+| | Se pierde el "por qué" pegado a la línea, que es lo que evita que alguien "arregle" algo que estaba así a propósito. Este manual guarda las decisiones, pero no puede estar al lado de cada línea |
+| | Es trabajo manual, se hace una vez y se vuelve a ensuciar al primer cambio |
+| | Da **falsa sensación de seguridad**: el repo sigue enseñando la ruta del panel, el nombre del campo trampa, los límites de intentos y toda la lógica de negocio |
+
+#### Opción B — Poner el repo en privado
+
+| A favor | En contra |
+|---|---|
+| Cierra **todo** de golpe: comentarios, lógica, historial, y lo que se llegue a subir mañana | Se pierde el repo como escaparate (si algún día sirviera de portafolio) |
+| Gratis, un clic, y **se puede deshacer** cuando sea | Hay que dar acceso a mano a quien colabore |
+| Los comentarios se quedan, que es lo que hace mantenible el proyecto | Vercel sigue desplegando igual — **no se rompe nada** |
+
+#### Recomendación
+
+**La B, y las dos cosas no se suman.** Poner el repo en privado y **quedarse con
+los comentarios**. Quitarlos con el repo público es pagar el precio caro (perder
+la memoria del proyecto) por el beneficio chico (que no se lean unos textos que,
+de todas formas, van junto a un código que sí se sigue viendo).
+
+Si algún día el repo tiene que volver a público, **eso** es el momento de
+revisar qué dicen los comentarios — no antes.
+
+#### Lo que hay que hacer aunque el repo se ponga en privado
+
+Esto no depende de la visibilidad y ya está resuelto, pero conviene volver a
+comprobarlo antes de abrir:
+
+- **Ningún secreto escrito en el código.** Comprobado el 6-ago-2026: no hay
+  `sk_live`, `sk_test`, `whsec_` ni contraseñas a mano. Todo va por variables de
+  entorno y `.gitignore` ya excluye `.env*`.
+- **La clave de vista previa fuera del código** (se sacó el 1-ago-2026,
+  justamente porque el repo es público).
+- **`PANEL_PATH` (`/idg-hq-9f2a`) es seguridad por oscuridad y nada más.** Con
+  el repo público no es secreto para nadie. Lo que de verdad protege el panel es
+  la contraseña, y esa ya vive en una variable de entorno.
+
 ### Siguiente etapa técnica
 
 - **Lo que quedó pendiente de la auditoría de peso** (sección de arriba,
