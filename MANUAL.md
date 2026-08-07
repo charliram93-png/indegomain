@@ -548,13 +548,8 @@ indego/
   > **Va pegado al filo de la pantalla, NO alineado con la columna de lectura**
   > del panel (que va en 24 y 48 px). Es a propósito: no es contenido de la
   > página sino un aviso pegado a la orilla, y alinearlo con el texto lo hacía
-  > parecer un párrafo más.
-  > **El `env(safe-area-inset-bottom)` va en el RECUADRO ENTERO, no en el
-  > relleno del texto.** Puesto en el relleno, en un iPhone la caja crecía hacia
-  > abajo y el renglón se subía dentro de ella — o sea que dejaba de estar
-  > centrado justo en los aparatos con barra de gestos, y encima el techo del
-  > texto se metía en la zona del desvanecido. En el recuadro, las medidas de
-  > dentro no cambian nunca y simplemente se levanta lo que haga falta.
+  > parecer un párrafo más. El `env(safe-area-inset-bottom)` va en el RELLENO de
+  > abajo del texto, nunca en el anclaje (ver el apartado del riel).
 - **`cartDrawer.tsx`** — Carrito lateral: lista de productos, cantidades,
   subtotal y botón para pagar. Va **al mismo estilo minimalista del modal**:
   sin recuadro en la cantidad y con el botón de pagar en puro texto. Mientras
@@ -565,6 +560,36 @@ indego/
 - **`themeToggle.tsx`** — Botón sol/luna que alterna claro/oscuro.
 - **`themeColorSync.tsx`** — Sincroniza el `<meta theme-color>` con el tema para
   que la barra del navegador (iOS) cambie de color al cambiar de tema.
+
+  > **EL BUG QUE ARRASTRABA, encontrado y corregido el 7-ago-2026.** La barra se
+  > quedaba con el color del tema ANTERIOR, y **no era un capricho de Safari**:
+  > el `<meta>` de verdad llevaba el color viejo. Medido en el navegador —clase
+  > `light` y fondo claro ya aplicados, y el meta todavía en el olivo oscuro.
+  >
+  > **La causa era el ORDEN DE LOS EFECTOS de React**: este componente es HIJO
+  > de `ThemeProvider`, y los efectos de los hijos corren ANTES que los del
+  > padre, así que leía `--surface` antes de que next-themes cambiara la clase
+  > de `<html>` — y lo que leía era siempre la paleta que estaba saliendo. El
+  > `requestAnimationFrame` que había no lo salvaba porque **volvía a escribir
+  > la misma cadena**, solo que en otra notación.
+  >
+  > **El arreglo no es esperar, es MIRAR.** Se intentó primero releer la
+  > variable un cuadro después y **seguía saliendo el color viejo**: no hay
+  > garantía de cuándo escribe next-themes la clase, así que cualquier espera es
+  > una apuesta. Ahora un `MutationObserver` vigila el atributo `class` de
+  > `<html>` y aplica el color cuando la clase cambia de verdad; el aviso llega
+  > como microtarea, sin depender del orden de los efectos ni de que haya
+  > cuadros. Comprobado con cuatro cambios seguidos: el meta coincide con el
+  > tema en todos.
+  >
+  > **LO QUE ESTO NO ARREGLA**, y hay que ver en un iPhone: que Safari REPINTE
+  > la barra al vuelo. En el catálogo se arreglaba solo al hacer scroll; en el
+  > Nosotros, que no se recorre en vertical, no hay scroll que fuerce el
+  > repintado. Si con el color ya correcto sigue sin repintar, el siguiente paso
+  > es el **PLAN B** del propio archivo (`DEJAR_QUE_SAFARI_ELIJA = true`): sin
+  > `<meta>`, Safari saca el color del fondo real de la página, que sí cambia al
+  > instante. Ya está comprobado que `color-scheme` se pone bien en `<html>`,
+  > así que esa salida funciona.
 
 ### Modo claro / oscuro (temas)
 
@@ -925,43 +950,33 @@ antes que el texto.
   volvía el problema de contraste ya resuelto. Taparlo pedía una caja de casi
   500 px, más ancha que un teléfono. Con dos degradados cada eje se ajusta por
   separado, que es justo lo que hacía falta.
-- **EL RENGLÓN VA CENTRADO EN LOS DOS EJES** y el relleno es parejo por los
-  cuatro lados (7-ago-2026). Antes era muy desigual —mínimo abajo y a la
-  izquierda, mucho arriba y a la derecha— porque ese aire es el sitio por donde
-  el vidrio se desvanece, y el renglón acababa arrinconado en su esquina.
-  > **AL EMPAREJARLO, EL DESVANECIDO SE QUEDÓ SIN SITIO** y hubo que devolvérselo
-  > por otro lado: **subiendo los topes de `MACIZO`**, o sea dejando más vidrio
-  > entero y desvaneciendo en una franja más angosta. Mismo aspecto, menos caja.
-  > **Los dos ajustes van juntos: si se toca el relleno hay que revisar esos
-  > topes, y al revés.**
-- **LOS TOPES DEL DEGRADADO SON DISTINTOS POR VARIANTE**, y eso llegó justo al
-  centrar. Mientras el renglón vivía pegado a la esquina sobraba sitio a la
-  derecha y un solo par servía para las dos; centrado, el texto se acerca al
-  borde derecho y **cuánto se acerca depende de lo largo que sea**: "Desliza →"
-  acaba en el 80% del ancho y "Arrastra | Rueda | ←→" en el 89%. Con un tope
-  único, o se le comía el tinte al largo o el corto se quedaba sin desvanecido.
-  > **Lo que se mantiene igual en las dos no es el porcentaje sino los PÍXELES
-  > de desvanecido** (unos veinte), que es lo que de verdad se ve. Por eso el de
-  > cursor, con una caja mucho más ancha, lleva un porcentaje más alto.
-
-  **Cómo ha ido encogiendo**, todo **sin tocar el tamaño de letra** (10 px):
-
-  | | táctil | cursor |
-  |---|---|---|
-  | al nacer | 222 × 83 | 319 × 83 |
-  | relleno por variante | 166 × 57 | 295 × 65 |
-  | más estrecho | 142 × 53 | — |
-  | **centrado** | **118 × 55** | **215 × 55** |
-
-  Medido después de centrar: márgenes 24/24 y 20/20 en las dos, la máscara vale
-  **1.000 en la esquina superior derecha del texto** (que es el punto más
-  expuesto) y **0.000 en los dos bordes libres**.
+- **El relleno de arriba y de la derecha es MUCHO mayor que el de abajo y la
+  izquierda**, y no es por gusto: ahí es donde el vidrio tiene que
+  desvanecerse. Sin ese aire el degradado empezaría encima de las letras.
+- **ESE AIRE SE MIDE POR VARIANTE, no una sola vez para las dos** (7-ago-2026).
+  El renglón táctil ("Desliza →") es como un tercio de largo que el de cursor
+  ("Arrastra | Rueda | ←→"), así que con un relleno único el recuadro del
+  teléfono quedaba enorme y medio vacío. El táctil bajó en dos pasos —222 × 83 →
+  166 × 57 → **142 × 53**— y el de cursor de 319 × 83 a **295 × 65**, todo **sin
+  tocar el tamaño de letra** (10 px). La máscara vale 1.000 bajo todo el texto
+  en los dos casos.
   > Esto **no** rompe lo del idioma: la variante se elige por APARATO, y el
   > aparato no cambia mientras alguien mira la página; el idioma sí, con un
-  > botón que está a la vista. El tamaño sigue siendo fijo entre idiomas, y
-  > ahora además el texto va `justify-center` **porque los idiomas no miden lo
-  > mismo**: sin eso, el más corto quedaría pegado a la izquierda dentro de un
-  > recuadro dimensionado para el otro.
+  > botón a la vista. El tamaño sigue siendo fijo entre idiomas.
+
+  > **SE PROBÓ CENTRAR EL RENGLÓN EN LOS DOS EJES Y SE REVIRTIÓ** (7-ago-2026).
+  > Centrado quedaba 118 × 55 en táctil, pero **se veía peor**: el aire del
+  > desvanecido es lo que le da sitio al vidrio para disolverse, y al repartirlo
+  > en partes iguales el recuadro se leía más macizo, no más chico. Va pegado a
+  > su esquina, abajo y a la izquierda.
+  > **Y de paso destapó un fallo que solo se ve en el teléfono**: para levantar
+  > el recuadro sobre la barra de gestos del iPhone se ancló el `bottom` a un
+  > valor arbitrario con `env(safe-area-inset-bottom)`, y **el letrero apareció
+  > hasta arriba**. Si ese `env()` no resuelve, la declaración se descarta,
+  > `bottom` vuelve a `auto` y un elemento absoluto sin `top` ni `bottom` cae en
+  > su posición estática — arriba del panel. En Chrome de escritorio NO se
+  > reproduce, porque ahí resuelve a 0. **El anclaje va en `bottom-0` pelado; si
+  > hay que separarlo del filo, se hace con relleno.**
 - **Los dos degradados terminan en 100%**, o sea en el borde de la caja. Si
   acabaran antes, el vidrio se cortaría a filo dentro del recuadro — que es
   exactamente lo que se está quitando.
@@ -1513,8 +1528,13 @@ Recordatorios de configuración:
 2. Si los tirones se fueron al quitar los `backdrop-filter`. Si aún se sienten,
    comparar con `?grano=0` (granulado) y `?glass=0` (cristal del navbar) para
    descartarlos uno por uno.
-3. Que la barra de direcciones cambie de color con el tema. Si falla, hay
-   PLAN B en `components/themeColorSync.tsx` (`DEJAR_QUE_SAFARI_ELIJA = true`).
+3. **Que la barra de direcciones cambie de color con el tema, en el NOSOTROS**
+   (que es donde más se notaba, porque al no recorrerse en vertical no hay
+   scroll que fuerce el repintado). El **7-ago-2026 se corrigió un bug real**
+   por el que el `<meta>` llevaba el color del tema anterior — ver
+   `components/themeColorSync.tsx`. Si con el color ya correcto Safari SIGUE sin
+   repintar, hay PLAN B en ese mismo archivo
+   (`DEJAR_QUE_SAFARI_ELIJA = true`).
 
 ### Para decidir con el equipo
 
