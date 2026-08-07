@@ -215,13 +215,16 @@ export default function ComoRecorrer() {
           un párrafo más.
 
           EL `env(safe-area-inset-bottom)` DEL RELLENO DE ABAJO NO ES DE ADORNO:
-          a diez píxeles del filo, en un iPhone el renglón cae justo debajo de
-          la barra de gestos y se ve mochado. Con esto conserva sus diez píxeles
-          en los aparatos que no tienen esa barra y se levanta lo necesario en
-          los que sí. Es el mismo recurso que usa el botón de pagar del carrito,
-          por la misma razón.
+          pegado al filo, en un iPhone el renglón cae justo debajo de la barra
+          de gestos y se ve mochado. Con esto conserva su hueco en los aparatos
+          que no tienen esa barra y se levanta lo necesario en los que sí. Es el
+          mismo recurso que usa el botón de pagar del carrito, por la misma
+          razón. VA EN EL RELLENO Y NO EN EL ANCLAJE: si `env()` no resuelve,
+          un relleno se queda en cero y no pasa nada, pero un anclaje se
+          descartaría y mandaría el letrero a su posición estática, arriba del
+          panel (ya pasó, ver el comentario del recuadro).
         */
-        className={`relative grid pb-[calc(0.625rem+env(safe-area-inset-bottom))] pl-4 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground ${
+        className={`relative grid pl-4 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground ${
           /*
             EL AIRE DEL DESVANECIDO SE MIDE POR VARIANTE, no una sola vez para
             las dos (7-ago-2026). El renglón táctil ("Desliza →") es como un
@@ -244,8 +247,16 @@ export default function ComoRecorrer() {
             texto pero el relleno no. **Si hay que estrecharlo más, no basta con
             bajar este número: hay que subir también el 68% del degradado, y
             entonces vuelve a medirse el contraste.**
+
+            EL RELLENO DE ABAJO TAMBIÉN VA POR VARIANTE desde el 7-ago-2026:
+            en teléfono el renglón baja un pelo más (6 px contra 10), que fue
+            un ajuste pedido a ojo sobre el aparato. Es poco a propósito — a
+            menos de eso el texto empieza a leerse pegado al filo de la
+            pantalla.
           */
-          conDedo ? "pr-14 pt-7" : "pr-28 pt-10"
+          conDedo
+            ? "pb-[calc(0.375rem+env(safe-area-inset-bottom))] pr-14 pt-7"
+            : "pb-[calc(0.625rem+env(safe-area-inset-bottom))] pr-28 pt-10"
         }`}
       >
         {/*

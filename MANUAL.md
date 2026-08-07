@@ -956,10 +956,15 @@ antes que el texto.
 - **ESE AIRE SE MIDE POR VARIANTE, no una sola vez para las dos** (7-ago-2026).
   El renglón táctil ("Desliza →") es como un tercio de largo que el de cursor
   ("Arrastra | Rueda | ←→"), así que con un relleno único el recuadro del
-  teléfono quedaba enorme y medio vacío. El táctil bajó en dos pasos —222 × 83 →
-  166 × 57 → **142 × 53**— y el de cursor de 319 × 83 a **295 × 65**, todo **sin
-  tocar el tamaño de letra** (10 px). La máscara vale 1.000 bajo todo el texto
-  en los dos casos.
+  teléfono quedaba enorme y medio vacío. El táctil bajó en tres pasos —222 × 83
+  → 166 × 57 → 142 × 53 → **142 × 49**— y el de cursor de 319 × 83 a
+  **295 × 65**, todo **sin tocar el tamaño de letra** (10 px). La máscara vale
+  1.000 bajo todo el texto en los dos casos.
+  > **El relleno de ABAJO también va por variante** desde el último paso: en
+  > teléfono el renglón queda a 6 px del filo y en computadora a 10. Es poco a
+  > propósito — a menos de eso empieza a leerse pegado al borde de la pantalla.
+  > Y va en el RELLENO, nunca en el anclaje: ahí es donde el
+  > `env(safe-area-inset-bottom)` es inofensivo si no resuelve.
   > Esto **no** rompe lo del idioma: la variante se elige por APARATO, y el
   > aparato no cambia mientras alguien mira la página; el idioma sí, con un
   > botón a la vista. El tamaño sigue siendo fijo entre idiomas.
@@ -1111,7 +1116,17 @@ el mismo gesto contando dos cosas distintas.
      React —mueve el nodo directo desde el `scroll`— porque con estado cada
      cuadro de scroll redibujaría los diez paneles para correr una barra de dos
      píxeles.
-     > **EL HALO NO ES ADORNO.** La rayita va fija sobre un riel donde por
+     > **EL HALO SE QUITÓ el 7-ago-2026**, a petición: se veía como una luz
+     > alrededor de la rayita y ensuciaba un trazo que quiere ser limpio. Lo que
+     > sigue explica QUÉ HACÍA, porque **es lo que se pierde**: sobre la cascada
+     > negra y sobre la banda invertida la rayita queda del mismo tono que su
+     > fondo y **puede no verse**. En teléfono duele menos —ahí solo aparece
+     > mientras se desliza, y para entonces la entrada ya va saliendo—; en
+     > computadora está siempre. Si se nota que desaparece, **la salida no es
+     > devolver el halo tal cual** (era justo lo que no gustaba) sino subir el
+     > contraste del propio trazo.
+     >
+     > ~~**EL HALO NO ES ADORNO.**~~ La rayita va fija sobre un riel donde por
      > debajo pasa el crema de la página, la cascada de logos NEGRA de la
      > entrada y la banda del cierre INVERTIDA. Una línea de un solo color se
      > borra en alguno de esos. Lleva un `drop-shadow` del color de la página

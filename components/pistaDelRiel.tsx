@@ -47,29 +47,30 @@ const FRACCION_DEL_RELLENO = 0.32;
  */
 const RECORRIDO = ((1 - FRACCION_DEL_RELLENO) / FRACCION_DEL_RELLENO) * 100;
 
-/**
- * EL HALO QUE LA MANTIENE VISIBLE SOBRE CUALQUIER FONDO.
- *
- * La rayita va FIJA sobre un riel donde pasa de todo por debajo: el crema de la
- * página, la cascada de logos NEGRA del panel de entrada, y la banda del cierre,
- * que va invertida (fondo del color de la tinta). Una línea de un solo color se
- * borra en al menos uno de esos.
- *
- * La solución es un halo del color de la PÁGINA alrededor del trazo, del color
- * de la TINTA. Se resuelve solo en los cuatro casos y en los dos temas, porque
- * los dos colores son variables:
- *   · sobre el crema → el halo no se ve y manda el trazo oscuro;
- *   · sobre la cascada negra o la banda invertida → el trazo se pierde y el
- *     halo claro toma su lugar, así que SIEMPRE queda una raya visible.
- *
- * NO ES `mix-blend-mode`, y no por casualidad: este proyecto ya sacó el blend
- * del grano porque obliga a recomponer la pantalla completa en cada cuadro
- * (ver `.grain` en `globals.css`). Un `drop-shadow` sobre un elemento de
- * 64 × 2 px se dibuja una vez y la GPU lo reusa.
- */
-const HALO =
-  "drop-shadow(0 0 1px var(--color-background)) " +
-  "drop-shadow(0 0 3px var(--color-background))";
+/*
+  AQUÍ VIVÍA UN HALO y se quitó el 7-ago-2026, a petición: se veía como una
+  luz alrededor de la rayita y ensuciaba un trazo que quiere ser limpio.
+
+  QUÉ HACÍA, por si hay que recuperarlo. Eran dos `drop-shadow` del color de la
+  PÁGINA alrededor de un trazo del color de la TINTA:
+
+      drop-shadow(0 0 1px var(--color-background))
+      drop-shadow(0 0 3px var(--color-background))
+
+  Servían para que la rayita no desapareciera nunca, porque va FIJA sobre un
+  riel donde por debajo pasa de todo: el crema de la página, la cascada de
+  logos NEGRA del panel de entrada y la banda del cierre, que va invertida. El
+  halo se resolvía solo en los dos temas porque los dos colores son variables:
+  sobre el crema no se veía y mandaba el trazo; sobre lo oscuro el trazo se
+  perdía y el halo tomaba su lugar.
+
+  LO QUE SE PIERDE AL QUITARLO: sobre la cascada negra y sobre la banda
+  invertida, la rayita queda del mismo tono que su fondo y **puede no verse**.
+  En teléfono duele menos de lo que parece, porque ahí solo aparece mientras se
+  desliza y para entonces la entrada ya va saliendo; en computadora está
+  siempre. Si se nota que desaparece, la salida NO es volver al halo tal cual
+  —era justo lo que no gustaba— sino subir el contraste del propio trazo.
+*/
 
 export default function PistaDelRiel({
   riel,
@@ -169,9 +170,10 @@ export default function PistaDelRiel({
       apagar = window.setTimeout(() => {
         marco.style.opacity = "0";
         /*
-          Se esconde DEL TODO al terminar de atenuarse, no solo transparente: el
-          halo es un `filter`, y a opacidad 0 el navegador lo seguiría
-          calculando. La espera es la misma que dura la transición del CSS.
+          Se esconde DEL TODO al terminar de atenuarse, no solo transparente:
+          un elemento a opacidad 0 sigue existiendo para el navegador y se
+          recompone con cada cuadro del recorrido. La espera es la misma que
+          dura la transición del CSS.
         */
         apagar = window.setTimeout(() => {
           marco.style.visibility = "hidden";
@@ -214,7 +216,7 @@ export default function PistaDelRiel({
       ref={caja}
       aria-hidden
       className="pointer-events-none fixed inset-x-0 bottom-5 z-20 flex justify-center"
-      style={{ filter: HALO, transition: "opacity 0.25s linear" }}
+      style={{ transition: "opacity 0.25s linear" }}
     >
       <div className="h-[2px] w-16 overflow-hidden rounded-full bg-foreground/20">
         <div
