@@ -8,6 +8,7 @@ import Navbar from "@/components/navbar";
 import CartDrawer from "@/components/cartDrawer";
 import AboutBlock from "@/components/aboutBlock";
 import Convocatoria, { ConvocatoriaLlamado } from "@/components/convocatoria";
+import PatronDeFondo from "@/components/patronDeFondo";
 import { Line } from "@/components/manifesto";
 import {
   ABOUT_PORTADA,
@@ -18,6 +19,38 @@ import {
 import { PRODUCTS } from "@/config/products";
 import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
+
+/**
+ * LAS FOTOS DEL CARRUSEL: FRENTES Y ESPALDAS, REVUELTOS.
+ *
+ * Se toman TODAS las fotos de todas las playeras (cada una tiene frente y
+ * espalda) y se acomodan alternando producto, para que no salgan las dos caras
+ * de la misma prenda pegadas ni las tres espaldas seguidas.
+ *
+ * EL ORDEN ES FIJO, NO ALEATORIO, y esto importa: si se revolviera con
+ * `Math.random()` el servidor y el navegador armarían órdenes distintos y React
+ * se quejaría de que el HTML no coincide. Esta cuenta da un orden que PARECE
+ * revuelto y es siempre el mismo.
+ *
+ * Cómo funciona: se recorren las fotos por POSICIÓN (primero todos los frentes,
+ * luego todas las espaldas) pero desfasando el producto en cada vuelta. Con tres
+ * playeras sale: frente 1, frente 2, frente 3, espalda 2, espalda 3, espalda 1.
+ */
+const FOTOS_DEL_CARRUSEL = (() => {
+  const cuantasCaras = Math.max(...PRODUCTS.map((p) => p.images.length));
+  const fotos: string[] = [];
+
+  for (let cara = 0; cara < cuantasCaras; cara++) {
+    for (let i = 0; i < PRODUCTS.length; i++) {
+      // El desfase por vuelta es lo que rompe el patrón "1,2,3 / 1,2,3".
+      const producto = PRODUCTS[(i + cara) % PRODUCTS.length];
+      const foto = producto.images[cara];
+      if (foto) fotos.push(foto);
+    }
+  }
+
+  return fotos;
+})();
 
 /**
  * UNA TIRA del carrusel de fondo.
@@ -34,7 +67,7 @@ import { useI18n } from "@/lib/i18n/context";
  * crema y resaltan solas. El porqué largo está allá.
  */
 function TiraDeFondo({ alReves = false }: { alReves?: boolean }) {
-  const tira = [...PRODUCTS, ...PRODUCTS];
+  const tira = [...FOTOS_DEL_CARRUSEL, ...FOTOS_DEL_CARRUSEL];
 
   return (
     <div
@@ -42,19 +75,19 @@ function TiraDeFondo({ alReves = false }: { alReves?: boolean }) {
         alReves ? "carrusel-al-reves" : ""
       }`}
     >
-      {tira.map((producto, i) => (
+      {tira.map((foto, i) => (
         /*
           LA SEPARACIÓN VA COMO `pr-*` EN CADA PIEZA, NO COMO `gap` EN LA TIRA,
-          y esto NO es cuestión de gusto: con `gap`, seis piezas dejan CINCO
-          huecos, así que la mitad exacta de la tira cae medio hueco antes de
-          donde empieza la copia — y el bucle daría un brinquito cada vuelta.
-          Con el espacio metido en cada pieza, las seis miden exactamente lo
-          mismo, la mitad cae justo en la copia y el salto es invisible.
+          y esto NO es cuestión de gusto: con `gap`, N piezas dejan N−1 huecos,
+          así que la mitad exacta de la tira cae medio hueco antes de donde
+          empieza la copia — y el bucle daría un brinquito cada vuelta. Con el
+          espacio metido en cada pieza, todas miden exactamente lo mismo, la
+          mitad cae justo en la copia y el salto es invisible.
         */
-        <div key={i} className="h-[88%] shrink-0 pr-10 md:pr-20">
+        <div key={i} className="h-[88%] shrink-0 select-none pr-10 md:pr-20">
           <div className="relative h-full w-36 md:w-60">
             <Image
-              src={producto.images[0]}
+              src={foto}
               alt=""
               fill
               sizes="(max-width: 768px) 40vw, 240px"
@@ -152,6 +185,16 @@ const REPETICIONES_DEL_LOGO = 8;
 const ALTO_LOGO = "h-24 md:h-28";
 
 /**
+ * QUÉ TAN OPACA VA LA CASCADA.
+ *
+ * Al 100% competía con el título "Nosotros", que es lo que tiene que mandar en
+ * ese panel. Este número la deja un pelín atrás sin que llegue a leerse como
+ * fondo: sigue siendo un elemento de la composición, no textura. Se probó al 85%
+ * y se quedaba corta —ahí sí empezaba a parecer fondo—, de ahí el 93%.
+ */
+const OPACIDAD_CASCADA = 0.93;
+
+/**
  * CUÁNTO SE SALE EL LOGO POR LA IZQUIERDA.
  *
  * La palabra arranca FUERA del panel, así que lo primero que se ve es una "I"
@@ -212,10 +255,14 @@ function CascadaDeLogos({
       }`}
     >
       {Array.from({ length: REPETICIONES_DEL_LOGO }).map((_, i) => (
+        /* `select-none` + `pointer-events-none`: la cascada es TEXTURA, no
+           contenido. Sin esto, al arrastrar para seleccionar el texto de la
+           entrada se marcaban también las imágenes del logo, y al soltar
+           quedaban resaltadas en azul. */
         <div
           key={i}
-          className={`relative w-full shrink-0 ${ALTO_LOGO}`}
-          style={{ left: CORTE_IZQUIERDA }}
+          className={`pointer-events-none relative w-full shrink-0 select-none ${ALTO_LOGO}`}
+          style={{ left: CORTE_IZQUIERDA, opacity: OPACIDAD_CASCADA }}
         >
           <Image
             src={src}
@@ -240,9 +287,17 @@ function CascadaDeLogos({
   común solo escondía las diferencias.
 
   LO QUE SÍ COMPARTEN TODOS, y hay que respetar al agregar uno nuevo:
-    h-full shrink-0 border-l border-foreground/10
+    relative h-full shrink-0 border-l border-foreground/10
   `shrink-0` es lo importante: sin eso, flex apachurra los paneles para que
   quepan y ya no hay nada que recorrer.
+
+  `relative` PARECE DE ADORNO Y NO LO ES: es lo que hace que los hijos
+  posicionados de un panel se midan CONTRA EL PANEL. Sin él, un hijo `absolute`
+  se mide contra la página entera y entonces el `overflow` del riel ya no lo
+  recorta: se queda dibujado a miles de píxeles a la derecha —donde cae ese
+  panel dentro del riel— y estira el ancho del DOCUMENTO hasta allá. Eso es
+  exactamente lo que rompió el sitio en Android (ver el manual). Un panel del
+  riel SIEMPRE va `relative`, aunque hoy no tenga nada posicionado adentro.
 */
 
 /**
@@ -294,27 +349,27 @@ export default function AboutPage() {
       : ABOUT_PORTADA.imagen;
 
   /*
-    UNA SOLA BARRA DE DESPLAZAMIENTO, la del riel.
+    ARRANCAR ARRIBA DEL TODO, SIEMPRE.
 
-    Sin esto salían DOS: la horizontal del riel y una vertical del documento.
-    La vertical no era contenido de más, era aritmética: la página mide `h-dvh`
-    (el alto completo de la ventana) pero la barra horizontal se come ~15 px de
-    ese alto, así que la página quedaba 15 px más alta que el hueco disponible y
-    el navegador ofrecía recorrerla. Quince píxeles de nada, con su barra al
-    lado.
+    Esta página no se recorre hacia abajo, así que cualquier posición vertical
+    heredada es basura — y heredarla se veía FEO EN ANDROID: llegando aquí
+    después de un "atrás" del navegador, la página aparecía desplazada hasta el
+    fondo y en blanco, y había que subir a mano para ver algo.
 
-    Se apaga el desplazamiento del DOCUMENTO —no el del riel— y solo mientras se
-    está en esta página: al salir se deja como estaba. Se toca `documentElement`
-    y no `body` a propósito, para no pelearse con `lib/useScrollLock.ts`, que es
-    quien bloquea el `body` cuando se abre el carrito.
+    Pasaba porque el navegador RESTAURA el scroll de la página anterior al
+    volver, y el cambio de página del lado del cliente no siempre lo pisa a
+    tiempo. Aquí se pone en cero y listo.
+
+    ANTES AQUÍ SE APAGABA EL SCROLL DEL DOCUMENTO (`documentElement.style
+    .overflow = "hidden"`). Se quitó: era un parche para quince píxeles de barra
+    vertical en COMPUTADORA, y esos quince píxeles ya no existen desde que la
+    barra del riel se esconde (clase `.sin-barra`). En el teléfono no arreglaba
+    nada y sí dejaba el documento congelado en una posición heredada, que es
+    parte de lo que se veía roto en Android. Si algún día reaparece esa barrita
+    de más, el arreglo NO es volver a congelar el documento.
   */
   useEffect(() => {
-    const raiz = document.documentElement;
-    const previo = raiz.style.overflow;
-    raiz.style.overflow = "hidden";
-    return () => {
-      raiz.style.overflow = previo;
-    };
+    window.scrollTo(0, 0);
   }, []);
 
   /*
@@ -527,18 +582,42 @@ export default function AboutPage() {
         */}
         {BLOQUES.map((block, i) => (
           <Fragment key={i}>
-            {tieneContenido(block) && (
-              <div
-                data-panel
-                className={`h-full shrink-0 overflow-y-auto border-l border-foreground/10 ${
-                  block.tipo === "texto" || block.tipo === "frase"
-                    ? "w-[min(92vw,680px)]"
-                    : "w-[min(94vw,1000px)]"
-                } ${i > 0 && i % 2 === 0 ? "bg-surface" : ""}`}
-              >
-                <AboutBlock block={block} numero={numeros[i]} />
-              </div>
-            )}
+            {tieneContenido(block) &&
+              (() => {
+                const conFondo = i > 0 && i % 2 === 0;
+                return (
+                  <div
+                    data-panel
+                    className={`relative h-full shrink-0 overflow-y-auto border-l border-foreground/10 ${
+                      block.tipo === "texto" || block.tipo === "frase"
+                        ? "w-[min(92vw,680px)]"
+                        : "w-[min(94vw,1000px)]"
+                    } ${conFondo ? "bg-surface" : ""}`}
+                  >
+                    {/*
+                      EL PAPEL DE ENVOLTURA va SOLO en los paneles crema, no en
+                      todos: es lo que hace que el color se lea como un material
+                      y no como una mancha de color. Los del fondo de la página
+                      se quedan limpios, y esa alternancia —material / limpio— es
+                      el ritmo del recorrido.
+
+                      VA CON LA VARIANTE "panel", que NO es la del catálogo: aquí
+                      es un cintillo apretado en la parte de arriba y allá un
+                      fondo que cubre varias pantallas. Los números de cada una
+                      viven en `components/patronDeFondo.tsx`.
+
+                      EL PANEL DE ENTRADA NO LO LLEVA, aunque también es crema:
+                      ahí ya está la cascada del logo, y las dos cosas juntas se
+                      peleaban.
+                    */}
+                    {conFondo && <PatronDeFondo variante="panel" />}
+                    {/* `relative` para que el bloque quede ENCIMA del patrón. */}
+                    <div className="relative h-full">
+                      <AboutBlock block={block} numero={numeros[i]} />
+                    </div>
+                  </div>
+                );
+              })()}
             {i === indiceCierre && cierre}
           </Fragment>
         ))}
@@ -563,7 +642,10 @@ export default function AboutPage() {
           — o sea que en una página que se recorre de lado aparecía un scroll
           vertical justo al final. Partido, cada mitad cabe en su pantalla.
         */}
-        <div className="h-full w-[min(92vw,640px)] shrink-0 border-l border-foreground/10">
+        <div
+          data-panel
+          className="relative h-full w-[min(92vw,640px)] shrink-0 overflow-y-auto border-l border-foreground/10"
+        >
           <ConvocatoriaLlamado />
         </div>
 
@@ -573,7 +655,7 @@ export default function AboutPage() {
             no tienen que ver. */}
         <div
           data-panel
-          className="h-full w-[min(92vw,620px)] shrink-0 overflow-y-auto"
+          className="relative h-full w-[min(92vw,620px)] shrink-0 overflow-y-auto"
         >
           <Convocatoria />
         </div>

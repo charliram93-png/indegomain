@@ -40,7 +40,17 @@ export function ConvocatoriaLlamado() {
   if (!CONVOCATORIA.activa) return null;
 
   return (
-    <section className="flex h-full flex-col justify-center px-6 md:px-12">
+    /*
+      SIN `overflow-y-auto` AQUÍ, a propósito: el que se recorre es el PANEL de
+      afuera. Si esta sección lo llevara, se quedaría con el desbordamiento y
+      el panel nunca sabría que hay más contenido — que es lo que decide la
+      rueda del ratón en `app/about/page.tsx`. Dejándolo suelto, lo que se sale
+      llega al panel y todo se recorre igual que en los demás.
+
+      `justify-center-safe`: centra mientras quepa y, cuando no cabe (celular
+      acostado), se pega arriba en vez de comerse el titular por arriba.
+    */
+    <section className="flex h-full flex-col justify-center-safe px-6 py-6 md:px-12">
       <h2
         className="font-bold uppercase"
         style={{
@@ -177,7 +187,7 @@ export default function Convocatoria() {
       píxeles — o sea, volvía a aparecer el scroll vertical justo en el aparato
       más chico. Apretándolo queda con margen de sobra en cualquier teléfono.
     */
-    <section className="flex h-full items-center px-6 py-6 md:px-12 md:py-0">
+    <section className="flex h-full items-center-safe px-6 py-6 md:px-12 md:py-0">
       <div className="w-full max-w-xl">
         {listo ? (
           /* ACUSE. Reemplaza al formulario en lugar de ponerse encima:
@@ -263,7 +273,20 @@ export default function Convocatoria() {
               />
             </div>
 
-            <div>
+            {/*
+              `relative` NO ES DECORATIVO, y esto rompió el sitio entero en
+              Android — ver el apartado del manual.
+
+              El input de abajo va `sr-only`, y `sr-only` es `position:
+              absolute`. Sin un ancestro posicionado, su bloque contenedor
+              termina siendo el de la página, así que NO lo recorta el
+              `overflow` del riel del Nosotros: quedaba dibujado en su posición
+              natural —cerca de 8300 px a la derecha, que es donde cae este panel
+              dentro del riel— y estiraba el ancho del DOCUMENTO hasta allá.
+              Chrome de Android, al ver una página de 8300 px, encoge todo para
+              que quepa y la deja de tamaño de hormiga en la esquina.
+            */}
+            <div className="relative">
               <span className={etiqueta}>{t.convocatoria.fileLabel}</span>
 
               {/* El input de archivo del navegador no se puede estilizar y

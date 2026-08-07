@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Countdown from "@/components/countdown";
 import DropIntro from "@/components/dropIntro";
 import { Line } from "@/components/manifesto";
 import { useI18n } from "@/lib/i18n/context";
+import { useMontado } from "@/lib/useMontado";
 import { HELVETICA } from "@/lib/fonts";
 import { MANIFESTO } from "@/config/brand";
 import { DROP_VIDEO, DROP_POSTER, isDropOpen } from "@/config/drop";
@@ -48,16 +49,27 @@ export default function Home() {
   const { t } = useI18n();
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [open, setOpen] = useState(false);
-  const [preview, setPreview] = useState(false);
   const [saliendo, setSaliendo] = useState(false);
 
-  useEffect(() => {
-    if (isDropOpen()) setOpen(true);
-    if (document.cookie.includes("drop_preview=1")) setPreview(true);
-  }, []);
+  /*
+    LO QUE EL SERVIDOR NO PUEDE SABER: si el drop ya abrió (depende de la HORA
+    del visitante) y si trae la cookie de vista previa. Los dos se leen hasta
+    montar en el navegador, si no el HTML del servidor y el del navegador salen
+    distintos. Ver `lib/useMontado.ts`.
 
-  const handleComplete = useCallback(() => setOpen(true), []);
+    Antes esto era un `useEffect` que llamaba a dos `setState` de golpe, o sea
+    un dibujado en cascada nada más entrar. Leerlo aquí sale igual de barato y
+    no encadena dibujados.
+  */
+  const montado = useMontado();
+  const preview = montado && document.cookie.includes("drop_preview=1");
+
+  /* El contador también puede abrirlo al llegar a cero, con la página ya
+     abierta; por eso hay estado además de la hora. */
+  const [abiertoPorElContador, setAbiertoPorElContador] = useState(false);
+  const open = abiertoPorElContador || (montado && isDropOpen());
+
+  const handleComplete = useCallback(() => setAbiertoPorElContador(true), []);
 
   /*
     TRANSICIÓN AL CATÁLOGO

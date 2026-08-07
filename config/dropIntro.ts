@@ -278,8 +278,16 @@ export const INTRO_CUES: IntroCue[] = [
  * en los mismos ángulos).
  */
 export const INTRO_STAR =
-  "https://res.cloudinary.com/dij60ghdf/image/upload/v1772753917/Logo_White_xhx1kd.webp";
+  "https://res.cloudinary.com/dij60ghdf/image/upload/f_auto,q_auto,w_400/v1772753917/Logo_White_xhx1kd.webp";
 
-/** Logo ovalado "INDEGO" del cierre (COMING · logo · SOON). */
+/**
+ * Logo ovalado "INDEGO" del cierre (COMING · logo · SOON).
+ *
+ * ESTA VA SIN TRANSFORMAR Y NO ES UN OLVIDO: se midió (6-ago-2026) y pedirle
+ * `f_auto,q_auto,w_400` a Cloudinary la deja en 16 KB, o sea MÁS que los 12 KB
+ * del archivo original. Es un PNG chico de un solo color, de esos que ya están
+ * en su mejor forma y cualquier reconversión solo les agrega peso. La estrella
+ * de arriba sí gana (7 → 4 KB) y por eso esa sí las lleva.
+ */
 export const INTRO_BADGE =
   "https://res.cloudinary.com/dij60ghdf/image/upload/v1772755261/Indg_Cd_White_zqimyq.png";

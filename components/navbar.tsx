@@ -3,20 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useTheme } from "next-themes";
 import { useCart } from "@/store/cart";
 import ThemeToggle from "@/components/themeToggle";
 import DropTag from "@/components/dropTag";
 import LangToggle from "@/components/langToggle";
+import { LOGO_ESTRELLA } from "@/config/brand";
 import { useFlag } from "@/lib/flags";
 import { useI18n } from "@/lib/i18n/context";
-
-// TODO: reemplazar por los logos oficiales (negro y blanco) subidos a Cloudinary.
-const LOGO_DARK =
-  "https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png"; // logo negro, para fondo claro
-const LOGO_LIGHT =
-  "https://res.cloudinary.com/dij60ghdf/image/upload/v1772753917/Logo_White_xhx1kd.webp"; // logo blanco, para fondo oscuro
+import { useMontado } from "@/lib/useMontado";
 
 const Navbar: React.FC = () => {
   const { openCart, totalItems } = useCart();
@@ -26,10 +22,13 @@ const Navbar: React.FC = () => {
   const glass = useFlag("glass", "1") !== "0";
 
   // Evita mismatch de hidratación: contador y logo temático solo tras montar.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const count = mounted ? totalItems() : 0;
-  const logoSrc = mounted && resolvedTheme === "dark" ? LOGO_LIGHT : LOGO_DARK;
+  // Ver `lib/useMontado.ts`.
+  const montado = useMontado();
+  const count = montado ? totalItems() : 0;
+  const logoSrc =
+    montado && resolvedTheme === "dark"
+      ? LOGO_ESTRELLA.oscuro
+      : LOGO_ESTRELLA.claro;
 
   return (
     /*

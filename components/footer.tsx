@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
   return (
     /* Toda la tipografía del pie va en la Helvetica del sitio (se hereda). */
     <footer
-      className="mt-auto w-full bg-background px-6 py-12"
+      className="relative mt-auto w-full px-6 py-12"
       style={{ fontFamily: HELVETICA }}
     >
       <div className="flex flex-col items-center justify-center gap-4">

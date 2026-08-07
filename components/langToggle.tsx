@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/context";
+import { useMontado } from "@/lib/useMontado";
 
 /**
  * Alterna el idioma EN <-> ES. Muestra el idioma ACTUAL.
@@ -13,11 +13,12 @@ export default function LangToggle({
   variant?: "auto" | "light";
 }) {
   const { lang, toggleLang } = useI18n();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  /* Vacío hasta montar: el idioma sale de lo guardado en el navegador, que el
+     servidor no puede saber. Ver `lib/useMontado.ts`. */
+  const montado = useMontado();
 
   const color = variant === "light" ? "text-cream" : "text-foreground";
-  const label = mounted ? lang.toUpperCase() : "";
+  const label = montado ? lang.toUpperCase() : "";
 
   return (
     <button

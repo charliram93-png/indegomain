@@ -180,14 +180,19 @@ indego/
   el helper `foto()`, que les aplica transformaciones de Cloudinary al vuelo —
   ver "Las fotos de las playeras" en la sección 9.
 - **`config/brand.ts`** — Lo que el sitio dice de sí mismo: `CONTACT_EMAIL`,
-  `INSTAGRAM_URL`, `LINKTREE_URL`, el `MANIFESTO` y el `LOGO_PALABRA`. El correo
+  `INSTAGRAM_URL`, `LINKTREE_URL`, el `MANIFESTO` y **los logos**. El correo
   y el Instagram **solo aparecen en el footer si están llenos** (vacío = no se
   muestra el enlace), para no publicar un dato inventado.
-  **`LOGO_PALABRA`** es el logo alterno (la palabra INDEGO), en sus dos
-  versiones: `claro` (el negro, para fondos claros) y `oscuro` (el blanco). Vive
-  aquí y no en una página porque ya lo usan dos —la cascada de la entrada del
-  Nosotros y la lluvia de fondo del catálogo—, así que cambiar el archivo se
-  hace en un solo lugar.
+  **LOS LOGOS VIVEN AQUÍ**, cada uno en sus dos versiones (`claro` = el negro,
+  para fondos claros; `oscuro` = el blanco): **`LOGO_PALABRA`** es el alterno,
+  la palabra INDEGO, y **`LOGO_ESTRELLA`** es el principal, el del navbar. Están
+  en la config y no escritos dentro de los componentes porque cada uno lo usan
+  varios —la cascada del Nosotros, el patrón de fondo del catálogo y el navbar—,
+  así que cambiar un archivo se hace en un solo lugar.
+  > Ojo: `LOGO_ESTRELLA` **no** lleva `e_trim`. El navbar necesita el margen
+  > transparente del archivo para que la estrella quede centrada y del tamaño de
+  > siempre; recortándola cambiaría de tamaño. Quien la quiera recortada que se
+  > lo pida a Cloudinary por su cuenta.
 - **`config/dropIntro.ts`** — El **guion del texto del countdown**: qué palabra
   entra, en qué segundo del video, de qué tamaño y en qué lugar. Los valores
   salieron de medir cuadro por cuadro el video original que traía las letras
@@ -351,23 +356,100 @@ indego/
   cambiarla por otra no la deforma, pero sí cambia cuánto ocupa a lo ancho.
   Mientras esa variable esté vacía se dibuja una de respaldo en SVG con los
   colores del tema, para que nunca quede un hueco.
-- **`lluviaDeLogos.tsx`** — **(6-ago-2026)** El fondo de los costados del
-  catálogo: la palabra INDEGO cayendo, muy tenue, pegada a los dos bordes de la
-  pantalla y cortada por ellos. Llena el aire que queda a los lados de la
-  columna del catálogo (1152 px) cuando la pantalla es ancha. Es la misma idea
-  de la cascada del Nosotros, pero en oficio de fondo: allá la palabra se lee,
-  aquí apenas se adivina.
-  **Solo en computadora** (`hidden md:block`): en teléfono no hay costados que
-  llenar. Va detrás de todo (`z-0`, con `main` y el pie en `relative z-10`) y
-  `fixed`, para que se quede quieta mientras el catálogo pasa por encima — si se
-  moviera con el scroll se leería como contenido.
-  **Qué tan tenue** se controla con `OPACIDAD` (hoy `0.10`), el único número que
-  hay que mover. Pasando de ~0.15 empieza a competir con las playeras.
+- **`patronDeFondo.tsx`** — **(6-ago-2026)** El fondo del catálogo: los logos de
+  la marca repartidos por toda la página, ladeados a distintos ángulos y en
+  distintos tamaños, **casi imperceptibles**. La referencia es el papel en el que
+  envuelven la comida rápida: uno no lo mira, pero el lugar se siente de la
+  marca.
+  **SALEN LOS CUATRO LOGOS DE LA MARCA y en la MISMA PROPORCIÓN** (15 de cada
+  uno de 60 piezas): la palabra INDEGO, los niños, la estrella y el del
+  countdown. Cuatro formas distintas es lo que evita que se lea como una
+  cuadrícula. Se reparten POR TURNOS, no al azar — al azar, con 60 piezas, uno
+  salía 20 veces y otro 9, y se notaba.
+  **LOS CUATRO EN LOS DOS TEMAS.** El color se pide al vuelo con `e_colorize` de
+  Cloudinary, que pinta la imagen del color que se le diga respetando la
+  transparencia; como los cuatro logos son de un solo color, con eso salen en
+  negro y en blanco desde el mismo archivo, sin tener que subir las dos
+  versiones. Ver `LOGOS_DE_MARCA` en `config/brand.ts`.
+  **CUBRE TODA LA PÁGINA, PIE INCLUIDO**, y se corta donde termina: es
+  `absolute` sobre el contenedor de la página, no `fixed` sobre la ventana. Para
+  que se vea a través, **el pie ya no lleva fondo propio** (lo pone la página,
+  que es del mismo color). Va detrás de todo (`z-0`, con `main` y el pie en
+  `relative z-10`).
+  **HAY DOS VARIANTES**, y todos los números viven en `VARIANTES` dentro de
+  `components/patronDeFondo.tsx`. Se elige con la prop `variante`; cada una trae
+  los suyos justamente para que ajustar una no mueva la otra:
+
+  | | `catalogo` | `panel` |
+  |---|---|---|
+  | Dónde | fondo de toda la página de producto | cintillo arriba de los paneles crema del Nosotros |
+  | Reja | 1 columna × 60 renglones | 8 columnas × 4 renglones |
+  | Hasta | 100% del alto | 15% |
+  | Ancho de pieza | `clamp(90px, 12vw, 200px)` | `clamp(80px, 18cqw, 190px)` |
+  | Escala | 0.7 – 1.5 | 0.6 – 1.05 |
+  | Pesos emparejados | no | sí |
+  | Opacidad claro / oscuro | 0.028 / 0.015 | 0.035 / 0.022 |
+
+  **EL REPARTO ES UNA REJA**, y la forma de la reja es la del hueco que hay que
+  llenar: el catálogo es una columna larguísima (por eso 1 × 60), el cintillo de
+  un panel es ancho y bajito (8 × 4). Cae una pieza por celda, empujada al azar
+  dentro de la suya. Antes el cintillo era una sola hilera con la altura al azar
+  y por eso quedaban claros: en cada columna caía UNA pieza a una altura
+  cualquiera, así que la parte de hasta arriba salía medio vacía. Con la reja la
+  cobertura pasó de 53% a 83%.
+  **Las celdas son MÁS CHICAS que las piezas, a propósito**: por eso se encaraman
+  unas sobre otras y se ve apachurrado. Las de hasta arriba se cortan con la
+  orilla del panel, también a propósito.
+  **`hasta` es el CENTRO de la pieza, no su orilla.** Las piezas van centradas en
+  su punto, así que la de más abajo se pasa unos puntos de ese número: con 15, el
+  cintillo termina cerca del 20% del alto y el texto del bloque más apretado (el
+  03) empieza pasando el 30%. Ese margen es el que hay que cuidar al moverlo.
+  **El cintillo se mide contra el PANEL (`cqw`), no contra la ventana**, y esto
+  era el bug del teléfono ("se ve muy disperso y casi sin logos"): con `vw`, en
+  un celular el `clamp` se iba a su mínimo y las piezas quedaban chiquitas y
+  perdidas dentro del panel, mientras que en computadora salían al doble. Ahora
+  una pieza mide siempre lo mismo EN PROPORCIÓN AL PANEL: medido a 359, 331 y
+  300px de panel, la cobertura se queda en 81–85% y el cintillo en 18%.
+  **`emparejarPesos` le saca raíz al peso de cada logo.** Los pesos de
+  `LOGOS_DE_MARCA` están puestos para que los cuatro se vean del mismo peso
+  visual SUELTOS, y ahí la palabra INDEGO sale más del doble de ancha que la
+  estrella. En un fondo suelto da igual; en un cintillo apretado hacía las dos
+  cosas malas a la vez: la palabra se volvía una plasta de tinta y los otros tres
+  quedaban tan chicos que dejaban huecos alrededor. La raíz los acerca sin
+  igualarlos.
+
+  **La opacidad es distinta en cada tema**, y no es capricho: sobre el crema del
+  tema claro un logo negro al 3.5% apenas se adivina, pero sobre el olivo del
+  oscuro el mismo logo en blanco al mismo 3.5% se ve bastante más — el blanco
+  contra fondo oscuro pesa más que el negro contra fondo claro.
+  **EL CINTILLO DEL NOSOTROS SALIÓ DE UN ACCIDENTE.** Al principio el panel solo
+  pedía 14 de las 60 piezas del catálogo; como el reparto iba por franjas de
+  arriba abajo, esas 14 cayeron todas juntas en la parte de arriba. Gustó y se
+  volvió intencional (de ahí la variante `panel`): arriba el cintillo, abajo aire
+  para el texto del bloque. Es lo que hace que ese color se lea como un material
+  y no como una mancha; los paneles del color de la página se quedan limpios y
+  esa alternancia es el ritmo del recorrido. **El panel de entrada NO lo lleva**,
+  aunque también sea crema: ahí ya está la cascada del logo y las dos cosas
+  juntas se peleaban.
+  > **Las posiciones se calculan con un azar CONTROLADO.** `Math.random()` a
+  > secas no sirve: el servidor y el navegador sacarían posiciones distintas y
+  > React se quejaría de que el HTML no coincide. El generador arranca siempre
+  > de la misma semilla. Y el reparto va POR CELDAS (una pieza por celda de la
+  > reja, con un empujón al azar dentro de la suya): al puro azar salen montones
+  > y huecos.
+  > **El tamaño va en `clamp` y el alto lo saca `aspect-ratio`.** Con píxeles
+  > fijos, lo que en computadora era un detallito, en teléfono ocupaba medio
+  > ancho de pantalla y las piezas se encimaban.
   > **No es un componente de cliente, a propósito.** El cambio de tema se
-  > resuelve dibujando LAS DOS versiones del logo y escondiendo una con CSS
+  > resuelve poniendo LAS DOS versiones y escondiendo una con CSS
   > (`dark:hidden` / `hidden dark:block`) en vez de preguntarle el tema a
-  > JavaScript. Así no hay parpadeo al hidratar ni hace falta el truco de
-  > `montado` que sí usan el navbar y el Nosotros.
+  > JavaScript: así no hay parpadeo al hidratar, y como el navegador no descarga
+  > el fondo de un elemento escondido, la versión que no se usa tampoco se baja.
+  >
+  > **ANTES ERA UNA "LLUVIA"** de la palabra INDEGO en dos columnas pegadas a
+  > las orillas. Se cambió porque llenaba los costados pero dejaba el centro
+  > pelón: se leía como dos cenefas, no como un fondo.
+
 - **`convocatoria.tsx`** — **"NUESTROS MUSEOS ESTÁN VACÍOS"**, la sección que
   cierra el Nosotros: una puerta abierta para que quien haga algo lo mande y se
   pueda colaborar. Va DESPUÉS de la banda que lleva al catálogo, a propósito —
@@ -377,7 +459,10 @@ indego/
   trampa para robots (un campo escondido que solo ellos llenan) y valida de los
   dos lados. El título y la invitación se editan en `config/convocatoria.ts`,
   que también trae el apagador (`activa: false` y desaparece).
-- **`footer.tsx`** — Pie con los enlaces del sitio, en este orden a propósito:
+- **`footer.tsx`** — Pie con los enlaces del sitio. **No pinta fondo propio**:
+  lo pone la página (siempre es el mismo color), y así la lluvia del catálogo se
+  ve a través de él en vez de cortarse en su borde. El orden de los enlaces es a
+  propósito:
   primero lo que resuelve un problema (**seguir pedido**), luego **Nosotros** —
   que de todo lo de marca es lo único que alguien busca queriendo— y después
   términos y redes. Contacto e Instagram solo salen si están puestos en
@@ -765,8 +850,14 @@ toca. Tres partes:
      texto se queda con su espacio y las cascadas se comen el resto, así que en
      una pantalla alta se ven más y en una bajita menos, pero el título nunca se
      mueve.
-     Los tres números están arriba de `app/about/page.tsx`:
-     `REPETICIONES_DEL_LOGO`, `ALTO_LOGO` y `CORTE_IZQUIERDA`.
+     Los cuatro números están arriba de `app/about/page.tsx`:
+     `REPETICIONES_DEL_LOGO`, `ALTO_LOGO`, `CORTE_IZQUIERDA` y
+     `OPACIDAD_CASCADA`.
+     > **`OPACIDAD_CASCADA` (hoy 0.93) es un ajuste fino, no un fondo.** Al 100%
+     > la cascada competía con el título "Nosotros", que es lo que tiene que
+     > mandar en ese panel; al 85% se pasaba de largo y empezaba a leerse como
+     > textura. El 93% la deja un pelín atrás y la mantiene como elemento de la
+     > composición.
      > **`ALTO_LOGO` va en PÍXELES, no en porcentaje**, y costó descubrirlo: un
      > porcentaje se mide contra el contenedor de la cascada —que es el que se
      > lleva "lo que sobre" del panel—, así que las repeticiones salían de 32 px
@@ -829,8 +920,11 @@ que reordenar `BLOQUES` no la deja en un lugar absurdo: se pega a la primera
 antes.
 
 **LA BANDA TRAE UN CARRUSEL DE FONDO**: **tres tiras** con las playeras del
-catálogo pasando despacio y en bucle detrás del texto (30 s por vuelta). Se
-alimenta de `config/products.ts`, así que si cambian las fotos del drop cambian
+catálogo pasando despacio y en bucle detrás del texto (30 s por vuelta). Lleva
+FRENTES Y ESPALDAS revueltos: se toman todas las fotos de todas las prendas y se
+acomodan alternando producto, con un orden FIJO —no `Math.random()`, que daría
+órdenes distintos en el servidor y en el navegador y React se quejaría de que el
+HTML no coincide. Se alimenta de `config/products.ts`, así que si cambian las fotos del drop cambian
 solas aquí. Cuatro detalles que importan si se toca:
 
 - **La de en medio va para un lado y las de afuera para el otro**
@@ -1306,26 +1400,219 @@ Anotadas para que nadie las "arregle" pensando que urgen:
   roto: el argumento de `blur()` es opcional y vale 0, y el minificador lo
   acorta. Comprobado en el navegador — `blur()` se calcula como `blur(0px)`.
 
-#### 8. Lo que queda pendiente de esta auditoría
+#### 8. Segunda pasada, con el recorrido horizontal ya puesto (6-ago-2026)
+
+Revisión de responsividad y peso después de voltear el Nosotros. Lo medido:
+
+**EL BUG GORDO: EL CELULAR ACOSTADO.** En horizontal un teléfono deja ~310 px
+de alto útil (390 menos el navbar), y **cuatro paneles no caben ahí**: el
+manifiesto (316 px), "a dónde vamos" (378), el llamado de museos (568) y el
+formulario (512).
+
+El problema no era que no cupieran —para eso los paneles se recorren— sino que
+un `items-center` normal, cuando el contenido es más alto que su caja, **lo
+desborda por ARRIBA y por abajo en partes iguales, y lo de arriba queda
+inalcanzable**: no se puede scrollear hacia atrás del inicio. O sea que en
+horizontal se comía el principio de los textos y no había forma de leerlo.
+
+Arreglado con **alineación segura** (`items-center-safe` /
+`justify-center-safe`, de Tailwind 4.1+): centra mientras quepa y, en cuanto no
+cabe, se pega arriba y deja que el panel se recorra normal. Comprobado a 390 y
+a 360 px de alto: ya no queda nada atrapado.
+
+> De paso: el panel del llamado de museos tenía **dos contenedores de scroll
+> anidados** (el panel y su sección). El de adentro se quedaba con el
+> desbordamiento y el de afuera nunca se enteraba de que había más contenido —
+> que es justo lo que consulta la rueda del ratón para decidir si recorre el
+> panel o el riel. Se dejó uno solo.
+
+**EL ICONO DE LA PESTAÑA.** Era la estrella de Indego **casi blanca sobre
+transparente**: en una barra de pestañas clara, invisible.
+
+Se probó ponerle fondo olivo. Se veía en todos lados, pero en el conmutador de
+pestañas de **Safari en iPhone** quedaba como un cuadrito verde que no dice nada
+de la marca, así que se descartó.
+
+La solución final: **la estrella sin fondo, en DOS versiones** —blanca y negra—
+y el navegador elige según su interfaz (`prefers-color-scheme`, declarado en
+`metadata.icons` de `app/layout.tsx`). Los archivos están en `public/`
+(`icono-oscuro.png` e `icono-claro.png`), 6 y 14 KB.
+
+> Ya NO se usa `app/icon.png`, que es la forma automática de Next: esa solo
+> admite UNA imagen y aquí hacen falta dos. La versión OSCURA va PRIMERO en la
+> lista a propósito: un navegador que ignore el `media` se queda con la primera,
+> y esa es la que se ve bien en el caso que originó el cambio.
+
+**LO QUE SE REVISÓ Y ESTÁ BIEN:**
+
+- Los anchos de panel usan `min(92vw, …)`, así que ningún panel se pasa del
+  ancho de la pantalla por angosta que sea.
+- La lluvia del catálogo es `hidden md:block`, así que su `w-[240px]` fijo nunca
+  toca el teléfono.
+- El JS por página casi no se movió con todo lo nuevo: `/about` 28.7 KB gzip
+  sobre el piso (era 27.7) y `/product` 27.1 (era 26.9).
+
+**UNA COSA QUE SE ACEPTÓ A SABIENDAS:** la lluvia del catálogo dibuja las DOS
+versiones del logo y esconde una con CSS, así que el navegador se baja una
+imagen que no se ve (~10 KB). Es el precio de no tener que preguntarle el tema a
+JavaScript, que traía parpadeo al hidratar. Son dos URLs repetidas 44 veces, así
+que el navegador las descarga UNA vez cada una, no 88.
+
+#### 9. EL BUG DE ANDROID, y por qué era el mismo de las dos barras
+
+**Reportado el 6-ago-2026** (S23 y S26 Ultra, Chrome y Edge): entrando al
+Nosotros después de un "atrás" del navegador, la página salía **encogida y
+desplazada hasta el fondo, en blanco**. Había que alejar el zoom y subir a mano
+para ver algo.
+
+**LA CAUSA, y es la misma que la de las dos barras en computadora:** el
+DOCUMENTO se volvía recorrible en horizontal. El riel del Nosotros se le
+escapaba al recorte y `<html>` acababa midiendo miles de píxeles de ancho. De
+ahí salían los dos síntomas:
+
+- en computadora, una barra horizontal que se comía 15 px de alto y obligaba a
+  una segunda barra, vertical;
+- en Android, el navegador **encoge la página** para que quepa un documento más
+  ancho que la pantalla — y encima conservaba la posición de scroll de la página
+  anterior al volver con "atrás".
+
+**EL ARREGLO:** `overflow-x: clip` en `html, body` (`globals.css`, arriba del
+todo, con la explicación completa). Y el Nosotros se pone en cero al montar,
+para no heredar posiciones de la página anterior.
+
+> **NO USAR `hidden` PARA ESTO.** Es lo primero que uno escribe y fue lo primero
+> que se hizo — mal. `hidden` CREA un contenedor de scroll (solo que sin
+> barras), así que el navegador sigue guardando y restaurando una posición, que
+> es justo lo que hay que evitar; además rompe `position: sticky` en los hijos.
+> `clip` recorta y ya.
+
+##### 9-bis. LO QUE DE VERDAD LO CAUSABA: un input invisible a 8 300 px
+
+**El arreglo de arriba NO bastó**, y el 6-ago-2026 el usuario dio con el síntoma
+que faltaba: en la vista responsiva de Chrome **la barra de arriba se iba hasta
+la derecha y la página quedaba metida en la esquina izquierda**, con más página
+abajo y a la derecha. En iPhone no pasaba, por eso se había escapado.
+
+**LA CAUSA, medida:** en el Nosotros, `document.documentElement.scrollWidth`
+daba **8 348 px** con una ventana de 396. El culpable era **UN SOLO ELEMENTO**:
+el `<input type="file" name="archivo">` del formulario de la convocatoria, que
+va con la clase `sr-only` — y `sr-only` es `position: absolute`.
+
+Ese input **no tenía ningún ancestro posicionado**, así que su bloque contenedor
+terminaba siendo el de la página. Y ahí está la trampa: **el `overflow` de un
+elemento solo recorta a los descendientes que lo tienen en su cadena de bloques
+contenedores.** Como el input se medía contra la página y no contra el panel, el
+`overflow-x: auto` del riel **no lo recortaba**: quedaba dibujado en su posición
+natural —8 347 px a la derecha, que es donde cae el panel de la convocatoria
+dentro del riel— y estiraba el ancho del DOCUMENTO hasta allá.
+
+De ahí salía todo lo demás: Chrome de Android, al ver un documento de 8 300 px,
+encoge la página entera para que quepa; la barra es `fixed w-full`, o sea 100%
+del ancho del documento, así que se estiraba con él y se iba hasta la derecha.
+
+> **`overflow-x: clip` no salva de esto**, y por eso el arreglo anterior no
+> alcanzó: lo que se le escapa al recorte no es un hijo que se desborda, es un
+> elemento que ni siquiera está midiéndose contra ese contenedor.
+
+**EL ARREGLO:** `relative` en el `<div>` que envuelve ese input
+(`components/convocatoria.tsx`) — con eso el bloque contenedor vuelve a ser el
+panel y el riel sí lo recorta. Y de red, `relative` en TODOS los paneles del
+riel (`app/about/page.tsx`), aunque hoy no tengan nada posicionado adentro, para
+que el próximo `absolute` que alguien meta ahí no vuelva a fugarse.
+
+**Medido después:** en las cinco páginas (`/`, `/about`, `/product`,
+`/product/idg-01`, `/track`) el desborde horizontal es **0** y `window.scrollTo`
+en horizontal ya no mueve nada. Cero elementos posicionados contra la página que
+caigan fuera de la pantalla.
+
+> **CÓMO CAZARLO SI VUELVE.** Sale en dos líneas en la consola: comparar
+> `documentElement.scrollWidth` con `clientWidth` y, si no cuadran, listar los
+> `position: absolute` cuyo `offsetParent` sea `body` o `null` — esos son los
+> que se miden contra la página. El culpable salta por su `left`.
+
+#### 10. LOS SEIS `set-state-in-effect`, y por qué eran el mismo
+
+**Cerrado el 6-ago-2026.** `npx eslint` marcaba **seis errores**, todos de la
+misma regla (`react-hooks/set-state-in-effect`) y casi todos la misma idea
+escrita seis veces: *"esto no lo sé hasta estar en el navegador"*.
+
+```
+app/page.tsx            components/langToggle.tsx    components/themeToggle.tsx
+components/navbar.tsx   components/countdown.tsx     lib/i18n/context.tsx
+```
+
+El patrón repetido era `useState(false)` + `useEffect(() => setMontado(true))`.
+Funcionaba, pero dibujaba dos veces cada vez que alguien entraba: React pintaba,
+el efecto cambiaba el estado, React volvía a pintar.
+
+**LA HERRAMIENTA CORRECTA ERA `useSyncExternalStore`**, que es justo para esto:
+se le dan dos respuestas —la del servidor y la del cliente— y resuelve el cambio
+sin pasar por un efecto. Quedó en tres piezas:
+
+- **`lib/useMontado.ts`** — el hook compartido. Sustituye el patrón en `navbar`,
+  `themeToggle`, `langToggle` y `app/page.tsx`.
+- **`lib/i18n/almacen.ts`** — el idioma dejó de ser un `useState` y ahora vive en
+  `localStorage`, con el proveedor leyéndolo. **De pilón se sincroniza entre
+  pestañas**: cambiar el idioma en una lo cambia en todas, cosa que antes no
+  pasaba hasta recargar.
+- **`components/countdown.tsx`** — el reloj también es un almacén externo: la
+  hora no vive en React, cambia sola. El aviso de "llegó a cero" (`onComplete`)
+  SÍ se quedó en un efecto, porque toca algo de fuera del componente, y eso no
+  se puede hacer mientras React dibuja.
+
+> **LA COPIA EN MEMORIA NO ES OPCIONAL**, ni en el idioma ni en el reloj.
+> `useSyncExternalStore` exige que leer dos veces seguidas, sin que nada haya
+> cambiado, devuelva EXACTAMENTE el mismo valor. Devolver un objeto nuevo cada
+> vez —que es lo que hace `calculateTimeLeft()`— mete a React en un ciclo
+> infinito de dibujados. Por eso el reloj guarda el último valor y solo
+> recalcula cuando cambió el SEGUNDO.
+
+**Comprobado en el navegador después del cambio:** el contador avanza, el idioma
+cambia y se guarda (y le pone el `lang` al `<html>`), el tema cambia, el carrito
+agrega y persiste, y no sale ni un aviso de hidratación en la consola.
+
+#### 11. Lo que queda pendiente de esta auditoría
 
 - **El idioma** (punto 3), por la vía de rutas `/es` y `/en`.
-- **`npm audit` reporta 9 vulnerabilidades, 8 de ellas altas**, todas heredadas
-  de **`sharp`/libvips**, que es la librería con la que Next optimiza las
-  imágenes. `npm audit fix --force` las arregla pero **sube Next de 16.1.6 a
-  16.3.0**, y subir de versión el sitio de una tienda a días de un lanzamiento
-  es una decisión tuya, no algo que se deba hacer de pasada. Anotado para que
-  no se olvide.
-- **`npx eslint` marca dos errores que ya venían de antes** y que nadie ha
-  tocado: `app/page.tsx:49` y `components/countdown.tsx:49`, los dos por llamar
-  a `setState` directo dentro de un `useEffect`. Funcionan bien; la regla avisa
-  de dibujados en cascada. No se arreglaron aquí para no mezclar cambios de
-  rendimiento con cambios de comportamiento del countdown.
+- **`npm audit`: quedan 3 altas, y las tres piden `next@16.3.0`.** Se cerró la
+  cuarta (`lodash`, inyección de código por `_.template`) con un `npm update
+  lodash` — 4.17.23 → 4.18.1, dentro del rango que ya pedía `cloudinary`, sin
+  tocar nada más.
+  **Las otras tres NO se subieron, y es una decisión, no un olvido.** Se revisó
+  una por una si aplican a este sitio:
+
+  | Aviso | ¿Aplica aquí? |
+  |---|---|
+  | Contrabando de peticiones HTTP en *rewrites* de Next | **No.** El proyecto no usa ni un `rewrite`: `next.config.ts` no los define y `proxy.ts` solo hace `redirect` y `next()`. |
+  | Crecimiento sin tope del caché en disco de `next/image` | **No.** Es cosa de quien se auto-hospeda; en Vercel el disco lo maneja Vercel. |
+  | `sharp`/libvips | **De refilón.** `sharp` solo procesa lo que permite `remotePatterns`, y ahí está únicamente `res.cloudinary.com`, o sea assets propios. Lo que sube la gente por la convocatoria **no pasa por `sharp`**: va directo a Cloudinary. |
+
+  O sea: ninguna es alcanzable de forma peligrosa con esta configuración. Subir
+  de versión menor el sitio de una tienda **el día que se despliega y sin nadie
+  que lo pruebe a mano después** pesa más que el riesgo que cierra. Cuando haya
+  un rato con calma: `npm audit fix --force`, y probar a mano el catálogo, el
+  carrito y el pago.
+- **Dos `<img>` a pelo en `components/dropIntro.tsx`**, con su
+  `eslint-disable`. Ya está explicado en el propio archivo: se miden en `cqw`
+  contra el lienzo del video y `next/image` necesita el tamaño de antemano.
+  > Ojo con "optimizar" el logo ovalado del cierre: se midió y pedirle
+  > `f_auto,q_auto,w_400` a Cloudinary lo deja en **16 KB contra los 12 KB del
+  > original**. Es un PNG chico de un solo color, ya está en su mejor forma. La
+  > estrella sí gana (7 → 4 KB) y esa sí las lleva.
 
 ### Antes de abrir la tienda
 
 - **Fecha real del drop** (`DROP_DATE`), hoy placeholder 1-sep-2026.
 - **Stripe en modo LIVE** + activar **OXXO** + webhook live.
 - **Rellenar `/terms`** (textos entre `[corchetes]`, en los dos idiomas).
+- **Revisar ANDROID.** La causa de fondo ya se encontró y se arregló (ver 9-bis:
+  era el input `sr-only` de la convocatoria estirando el documento a 8 348 px),
+  pero se midió en Chrome de escritorio, NO en un Android real. Falta
+  confirmarlo en el aparato. Ahí es donde más
+  suele romperse un scroll horizontal: la barra del navegador que aparece y
+  desaparece cambiando el alto real de la ventana (`dvh`), el gesto de "atrás"
+  desde el borde que compite con el deslizar de lado, y el teclado al abrir el
+  formulario de la convocatoria.
 - ⚠️ **`MOSTRAR_HUECOS` de vuelta en `false`** (`config/about.ts`). Está en
   `true` a propósito y de forma TEMPORAL, para poder ver la forma del recorrido
   de Nosotros con sus paneles de foto en el sitio desplegado mientras llegan las

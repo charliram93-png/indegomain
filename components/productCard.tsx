@@ -134,9 +134,14 @@ export default function ProductCard({ product, index, onClick }: Props) {
             que corrido a la derecha se asoma un poco más. En móvil se quedó
             como estaba, que ahí sí se veía bien.
           */}
+          {/* `select-none` además de `pointer-events-none`: el número es
+              DECORACIÓN, no texto. Sin esto, al arrastrar para seleccionar el
+              nombre de la playera se llevaba también el "01" y al pegar salía
+              un número suelto que nadie pidió. */}
           <span
-            className="pointer-events-none absolute bottom-[3%] right-[6%] text-[24cqw] font-bold leading-none opacity-15 md:right-[2%]"
+            className="pointer-events-none absolute bottom-[3%] right-[6%] select-none text-[24cqw] font-bold leading-none opacity-25 md:right-[2%]"
             style={{ fontFamily: HELVETICA }}
+            aria-hidden
           >
             {number}
           </span>

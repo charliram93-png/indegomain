@@ -5,13 +5,17 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useState,
+  useMemo,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { dictionaries, type Dictionary, type Lang } from "./dictionaries";
-
-const STORAGE_KEY = "indego-lang";
-const DEFAULT_LANG: Lang = "en";
+import {
+  guardar,
+  leerEnElCliente,
+  leerEnElServidor,
+  suscribir,
+} from "./almacen";
 
 type I18nValue = {
   lang: Lang;
@@ -22,40 +26,43 @@ type I18nValue = {
 
 const I18nContext = createContext<I18nValue | null>(null);
 
+/**
+ * EL IDIOMA NO SE GUARDA AQUÍ, se lee de `./almacen.ts`.
+ *
+ * Antes esto era un `useState` que arrancaba en inglés y un `useEffect` que
+ * leía lo guardado al montar: dibujaba dos veces al entrar y era uno de los
+ * seis `set-state-in-effect` que marcaba el linter. Ahora React lee el valor
+ * del almacén cuando lo necesita, sin efecto de por medio.
+ *
+ * EL ÚNICO EFECTO QUE QUEDA es el `lang` del `<html>`, y ese SÍ es lo que un
+ * efecto debe hacer: sincronizar algo de fuera de React (el DOM) con el estado.
+ */
 export function I18nProvider({ children }: { children: ReactNode }) {
-  // Inicia en el idioma por defecto (coincide con el render del servidor,
-  // evitando errores de hidratación). En el cliente, ajusta a lo guardado.
-  const [lang, setLangState] = useState<Lang>(DEFAULT_LANG);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as Lang | null;
-    if (saved === "en" || saved === "es") setLangState(saved);
-  }, []);
+  const lang = useSyncExternalStore(
+    suscribir,
+    leerEnElCliente,
+    leerEnElServidor,
+  );
 
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  const setLang = useCallback((next: Lang) => {
-    setLangState(next);
-    localStorage.setItem(STORAGE_KEY, next);
-  }, []);
+  const setLang = useCallback((next: Lang) => guardar(next), []);
 
-  const toggleLang = useCallback(() => {
-    setLangState((prev) => {
-      const next = prev === "en" ? "es" : "en";
-      localStorage.setItem(STORAGE_KEY, next);
-      return next;
-    });
-  }, []);
-
-  return (
-    <I18nContext.Provider
-      value={{ lang, setLang, toggleLang, t: dictionaries[lang] }}
-    >
-      {children}
-    </I18nContext.Provider>
+  const toggleLang = useCallback(
+    () => guardar(leerEnElCliente() === "en" ? "es" : "en"),
+    [],
   );
+
+  /* `useMemo` para no repartir un objeto nuevo en cada dibujado: sin esto, TODO
+     lo que use `useI18n` se vuelve a dibujar aunque el idioma no haya cambiado. */
+  const valor = useMemo(
+    () => ({ lang, setLang, toggleLang, t: dictionaries[lang] }),
+    [lang, setLang, toggleLang],
+  );
+
+  return <I18nContext.Provider value={valor}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {

@@ -59,9 +59,17 @@ const HAY_QUE_DIBUJAR_HUECOS =
   OJO, CAMBIÓ CON EL RECORRIDO HORIZONTAL (6-ago-2026): cada bloque ya no es
   una franja apilada sino UN PANEL del riel, del alto de la ventana.
 
-  · `h-full` + `flex items-center` — el contenido se centra a media altura del
-    panel. Antes lo que ordenaba era el aire de arriba y abajo (`py-24`); ahora
-    los paneles miden todos lo mismo y lo que ordena es el centro.
+  · `h-full` + `flex items-center-safe` — el contenido se centra a media altura
+    del panel. Antes lo que ordenaba era el aire de arriba y abajo (`py-24`);
+    ahora los paneles miden todos lo mismo y lo que ordena es el centro.
+
+    EL `-safe` NO ES ADORNO. Un `items-center` normal, cuando el contenido es
+    MÁS ALTO que el panel, lo desborda por ARRIBA y por abajo en partes iguales
+    — y lo que se sale por arriba queda inalcanzable, porque no se puede
+    scrollear hacia atrás del inicio. Se veía en CELULAR ACOSTADO: con 310 px de
+    alto, el texto de "a dónde vamos" mide 378 y se le comía el principio.
+    `items-center-safe` centra mientras quepa y, en cuanto no cabe, se pega
+    arriba y deja que el panel se recorra normal.
   · La separación pasó de LÍNEA DE ARRIBA a LÍNEA DE LA IZQUIERDA. Es la misma
     idea girada 90°, junto con la página. La pone el panel, no el bloque, para
     que las que ya trae el riel (portada, banda, pie) queden parejas: por eso
@@ -69,7 +77,7 @@ const HAY_QUE_DIBUJAR_HUECOS =
   · La rejilla de 12 columnas se queda, pero SIN `max-w-6xl`: el ancho ya lo
     manda el panel, y un tope de más lo dejaba corto en los anchos.
 */
-const SECCION = "flex h-full items-center px-6 md:px-12";
+const SECCION = "flex h-full items-center-safe px-6 md:px-12";
 const REJILLA = "grid w-full gap-6 md:grid-cols-12 md:gap-10";
 /** Columna del contenido: arranca en la 5 y llega al final. */
 const CONTENIDO = "md:col-span-8 md:col-start-5";

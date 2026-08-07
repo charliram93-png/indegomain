@@ -8,7 +8,7 @@ import ProductCard from "@/components/productCard";
 import ProductModal from "@/components/productModal";
 import ProductTeaser from "@/components/productTeaser";
 import Manifesto from "@/components/manifesto";
-import LluviaDeLogos from "@/components/lluviaDeLogos";
+import PatronDeFondo from "@/components/patronDeFondo";
 import { PRODUCTS } from "@/config/products";
 
 export default function Catalog() {
@@ -17,16 +17,18 @@ export default function Catalog() {
   return (
     /* `entrada`: el catálogo aparece desde el color del tema, enganchando con
        el fundido del countdown (ver `app/page.tsx` y globals.css). */
-    <div className="entrada flex min-h-dvh flex-col bg-background">
+    /* `relative` para que el patrón de fondo se mida contra TODA la página y
+       llegue hasta el final, pie incluido (ver `components/patronDeFondo.tsx`). */
+    <div className="entrada relative flex min-h-dvh flex-col bg-background">
       <Navbar />
 
       {/*
-        LLUVIA DE LOGOS en los costados. Llena el aire que queda a los lados de
-        la columna del catálogo en pantallas anchas. Va ANTES del contenido y sin
-        z propio para que quede por debajo de todo; el `main` y el pie llevan
-        `relative z-10` justo por eso. Ver `components/lluviaDeLogos.tsx`.
+        EL PATRÓN DE FONDO: los logos de la marca repartidos por toda la página,
+        casi imperceptibles, como el papel en el que envuelven la comida rápida.
+        Va ANTES del contenido y sin `z` propio para que quede por debajo de
+        todo; el `main` y el pie llevan `relative z-10` justo por eso.
       */}
-      <LluviaDeLogos />
+      <PatronDeFondo />
 
       <main className="relative z-10 flex-1">
         {/*

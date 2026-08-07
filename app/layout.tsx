@@ -40,6 +40,38 @@ export const metadata: Metadata = {
   title: "Indego Studio — Drop #1",
   description: "Indego Studio · Drop #1. Próximamente.",
 
+  /*
+    EL ICONO DE LA PESTAÑA: la estrella, SIN FONDO.
+
+    Antes vivía en `app/icon.png`, que es la forma automática de Next, pero esa
+    solo admite UNA imagen — y un logo de un solo color sobre transparente no
+    puede verse bien en las dos: blanco desaparece en una barra de pestañas
+    clara, negro desaparece en una oscura.
+
+    Se probó resolverlo poniéndole fondo olivo. Funcionaba, pero en el
+    conmutador de pestañas de Safari en iPhone se leía como un cuadrito verde
+    que no dice nada de la marca. Se descartó.
+
+    Así que van LAS DOS versiones y el navegador elige según su interfaz. La
+    OSCURA (estrella blanca) va PRIMERO a propósito: un navegador que ignore el
+    `media` se queda con la primera, y esa es la que se ve bien en el caso que
+    importaba — Safari en iPhone, que es donde se detectó el problema.
+  */
+  icons: {
+    icon: [
+      {
+        url: "/icono-oscuro.png",
+        media: "(prefers-color-scheme: dark)",
+        type: "image/png",
+      },
+      {
+        url: "/icono-claro.png",
+        media: "(prefers-color-scheme: light)",
+        type: "image/png",
+      },
+    ],
+  },
+
   openGraph: {
     title: "Indego Studio — Drop #1",
     description: "Indego Studio · Drop #1. Próximamente.",
@@ -47,21 +79,23 @@ export const metadata: Metadata = {
     siteName: "Indego Studio",
     images: [
       {
-        url: "https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png", 
+        url: "https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png",
         width: 299,
-        height: 299, 
+        height: 299,
         alt: "Indego Studio - Previsualización",
       },
     ],
     locale: "es_MX",
     type: "website",
   },
-  
+
   twitter: {
     card: "summary_large_image",
     title: "Indego Studio — Drop #1",
     description: "Indego Studio · Drop #1. Próximamente.",
-    images: ["https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png"], 
+    images: [
+      "https://res.cloudinary.com/dij60ghdf/image/upload/v1772763867/LogoWhatsMetaData_jmp0lg.png",
+    ],
   },
 };
 

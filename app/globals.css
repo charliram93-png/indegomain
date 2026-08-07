@@ -53,6 +53,37 @@
   --surface: #3d3e26; /* olivo un poco más claro para superficies */
 }
 
+/*
+  EL SITIO NUNCA SE RECORRE DE LADO
+  ---------------------------------
+  Suena a detalle y no lo es. Sin esto el DOCUMENTO se volvía recorrible en
+  horizontal —el riel del Nosotros se le escapaba al recorte— y eso traía dos
+  problemas, uno feo y otro grave:
+
+  1. EN COMPUTADORA aparecía una barra horizontal que se comía ~15 px de ALTO.
+     La página de Nosotros mide exactamente una pantalla ("h-dvh"), así que con
+     esos 15 px menos ya no cabía y salía ADEMÁS una barra vertical. Dos barras
+     por quince píxeles de nada.
+
+  2. EN ANDROID era peor, y es el bug que se reportó el 6-ago-2026: un documento
+     más ancho que la pantalla hace que el navegador ENCOJA la página para que
+     quepa, y encima conservaba la posición de scroll de la página anterior al
+     volver con "atrás". El resultado era la página chiquita y desplazada hasta
+     el fondo, en blanco, y había que alejar el zoom y subir a mano.
+
+  POR QUÉ "clip" Y NO "hidden", que es lo primero que uno escribe:
+  "hidden" CREA UN CONTENEDOR DE SCROLL —solo que sin barras—, así que el
+  navegador sigue guardando y restaurando una posición, que es justo lo que hay
+  que evitar aquí. Además rompe "position: sticky" en los hijos, y el Nosotros
+  lo usa en las etiquetas de sección. "clip" recorta y ya: no hay contenedor, no
+  hay posición que restaurar y "sticky" sigue funcionando.
+  (Un Safari viejo que no lo entienda simplemente lo ignora; no se rompe nada.)
+*/
+html,
+body {
+  overflow-x: clip;
+}
+
 html {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

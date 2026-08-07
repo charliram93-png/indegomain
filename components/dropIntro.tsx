@@ -155,6 +155,17 @@ function Cue({ cue, elapsed }: { cue: IntroCue; elapsed: number }) {
 
   if (cue.kind === "star") {
     return (
+      /*
+        `<img>` A PELO Y NO `next/image`, a propósito en las dos de este archivo.
+
+        Estas piezas se miden en `cqw` —o sea, contra el ancho del lienzo del
+        video— y con el alto en `auto`. `next/image` necesita saber el tamaño de
+        antemano (`width`/`height`) o quedarse con `fill`, y ninguna de las dos
+        cosas se lleva con un tamaño que depende del contenedor y cambia con la
+        ventana. Las URLs ya vienen con las transformaciones de Cloudinary que
+        convienen (ver `config/dropIntro.ts`), que es lo que `next/image` habría
+        aportado.
+      */
       /* eslint-disable-next-line @next/next/no-img-element */
       <img
         src={INTRO_STAR}
