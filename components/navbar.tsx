@@ -7,7 +7,6 @@ import React from "react";
 import { useTheme } from "next-themes";
 import { useCart } from "@/store/cart";
 import ThemeToggle from "@/components/themeToggle";
-import DropTag from "@/components/dropTag";
 import LangToggle from "@/components/langToggle";
 import { LOGO_ESTRELLA } from "@/config/brand";
 import { useFlag } from "@/lib/flags";
@@ -52,12 +51,14 @@ const Navbar: React.FC = () => {
       {/* LOGO */}
       <div className="flex select-none items-center">
         {/*
-          EL LOGO LLEVA AL NOSOTROS, no a la raíz (6-ago-2026).
+          EL LOGO LLEVA AL CATÁLOGO (7-ago-2026), no a la raíz y ya no al
+          Nosotros.
 
           La raíz es el countdown: los caballos a pantalla completa. Mandar ahí
           a alguien que ya entró es sacarlo del sitio y ponerlo otra vez en la
-          puerta. El logo tiene que llevar "a casa", y la casa de la marca es su
-          página, no el catálogo.
+          puerta. El logo tiene que llevar "a casa", y desde hoy la casa es el
+          catálogo: es la página principal del sitio. El Nosotros pasó a ser una
+          página de consulta, a la que se llega desde el pie.
 
           Apunta al MISMO lugar que `DESTINO` en `app/page.tsx` (a dónde lleva
           ENTRAR). Si se cambia uno, hay que cambiar el otro.
@@ -65,7 +66,7 @@ const Navbar: React.FC = () => {
           La raíz sigue siendo los caballos y nada más, a propósito: quien
           escribe el dominio pelado ve el countdown.
         */}
-        <Link href="/about" className="select-none">
+        <Link href="/product" className="select-none">
           <Image
             src={logoSrc}
             width={100}
@@ -83,19 +84,19 @@ const Navbar: React.FC = () => {
         "seguir pedido", que es lo que la gente busca primero.
       */}
 
+      {/*
+        AQUÍ VIVÍA LA ENTRADA AL DROP y se quitó el 7-ago-2026, junto con su
+        componente. Primero fue una calcomanía roja montada en el borde de la
+        barra y luego un "DROP #1" de texto en esta fila.
+
+        YA NO TIENE SENTIDO: el catálogo pasó a ser la página principal, así que
+        el logo de aquí al lado ya lleva ahí y el enlace apuntaba a donde estás
+        parado. El único sitio donde salía era el Nosotros, que ahora es una
+        página de consulta a la que se llega desde el pie.
+      */}
+
       {/* CONTROLES */}
       <div className="flex select-none items-center gap-1">
-        {/*
-          LA ENTRADA AL DROP, y va DENTRO de la fila de controles (7-ago-2026).
-
-          Antes era una calcomanía roja posicionada contra la barra, para
-          montarse sobre su borde de abajo. Se quitó porque resaltaba demasiado
-          —en un sitio de crema y olivo, un sticker naranja se comía la mirada
-          antes que el logo— y quedó como un enlace de texto más, del mismo peso
-          que el idioma y el tema. Se esconde solo dentro del catálogo.
-          Ver `components/dropTag.tsx`.
-        */}
-        <DropTag />
         <LangToggle />
         <ThemeToggle />
         <button

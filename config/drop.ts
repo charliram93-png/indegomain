@@ -11,15 +11,16 @@
 export const DROP_DATE = new Date("2026-09-01T18:00:00-06:00");
 
 /**
- * NOMBRE DEL DROP. Es el enlace al catálogo que va en la barra
- * (`components/dropTag.tsx`).
+ * NOMBRE DEL DROP.
  *
- * Estuvo un tiempo sin usarse —era el título del catálogo, que se quitó cuando
- * entró el manifiesto— y volvió el 7-ago-2026 al cambiar la calcomanía roja por
- * un enlace de texto.
+ * HOY NO SE PINTA EN NINGÚN LADO, y ha entrado y salido de uso dos veces: fue
+ * el título del catálogo (se quitó al entrar el manifiesto), volvió el
+ * 7-ago-2026 como el enlace "DROP #1" de la barra, y ese enlace se quitó ese
+ * mismo día al volverse el catálogo la página principal — el logo ya lleva ahí.
  *
- * SE ESCRIBE CON "#" para que case con el resto del sitio: la banda que cierra
- * el manifiesto dice "GO TO DROP #1". NO se traduce: es nombre propio.
+ * Se deja porque es el nombre del lanzamiento y va a hacer falta en cuanto haya
+ * un segundo drop. SE ESCRIBE CON "#" para que case con la banda que cierra el
+ * manifiesto ("GO TO DROP #1"). NO se traduce: es nombre propio.
  */
 export const DROP_NAME = "DROP #1";
 
@@ -55,24 +56,22 @@ export const DROP_POSTER =
   "https://res.cloudinary.com/dij60ghdf/video/upload/so_1,w_1280,q_auto/v1785541329/caballos_etxysz.jpg";
 
 /**
- * LA ETIQUETA DEL DROP (ver `components/dropTag.tsx`).
+ * LA ETIQUETA DEL DROP — el sticker "SPECIAL DROP #1".
  *
- * Es el sticker "SPECIAL DROP #1", montado en el borde del navbar. Sale en un
- * solo lugar del sitio a propósito (ver el componente).
+ * YA NO SE USA. Iba montada en el borde del navbar y se quitó el 7-ago-2026
+ * porque resaltaba demasiado: en un sitio de crema, olivo y Helvetica era lo
+ * primero —y a veces lo único— que se veía al entrar, y le ganaba la mirada al
+ * logo. Su componente se borró ese mismo día; el historial está en `MANUAL.md`.
+ *
+ * Se deja la URL por si se retoma para Instagram o para el siguiente drop.
  *
  * ES APAISADA (1681 × 936, casi 16:9) y con FONDO TRANSPARENTE, así que se
- * apoya sola sobre cualquier fondo. El componente la mide POR ALTURA y el ancho
- * lo saca de la imagen, así que cambiarla por otra de otra proporción no la
- * deforma — pero sí cambia cuánto espacio ocupa a lo ancho. Si algún día vuelve
- * a ser cuadrada, hay que revisar el `left-*` de la del navbar, que está
- * calculado para que no le caiga encima al logo.
+ * apoya sola sobre cualquier fondo. Si se vuelve a dibujar, va medida POR
+ * ALTURA: el ancho lo saca de la imagen, y cambiarla por otra de otra
+ * proporción no la deforma pero sí cambia cuánto ocupa a lo ancho.
  *
  * Se sirve con `f_auto,q_auto,w_800` igual que las playeras. Sin eso es un PNG
- * de más de 1 MB en el navbar de TODAS las páginas; con eso son unas decenas de
- * KB en webp.
- *
- * MIENTRAS ESTÉ VACÍA se dibuja una etiqueta de respaldo en SVG, hecha con los
- * colores del tema. Así el navbar nunca se queda con un hueco.
+ * de más de 1 MB; con eso son unas decenas de KB en webp.
  */
 export const DROP_TAG_IMAGE =
   "https://res.cloudinary.com/dij60ghdf/image/upload/f_auto,q_auto,w_800/v1786033395/indego-drop1-banner-solo-etiqueta_xpslul.png";

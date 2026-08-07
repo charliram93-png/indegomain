@@ -168,10 +168,11 @@ indego/
 
 - **`config/drop.ts`** — El "panel de control" del lanzamiento:
   - `DROP_DATE`: fecha y hora del drop.
-  - `DROP_NAME`: nombre del drop ("DROP #1"). **Es el enlace al catálogo que va
-    en la barra** (`components/dropTag.tsx`). Estuvo un tiempo sin usarse —era
-    el título del catálogo, que se quitó al entrar el manifiesto— y volvió el
-    7-ago-2026 al cambiar la calcomanía roja por un enlace de texto.
+  - `DROP_NAME`: nombre del drop ("DROP #1"). **Hoy no se pinta en ningún
+    lado**, y ha entrado y salido de uso dos veces: fue el título del catálogo
+    (se quitó al entrar el manifiesto), volvió el 7-ago-2026 como el enlace de
+    la barra, y ese enlace se quitó ese mismo día al volverse el catálogo la
+    página principal. Se deja porque hará falta con el segundo drop.
   - `DROP_ACCESS_KEY`: clave para probar la tienda antes de tiempo.
   - `DROP_VIDEO` / `DROP_POSTER`: video de fondo del countdown y su imagen de
     respaldo (ambos en Cloudinary).
@@ -315,30 +316,29 @@ indego/
   traduce: es identidad de marca, no interfaz.
 - **`navbar.tsx`** — Barra superior. El ícono de bolsa abre el carrito y muestra
   cuántos productos hay.
-  **EL LOGO LLEVA A `/about`, no a la raíz** (6-ago-2026). La raíz es el
+  **EL LOGO LLEVA A `/product`, no a la raíz** (7-ago-2026). La raíz es el
   countdown: mandar ahí a alguien que ya entró es sacarlo del sitio y ponerlo
-  otra vez en la puerta. El logo lleva "a casa", y la casa de la marca es su
-  página. Apunta al MISMO lugar que `DESTINO` en `app/page.tsx` (a dónde lleva
-  ENTRAR): **si se cambia uno hay que cambiar el otro**. La raíz sigue siendo
-  los caballos y nada más, a propósito: quien escribe el dominio pelado ve el
-  countdown.
+  otra vez en la puerta. El logo lleva "a casa", y **desde hoy la casa es el
+  catálogo**. Apunta al MISMO lugar que `DESTINO` en `app/page.tsx` (a dónde
+  lleva ENTRAR): **si se cambia uno hay que cambiar el otro**. La raíz sigue
+  siendo los caballos y nada más, a propósito: quien escribe el dominio pelado
+  ve el countdown.
   **NOSOTROS NO VA EN LA BARRA.** Se probó junto al logo y se regresó al pie:
   competía con el logo y con el carrito por la misma mirada y no es un enlace
-  de esa jerarquía.
-- **`dropTag.tsx`** — La salida al catálogo desde la página de marca. Hoy es un
-  **"DROP #1" chico en mayúsculas dentro de la fila de controles**, del mismo
-  peso que EN y el tema, y va **primero de los cuatro** porque es el único que
-  lleva a algún lado (los otros tres cambian cómo se ve la página). Se esconde
-  solo dentro de `/product`; como el navbar solo existe en el Nosotros y en el
-  catálogo, en la práctica sale SOLO en el Nosotros. El nombre sale de
-  `DROP_NAME` (`config/drop.ts`) y **no se traduce**: es nombre propio.
+  de esa jerarquía. **Desde el 7-ago el pie es su ÚNICA entrada.**
+- ~~**`dropTag.tsx`**~~ — **BORRADO el 7-ago-2026.** Era la salida al catálogo
+  desde la página de marca. Murió en dos pasos el mismo día: primero dejó de ser
+  una **calcomanía roja** ("SPECIAL DROP #1", ladeada y montada a caballo sobre
+  el borde de la barra) y pasó a ser un **"DROP #1" de texto** en la fila de
+  controles, porque **resaltaba demasiado** —en un sitio de crema, olivo y
+  Helvetica, un sticker naranja era lo primero, y a veces lo único, que se veía
+  al entrar—; y después se quitó del todo, porque **el catálogo se volvió la
+  página principal** y el logo de al lado ya lleva ahí: el enlace apuntaba a
+  donde estabas parado.
 
-  > **ERA UNA CALCOMANÍA ROJA** ("SPECIAL DROP #1"), ladeada, pegada al logo y
-  > montada a caballo sobre el borde de la barra. Se cambió el **7-ago-2026**
-  > porque **resaltaba demasiado**: en un sitio de crema, olivo y Helvetica, un
-  > sticker naranja era lo primero —y a veces lo único— que se veía al entrar, y
-  > le ganaba la mirada al propio logo. El trabajo es el mismo; lo que cambió es
-  > que ya no grita.
+  Se deja este apartado porque **todo esto ya se probó** y no hay que volver a
+  proponerlo. `DROP_NAME` y `DROP_TAG_IMAGE` siguen en `config/drop.ts`, ahora
+  sin uso, por si vuelven para el siguiente drop o para Instagram.
 
   **Tres cosas que ya se probaron y se echaron para atrás**, para no volver a
   proponerlas:
@@ -659,14 +659,16 @@ indego/
    - Esto **no se puede burlar** cambiando el reloj del navegador, porque la fecha
      se valida en el servidor.
 3. Cuando el countdown llega a cero, la home muestra el botón **ENTRAR**, que
-   lleva a la **página de marca** (`/about`), y de ahí se pasa a las playeras. Antes de darle, la pantalla se
-   funde al color del tema y aparece el manifiesto un momento — el puente entre
-   el video y la tienda. Los tres tiempos de esa salida están en `app/page.tsx`
+   lleva al **catálogo** (`/product`). Antes de darle, la pantalla se funde al
+   color del tema y aparece el manifiesto un momento — el puente entre el video
+   y la tienda. Los tres tiempos de esa salida están en `app/page.tsx`
    (`T_CORTINA`, `T_FRASE`, `T_DIFUMINA`).
-   Esto se ha ido y vuelto: se probó llevar directo al catálogo y se regresó al
-   Nosotros (6-ago-2026), ya que dejó de ser una página de lectura larga y pasó
-   a ser un recorrido de lado que se pasa rápido. Es UNA línea (`DESTINO` en
-   ese archivo), pero hay que cambiar también el logo del navbar.
+   > **ESTO SE HA IDO Y VUELTO DOS VECES.** El 6-ago-2026 se movió al Nosotros
+   > con el argumento de que la marca se cuenta antes de vender; el 7-ago se
+   > regresó al catálogo. **El Nosotros pasó a ser una página de consulta, no la
+   > puerta**: se llega a ella desde el pie, cuando alguien la busca a propósito,
+   > y ya no se le pone enfrente a todo el que entra. Es UNA línea (`DESTINO` en
+   > ese archivo), pero **hay que cambiar también el logo del navbar**.
 
 ---
 
@@ -1040,11 +1042,21 @@ el mismo gesto contando dos cosas distintas.
      visible siempre: el letrero está metido en la esquina de una pantalla
      ancha, la rayita centrada ni lo roza, y con ratón no existe la costumbre de
      que las barras se escondan.
-     > **La espera antes de esconderla (900 ms) tiene que sobrevivir a la
+     > **La espera antes de esconderla (500 ms) tiene que sobrevivir a la
      > INERCIA.** Al soltar el dedo el teléfono sigue desplazando solo y va
-     > soltando eventos de scroll cada vez más espaciados; con un tiempo corto
-     > la rayita parpadearía al final de cada deslizón, justo cuando la página
-     > se está frenando.
+     > soltando eventos de scroll cada vez más espaciados; si se queda corta, la
+     > rayita parpadea al final de cada deslizón, justo cuando la página se está
+     > frenando. Empezó en 900 y bajó a 500 porque se sentía pegajosa. **Si
+     > algún día parpadea, este es el número que hay que subir.**
+     > **EL EMPUJONCITO DE ENTRADA NO LA DESPIERTA.** Ese asomo dispara eventos
+     > de scroll iguales a los de un dedo, y la hacía aparecer nada más entrar
+     > —justo lo que se evitaba al esconderla, porque la primera pantalla tiene
+     > que verse limpia—. El empujón deja una marca (`data-empujando`) en el
+     > nodo del riel mientras dura, que es lo único que las dos piezas
+     > comparten; se prefirió a levantar un estado de React porque no hay nada
+     > que redibujar, solo un aviso entre dos oyentes del mismo elemento. La
+     > regla en corto: **la rayita responde a la persona, no a la página
+     > moviéndose sola.**
      > **Antes se resolvía distinto**: entraba en función de cuánto llevaba
      > salido el panel de entrada, para relevar al letrero cuando ése se
      > apagaba. Se cambió porque el letrero **dejó de apagarse**, y porque esto

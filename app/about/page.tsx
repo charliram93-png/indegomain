@@ -817,22 +817,48 @@ export default function AboutPage() {
     }
 
     let regreso: number | undefined;
+    let limpiar: number | undefined;
     const salida = window.setTimeout(() => {
       if (cancelado) return;
       if (el.scrollLeft !== 0) return;
       if (el.scrollWidth - el.clientWidth < ASOMO) return;
 
+      /*
+        SE AVISA DE QUE ESTE SCROLL LO ESTAMOS HACIENDO NOSOTROS.
+
+        La rayita de avance (`components/pistaDelRiel.tsx`) se asoma con cada
+        evento de scroll, porque en teléfono solo se muestra mientras la persona
+        se mueve. El empujón dispara esos mismos eventos, así que la hacía
+        aparecer sola nada más entrar — y eso es justo lo que se quería evitar
+        al esconderla: la primera pantalla tiene que verse limpia.
+
+        La marca va en el propio nodo del riel, que es lo único que las dos
+        piezas comparten. Es preferible a levantar un estado de React para esto:
+        no hay nada que redibujar, solo un aviso entre dos oyentes del mismo
+        elemento.
+      */
+      el.dataset.empujando = "1";
       el.scrollTo({ left: ASOMO, behavior: "smooth" });
 
       regreso = window.setTimeout(() => {
-        if (cancelado) return;
+        if (cancelado) {
+          delete el.dataset.empujando;
+          return;
+        }
         el.scrollTo({ left: 0, behavior: "smooth" });
+        /* El scroll suave del navegador tarda lo suyo; la marca se quita cuando
+           ya terminó de volver, no al pedirlo. */
+        limpiar = window.setTimeout(() => {
+          delete el.dataset.empujando;
+        }, 600);
       }, PAUSA);
     }, ESPERA);
 
     return () => {
       window.clearTimeout(salida);
       window.clearTimeout(regreso);
+      window.clearTimeout(limpiar);
+      delete el.dataset.empujando;
       for (const g of gestos) window.removeEventListener(g, cancelar);
     };
   }, []);
@@ -920,9 +946,10 @@ export default function AboutPage() {
     <div className="entrada flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <Navbar />
 
-      {/* LA ETIQUETA DEL DROP la dibuja el navbar, montada en su borde de
-          abajo (ver `components/dropTag.tsx`). Se probó suelta desde aquí,
-          pegada a la pantalla, y se regresó a la barra. */}
+      {/* AQUÍ ESTUVO LA ETIQUETA DEL DROP, primero suelta y pegada a la
+          pantalla y luego montada en el borde de la barra. Se quitó del todo el
+          7-ago-2026: el catálogo pasó a ser la página principal, así que el
+          logo de la barra ya lleva ahí. El historial está en `MANUAL.md`. */}
 
       {/*
         EL RIEL. Aquí es donde la página se voltea: en vez de apilarse hacia

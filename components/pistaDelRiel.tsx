@@ -117,13 +117,20 @@ export default function PistaDelRiel({
     /**
      * CUÁNTO AGUANTA VISIBLE DESPUÉS DEL ÚLTIMO MOVIMIENTO.
      *
-     * Tiene que sobrevivir a la INERCIA: al soltar el dedo, el teléfono sigue
+     * TIENE QUE SOBREVIVIR A LA INERCIA: al soltar el dedo, el teléfono sigue
      * desplazando solo y va soltando eventos de scroll cada vez más
-     * espaciados. Con un tiempo corto la rayita parpadearía al final de cada
-     * deslizón, justo cuando la página se está frenando. Con esto se apaga una
-     * sola vez, cuando de verdad se detuvo.
+     * espaciados. Si esto se queda corto, la rayita parpadea al final de cada
+     * deslizón, justo cuando la página se está frenando.
+     *
+     * Empezó en 900 ms y bajó a 500 el 7-ago-2026 porque se sentía pegajosa:
+     * la rayita seguía ahí bastante después de que la página ya se había
+     * parado. Medio segundo alcanza de sobra para la cola de la inercia —los
+     * eventos siguen llegando mientras el desplazamiento se frena, y cada uno
+     * reinicia la cuenta— y se retira en cuanto de verdad no pasa nada.
+     * SI ALGÚN DÍA PARPADEA al final de un deslizón, este número es el que hay
+     * que subir.
      */
-    const ESPERA = 900;
+    const ESPERA = 500;
 
     /* El `scroll` se dispara muchas más veces que cuadros dibuja la pantalla.
        Esta banderita deja pasar UNO por cuadro y tira los demás. */
@@ -143,6 +150,19 @@ export default function PistaDelRiel({
     /** La muestra y reinicia la cuenta para esconderla. Solo en teléfono. */
     const asomar = () => {
       if (!enTelefono) return;
+      /*
+        EL EMPUJONCITO DE ENTRADA NO CUENTA COMO MOVIMIENTO.
+
+        Al llegar, el riel se asoma solo y regresa (ver el `useEffect` del
+        empujón en `app/about/page.tsx`). Eso dispara eventos de scroll iguales
+        a los de un dedo, y hacía aparecer la rayita nada más entrar — justo lo
+        que se quería evitar al esconderla, porque la primera pantalla tiene que
+        verse limpia. El empujón deja esta marca en el riel mientras dura.
+
+        La regla, dicha en corto: **la rayita responde a la persona, no a la
+        página moviéndose sola.**
+      */
+      if (el.dataset.empujando) return;
       marco.style.visibility = "visible";
       marco.style.opacity = "1";
       window.clearTimeout(apagar);
