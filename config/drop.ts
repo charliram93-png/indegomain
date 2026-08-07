@@ -10,8 +10,18 @@
 // TODO: confirmar fecha definitiva. Por ahora: 1 de septiembre 2026, 6:00 PM (centro de MX).
 export const DROP_DATE = new Date("2026-09-01T18:00:00-06:00");
 
-// Nombre del drop. Es el TÍTULO del catálogo (antes decía "The Collection").
-export const DROP_NAME = "DROP 1";
+/**
+ * NOMBRE DEL DROP. Es el enlace al catálogo que va en la barra
+ * (`components/dropTag.tsx`).
+ *
+ * Estuvo un tiempo sin usarse —era el título del catálogo, que se quitó cuando
+ * entró el manifiesto— y volvió el 7-ago-2026 al cambiar la calcomanía roja por
+ * un enlace de texto.
+ *
+ * SE ESCRIBE CON "#" para que case con el resto del sitio: la banda que cierra
+ * el manifiesto dice "GO TO DROP #1". NO se traduce: es nombre propio.
+ */
+export const DROP_NAME = "DROP #1";
 
 /**
  * VIDEO DE FONDO DEL COUNTDOWN (en bucle), servido por Cloudinary.

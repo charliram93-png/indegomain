@@ -83,16 +83,19 @@ const Navbar: React.FC = () => {
         "seguir pedido", que es lo que la gente busca primero.
       */}
 
-      {/*
-        ETIQUETA DEL DROP. Va FUERA de la fila del logo: está posicionada contra
-        la barra para poder montarse sobre su borde de abajo, la mayor parte
-        adentro y el resto colgando. Se esconde sola dentro del catálogo.
-        Ver `components/dropTag.tsx`.
-      */}
-      <DropTag />
-
       {/* CONTROLES */}
       <div className="flex select-none items-center gap-1">
+        {/*
+          LA ENTRADA AL DROP, y va DENTRO de la fila de controles (7-ago-2026).
+
+          Antes era una calcomanía roja posicionada contra la barra, para
+          montarse sobre su borde de abajo. Se quitó porque resaltaba demasiado
+          —en un sitio de crema y olivo, un sticker naranja se comía la mirada
+          antes que el logo— y quedó como un enlace de texto más, del mismo peso
+          que el idioma y el tema. Se esconde solo dentro del catálogo.
+          Ver `components/dropTag.tsx`.
+        */}
+        <DropTag />
         <LangToggle />
         <ThemeToggle />
         <button

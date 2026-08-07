@@ -10,6 +10,7 @@ import { useScrollLock } from "@/lib/useScrollLock";
 import { usePresencia } from "@/lib/usePresencia";
 import { useI18n } from "@/lib/i18n/context";
 import SwipeHint from "@/components/swipeHint";
+import PatronDeFondo from "@/components/patronDeFondo";
 
 type Props = {
   product: Product | null;
@@ -164,6 +165,24 @@ export default function ProductModal({
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/*
+          EL PAPEL DE ENVOLTURA, el mismo del catálogo (7-ago-2026). En TODOS
+          los aparatos y en los dos temas: el modal es la única pantalla del
+          sitio donde la playera se ve sola, y sin nada detrás el fondo se leía
+          como un cuadro de diálogo del navegador en vez de una caja de la
+          marca.
+
+          VA CON LA VARIANTE "modal", que NO es la del catálogo. Allá son 60
+          renglones repartidos en una página de varias pantallas; metidos en una
+          caja de una pantalla saldrían todos encimados. El propio
+          `patronDeFondo.tsx` lo advierte y ahí están los números de cada una.
+
+          NO ROMPE LA REJILLA de dos columnas aunque sea un hijo más: va
+          `absolute`, o sea fuera del flujo, así que no ocupa celda. Y todo lo
+          que va encima lleva su propio `relative` o `z-`.
+        */}
+        <PatronDeFondo variante="modal" />
+
         {/* Cerrar */}
         <button
           onClick={onClose}
@@ -173,8 +192,11 @@ export default function ProductModal({
           <X size={22} strokeWidth={1.5} />
         </button>
 
-        {/* IMAGEN + GALERÍA (puntos). En móvil ocupa el espacio disponible. */}
-        <div className="flex min-h-0 flex-1 flex-col md:block md:flex-none">
+        {/* IMAGEN + GALERÍA (puntos). En móvil ocupa el espacio disponible.
+            `relative` para quedar ENCIMA del papel de envoltura: un elemento
+            posicionado se pinta después que el contenido de los que no lo
+            están, así que sin esto el patrón se dibujaría sobre la playera. */}
+        <div className="relative flex min-h-0 flex-1 flex-col md:block md:flex-none">
           <button
             ref={marco}
             type="button"
@@ -193,7 +215,27 @@ export default function ProductModal({
                    suave detrás de la playera SOLO en tema oscuro, si no la café
                    desaparece contra el fondo. En claro el modal va limpio. Ver
                    globals.css. */
-            className={`halo-modal relative flex min-h-0 w-full flex-1 items-center justify-center md:h-auto md:aspect-square md:flex-none ${
+            /*
+              EL TOPE DE ALTURA ES LO QUE QUITA EL SCROLL EN LAPTOP
+              (7-ago-2026). Sin él, en computadora la caja es CUADRADA y su alto
+              lo manda el ancho de la columna: con el modal a 1152 px, cada
+              columna mide 516, así que la imagen medía 516 de alto y el
+              contenido entero 610 con los rellenos. El modal está topado a
+              `90vh`, o sea que en cuanto la ventana bajaba de ~678 px de alto
+              —una laptop de 1366×768 deja unos 660— el contenido ya no cabía y
+              aparecía una barra de desplazamiento dentro del modal.
+
+              Con el tope, en pantallas altas no cambia NADA (el cuadrado sigue
+              mandando porque es más chico que el tope) y en las bajitas la caja
+              se achata lo justo para caber. La playera no se deforma: es
+              `object-contain`, así que solo se le queda un poco de aire a los
+              lados.
+
+              EL `overflow-y-auto` DEL MODAL SE QUEDA, de red: si algún día el
+              contenido crece por otro lado, es mejor que se pueda recorrer a
+              que se corte.
+            */
+            className={`halo-modal relative flex min-h-0 w-full flex-1 items-center justify-center md:h-auto md:aspect-square md:max-h-[calc(90vh-8rem)] md:flex-none ${
               hasGallery ? "cursor-pointer" : "cursor-default"
             }`}
           >
@@ -234,7 +276,9 @@ export default function ProductModal({
                 versión alineada a la izquierda: cambia `md:items-center` por
                 `md:items-stretch` aquí, quita `md:text-center` del bloque del
                 nombre y regresa `md:items-start` a tallas y cantidad. */}
-        <div className="flex shrink-0 flex-col items-center space-y-3 pt-3 text-foreground md:items-center md:justify-center md:space-y-6 md:pt-0">
+        {/* `relative`, por lo mismo que la columna de la imagen: para quedar
+            encima del papel de envoltura. */}
+        <div className="relative flex shrink-0 flex-col items-center space-y-3 pt-3 text-foreground md:items-center md:justify-center md:space-y-6 md:pt-0">
           <div className="w-full">
             {/* Nombre + precio: en la MISMA línea en móvil, apilados en desktop */}
             <div className="flex items-baseline justify-between gap-3 md:block md:text-center">

@@ -124,6 +124,44 @@ const VARIANTES = {
     opacidadClaro: 0.035,
     opacidadOscuro: 0.022,
   },
+  modal: {
+    /**
+     * EL MODAL DE PRODUCTO (7-ago-2026). Es el mismo papel de envoltura del
+     * catálogo, pero **no** se puede usar la variante "catalogo" tal cual: allá
+     * son 60 renglones para una página de varias pantallas, y metidos en una
+     * caja de una pantalla saldrían todos encimados en una plasta. Esa
+     * advertencia ya estaba escrita arriba; esta variante es la que la respeta.
+     *
+     * UNA REJA DE 5 × 4. La caja es ancha y de una pantalla de alto, así que hay
+     * que repartir parejo en los DOS sentidos —al revés que el catálogo, que
+     * solo reparte a lo largo—. 20 es múltiplo de 4, para que los cuatro logos
+     * salgan el mismo número de veces.
+     */
+    columnas: 5,
+    renglones: 4,
+    /** Toda la caja, no un cintillo: aquí sí es fondo completo. */
+    hasta: 100,
+    /**
+     * Emparejados, por lo mismo que en el cintillo: en un espacio contenido la
+     * palabra INDEGO se vuelve una plasta y los otros tres quedan perdidos.
+     */
+    emparejarPesos: true,
+    /**
+     * Medido contra LA CAJA (`cqw`) y no contra la ventana. El modal mide casi
+     * la pantalla en teléfono pero solo un pedazo en computadora, así que con
+     * `vw` las piezas saldrían diminutas en uno y enormes en el otro.
+     */
+    ancho: "clamp(70px, 13cqw, 165px)",
+    escala: [0.6, 1.05] as [number, number],
+    /**
+     * LAS MÁS TENUES DE LAS TRES, y tiene que ser así: aquí el fondo compite
+     * con lo único que importa de esta pantalla —la playera y el botón de
+     * comprar—. En el catálogo el papel acompaña un recorrido largo; aquí
+     * acompaña una decisión.
+     */
+    opacidadClaro: 0.03,
+    opacidadOscuro: 0.018,
+  },
 };
 
 export type VariantePatron = keyof typeof VARIANTES;
@@ -183,6 +221,7 @@ function reparte({
 const PIEZAS: Record<VariantePatron, ReturnType<typeof reparte>> = {
   catalogo: reparte(VARIANTES.catalogo),
   panel: reparte(VARIANTES.panel),
+  modal: reparte(VARIANTES.modal),
 };
 
 /**

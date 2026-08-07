@@ -1022,9 +1022,9 @@ export default function AboutPage() {
           <CascadaDeLogos src={logoDeEntrada} alt="" />
 
           {/* EL LETRERO DE CÓMO RECORRER. Va dentro del panel de entrada —no
-              fijo a la pantalla— para que se vaya con él, y encima se apaga
-              antes de que el panel termine de salir. */}
-          <ComoRecorrer riel={riel} />
+              fijo a la pantalla— y esa es toda su lógica de salida: se va
+              cuando el panel se va. No escucha el scroll ni se atenúa. */}
+          <ComoRecorrer />
         </div>
 
         {/*

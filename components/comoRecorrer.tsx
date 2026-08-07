@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
 import { useI18n } from "@/lib/i18n/context";
 import { dictionaries, LANGS, type Lang } from "@/lib/i18n/dictionaries";
 import { useMontado } from "@/lib/useMontado";
@@ -8,10 +7,15 @@ import { useMontado } from "@/lib/useMontado";
 /**
  * CÓMO SE RECORRE ESTA PÁGINA — el letrero del panel de entrada.
  * --------------------------------------------------------------
- * Un renglón chico abajo del panel de entrada, sobre un vidrio esmerilado, que
- * dice con qué se mueve la página. Se desvanece conforme se avanza: ya no hace
- * falta cuando la persona entendió, y la instrucción se va sola sin que nadie
- * la cierre.
+ * Un renglón chico en la esquina de abajo a la izquierda del panel de entrada,
+ * sobre un vidrio esmerilado, que dice con qué se mueve la página.
+ *
+ * SE QUEDA QUIETO. No se atenúa ni se apaga con el scroll: vive DENTRO del panel
+ * de entrada, así que se va solo cuando el panel se va, y eso ya es toda la
+ * salida que necesita. Llegó a desvanecerse conforme se avanzaba y se quitó el
+ * 7-ago-2026 — un aviso que se apaga mientras lo estás leyendo se siente como
+ * que el sitio te lo arrebata, y encima obligaba a escuchar el scroll para algo
+ * que el propio panel resuelve gratis.
  *
  * DICE UNA COSA DISTINTA SEGÚN EL APARATO, y esa es la razón de que exista un
  * componente en vez de un texto suelto:
@@ -28,16 +32,6 @@ import { useMontado } from "@/lib/useMontado";
  * navbar y el de la portada, y es preferible a que aparezca "Arrastra" un
  * instante en un teléfono.
  */
-
-/**
- * HASTA DÓNDE DURA EL LETRERO, en fracción del ancho del panel de entrada.
- *
- * A media pantalla de recorrido ya está en cero. Se quiso que se fuera ANTES de
- * que el panel termine de salir, no al mismo tiempo: si se apagara justo cuando
- * el panel se va, se leería como que se lo llevó el panel; apagándose antes se
- * lee como que ya cumplió y se retira.
- */
-const HASTA = 0.5;
 
 /**
  * CÓMO SE DESVANECE EL RECUADRO DE VIDRIO.
@@ -70,15 +64,9 @@ const DIFUMINADO =
   "linear-gradient(to top, #000 50%, transparent 100%), " +
   "linear-gradient(to right, #000 68%, transparent 100%)";
 
-export default function ComoRecorrer({
-  riel,
-}: {
-  /** El contenedor que se recorre. Vive en `app/about/page.tsx`. */
-  riel: RefObject<HTMLElement | null>;
-}) {
+export default function ComoRecorrer() {
   const { lang } = useI18n();
   const montado = useMontado();
-  const caja = useRef<HTMLDivElement>(null);
 
   /*
     ¿ESTE APARATO SE TOCA? `pointer: coarse` es el dedo: pregunta por la
@@ -93,50 +81,6 @@ export default function ComoRecorrer({
     typeof window !== "undefined" &&
     window.matchMedia("(pointer: coarse)").matches &&
     !window.matchMedia("(pointer: fine)").matches;
-
-  useEffect(() => {
-    const el = riel.current;
-    const nodo = caja.current;
-    if (!el || !nodo) return;
-
-    let pedido = false;
-
-    const pintar = () => {
-      pedido = false;
-
-      /* El ancho del PANEL, no el de la pantalla: el letrero pertenece al panel
-         de entrada y tiene que apagarse al ritmo en que ése se va. */
-      const panel = nodo.parentElement?.offsetWidth ?? el.clientWidth;
-      const avance = panel > 0 ? el.scrollLeft / (panel * HASTA) : 0;
-      const queda = Math.min(Math.max(1 - avance, 0), 1);
-
-      nodo.style.opacity = String(queda);
-      /*
-        APAGARLO DEL TODO CUANDO YA NO SE VE, y no solo dejarlo transparente:
-        el vidrio esmerilado es `backdrop-filter`, de lo más caro que hay para
-        dibujar, y a opacidad 0 el navegador lo seguiría calculando en cada
-        cuadro del recorrido. Con `visibility` deja de existir.
-      */
-      nodo.style.visibility = queda <= 0.01 ? "hidden" : "visible";
-    };
-
-    const alRecorrer = () => {
-      if (pedido) return;
-      pedido = true;
-      requestAnimationFrame(pintar);
-    };
-
-    pintar();
-    el.addEventListener("scroll", alRecorrer, { passive: true });
-    window.addEventListener("resize", alRecorrer);
-
-    return () => {
-      el.removeEventListener("scroll", alRecorrer);
-      window.removeEventListener("resize", alRecorrer);
-    };
-    /* `montado` está en las dependencias porque antes de montar no se dibuja
-       nada y `caja.current` es nulo: hay que volver a enganchar al aparecer. */
-  }, [riel, montado]);
 
   if (!montado) return null;
 
@@ -188,11 +132,7 @@ export default function ComoRecorrer({
       esquina que está esmerilado. Por eso tampoco lleva esquinas redondeadas:
       el que se difumina es el propio recuadro.
     */
-    <div
-      ref={caja}
-      className="pointer-events-none absolute bottom-0 left-0 z-10"
-      style={{ transition: "opacity 0.25s linear" }}
-    >
+    <div className="pointer-events-none absolute bottom-0 left-0 z-10">
       {/*
         EL VIDRIO VA EN SU PROPIA CAPA, DEBAJO DEL TEXTO, y esto es lo que hace
         que el difuminado funcione: la máscara se come esta capa por las orillas
@@ -226,21 +166,47 @@ export default function ComoRecorrer({
 
       <p
         /*
-          EL RELLENO ES LO QUE LE DA SITIO AL DIFUMINADO. Por la izquierda va el
-          mismo aire que el resto del panel, para que el texto caiga en la
-          columna de lectura; por arriba y por la derecha va MUCHO más, y no es
-          por gusto: ahí es donde el vidrio tiene que desvanecerse. Sin ese
-          aire, el degradado empezaría encima de las letras y se comería el
-          tinte justo debajo del texto — que es lo único que lo hace legible
-          sobre la cascada.
+          EL RELLENO ES LO QUE LE DA SITIO AL DIFUMINADO. Por arriba y por la
+          derecha va MUCHO, y no es por gusto: ahí es donde el vidrio tiene que
+          desvanecerse. Sin ese aire, el degradado empezaría encima de las
+          letras y se comería el tinte justo debajo del texto — que es lo único
+          que lo hace legible sobre la cascada.
 
-          EL DE ABAJO ES EL MÁS CHICO DE TODOS, y bajó a propósito: el texto se
-          veía trepado dentro del recuadro. La mitad de abajo es la parte del
-          vidrio que va MACIZA (ver `DIFUMINADO`), así que centrar el renglón
-          ahí —y no en la caja entera, que incluye todo el aire del
-          desvanecido— es lo que hace que se vea asentado en lugar de flotando.
+          POR ABAJO Y POR LA IZQUIERDA VA EL MÍNIMO, y los dos bajaron a
+          propósito (7-ago-2026). El renglón se veía trepado y despegado de la
+          esquina. Ahora se arrima al filo de la pantalla y se asienta en la
+          mitad de abajo del recuadro, que es la parte del vidrio que va MACIZA
+          (ver `DIFUMINADO`) — centrarlo ahí, y no en la caja entera (que
+          incluye todo el aire del desvanecido), es lo que lo hace ver asentado
+          en vez de flotando.
+
+          POR LA IZQUIERDA YA NO SIGUE LA COLUMNA DE LECTURA del panel (que va
+          en 24 y 48 px). Es a propósito: esto no es contenido de la página sino
+          un aviso pegado a la orilla, y alinearlo con el texto lo hacía parecer
+          un párrafo más.
+
+          EL `env(safe-area-inset-bottom)` DEL RELLENO DE ABAJO NO ES DE ADORNO:
+          a diez píxeles del filo, en un iPhone el renglón cae justo debajo de
+          la barra de gestos y se ve mochado. Con esto conserva sus diez píxeles
+          en los aparatos que no tienen esa barra y se levanta lo necesario en
+          los que sí. Es el mismo recurso que usa el botón de pagar del carrito,
+          por la misma razón.
         */
-        className="relative grid pb-3.5 pl-6 pr-32 pt-12 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground md:pl-12"
+        className={`relative grid pb-[calc(0.625rem+env(safe-area-inset-bottom))] pl-4 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground ${
+          /*
+            EL AIRE DEL DESVANECIDO SE MIDE POR VARIANTE, no una sola vez para
+            las dos (7-ago-2026). El renglón táctil ("Desliza →") es como un
+            tercio de largo que el de cursor ("Arrastra | Rueda | ←→"), así que
+            con un relleno único el recuadro del teléfono quedaba enorme y
+            medio vacío — que fue justo lo que se vio en pantalla.
+
+            Lo que NO cambia con esto: el tamaño sigue siendo FIJO ENTRE
+            IDIOMAS. Aquí se elige por aparato, y el aparato no cambia mientras
+            alguien mira la página; el idioma sí, con un botón que está a la
+            vista.
+          */
+          conDedo ? "pr-20 pt-8" : "pr-28 pt-10"
+        }`}
       >
         {/*
           SE DIBUJAN TODOS LOS IDIOMAS, UNO ENCIMA DE OTRO, y solo se ve el

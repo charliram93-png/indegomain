@@ -168,8 +168,10 @@ indego/
 
 - **`config/drop.ts`** — El "panel de control" del lanzamiento:
   - `DROP_DATE`: fecha y hora del drop.
-  - `DROP_NAME`: nombre del drop ("DROP 1"). Hoy no se pinta en pantalla: el
-    catálogo ya no lleva título.
+  - `DROP_NAME`: nombre del drop ("DROP #1"). **Es el enlace al catálogo que va
+    en la barra** (`components/dropTag.tsx`). Estuvo un tiempo sin usarse —era
+    el título del catálogo, que se quitó al entrar el manifiesto— y volvió el
+    7-ago-2026 al cambiar la calcomanía roja por un enlace de texto.
   - `DROP_ACCESS_KEY`: clave para probar la tienda antes de tiempo.
   - `DROP_VIDEO` / `DROP_POSTER`: video de fondo del countdown y su imagen de
     respaldo (ambos en Cloudinary).
@@ -323,39 +325,38 @@ indego/
   **NOSOTROS NO VA EN LA BARRA.** Se probó junto al logo y se regresó al pie:
   competía con el logo y con el carrito por la misma mirada y no es un enlace
   de esa jerarquía.
-- **`dropTag.tsx`** — El sticker "SPECIAL DROP #1", la salida al catálogo desde
-  la página de marca. **Va MONTADO A CABALLO en el borde de abajo del navbar**
-  —la mayor parte adentro, el resto colgando— y **ladeado**: derecho se leería
-  como un botón más de la barra, que es justo lo que no es. Al pasar el cursor
-  se endereza un poco y crece. Lo dibuja `components/navbar.tsx`, y se esconde
+- **`dropTag.tsx`** — La salida al catálogo desde la página de marca. Hoy es un
+  **"DROP #1" chico en mayúsculas dentro de la fila de controles**, del mismo
+  peso que EN y el tema, y va **primero de los cuatro** porque es el único que
+  lleva a algún lado (los otros tres cambian cómo se ve la página). Se esconde
   solo dentro de `/product`; como el navbar solo existe en el Nosotros y en el
-  catálogo, en la práctica sale SOLO en el Nosotros.
-  **LAS DOS SE ENCIMAN AL LOGO** por 16 px, sobre aire y no sobre dibujo: así se
-  lee como calcomanía pegada encima y no como algo acomodado a un lado. En
-  teléfono va en `left-[64px]` y además un poco más arriba (colgando media
-  etiqueta se comía demasiada pantalla); en computadora, en `left-[112px]` y
-  centrada en el borde. Antes iba en 146, después del logo y sin tocarlo, y se
-  veía despegada.
-  La inclinación es de **10°** (era 7, y así se leía casi derecha); al pasar el
-  cursor se endereza a 5.
+  catálogo, en la práctica sale SOLO en el Nosotros. El nombre sale de
+  `DROP_NAME` (`config/drop.ts`) y **no se traduce**: es nombre propio.
 
-  **Dos cosas que ya se probaron y se echaron para atrás**, para no volver a
+  > **ERA UNA CALCOMANÍA ROJA** ("SPECIAL DROP #1"), ladeada, pegada al logo y
+  > montada a caballo sobre el borde de la barra. Se cambió el **7-ago-2026**
+  > porque **resaltaba demasiado**: en un sitio de crema, olivo y Helvetica, un
+  > sticker naranja era lo primero —y a veces lo único— que se veía al entrar, y
+  > le ganaba la mirada al propio logo. El trabajo es el mismo; lo que cambió es
+  > que ya no grita.
+
+  **Tres cosas que ya se probaron y se echaron para atrás**, para no volver a
   proponerlas:
-  (1) **suelto, pegado a la pantalla** (fijo, a la derecha y muy abajo de la
-  barra): siendo `fixed` se encimaba con lo que iba pasando por detrás del riel
-  del Nosotros, y en el panel de museos le caía cerca del titular. Y ojo si se
-  reintenta: **no se puede fijar a la pantalla desde dentro de la barra**,
-  porque el `backdrop-blur` del navbar hace que un `position: fixed` se
-  posicione contra la BARRA y no contra la ventana — habría que dibujarlo desde
-  la página.
-  (2) **repetirlo cerrando el Nosotros** en lugar del "VER DROP #1" de texto:
-  repetido a los pocos segundos de scroll se leía como relleno.
+  (1) **la calcomanía suelta, pegada a la pantalla** (fija, a la derecha y muy
+  abajo de la barra): siendo `fixed` se encimaba con lo que iba pasando por
+  detrás del riel del Nosotros, y en el panel de museos le caía cerca del
+  titular. Y ojo si se reintenta algo fijo: **no se puede fijar a la pantalla
+  desde dentro de la barra**, porque el `backdrop-blur` del navbar hace que un
+  `position: fixed` se posicione contra la BARRA y no contra la ventana —
+  habría que dibujarlo desde la página.
+  (2) **repetir el llamado cerrando el Nosotros**, además de la banda de en
+  medio: repetido a los pocos segundos de scroll se leía como relleno.
+  (3) **la calcomanía misma**, por lo de arriba.
 
-  La imagen sale de `DROP_TAG_IMAGE` (`config/drop.ts`) y **es apaisada**
-  (1681 × 936). Se mide POR ALTURA y el ancho lo saca de la imagen, así que
-  cambiarla por otra no la deforma, pero sí cambia cuánto ocupa a lo ancho.
-  Mientras esa variable esté vacía se dibuja una de respaldo en SVG con los
-  colores del tema, para que nunca quede un hueco.
+  Se valoraron otras dos salidas al cambiarla y se descartaron: una **segunda
+  banda al final del Nosotros** (solo la ve quien recorre todo, y choca con el
+  punto 2) y un **botón flotante en la esquina** (sería el elemento de interfaz
+  más evidente de una página que no tiene ninguno).
 - **`patronDeFondo.tsx`** — **(6-ago-2026)** El fondo del catálogo: los logos de
   la marca repartidos por toda la página, ladeados a distintos ángulos y en
   distintos tamaños, **casi imperceptibles**. La referencia es el papel en el que
@@ -376,19 +377,33 @@ indego/
   que se vea a través, **el pie ya no lleva fondo propio** (lo pone la página,
   que es del mismo color). Va detrás de todo (`z-0`, con `main` y el pie en
   `relative z-10`).
-  **HAY DOS VARIANTES**, y todos los números viven en `VARIANTES` dentro de
+  **HAY TRES VARIANTES**, y todos los números viven en `VARIANTES` dentro de
   `components/patronDeFondo.tsx`. Se elige con la prop `variante`; cada una trae
   los suyos justamente para que ajustar una no mueva la otra:
 
-  | | `catalogo` | `panel` |
-  |---|---|---|
-  | Dónde | fondo de toda la página de producto | cintillo arriba de los paneles crema del Nosotros |
-  | Reja | 1 columna × 60 renglones | 8 columnas × 4 renglones |
-  | Hasta | 100% del alto | 15% |
-  | Ancho de pieza | `clamp(90px, 12vw, 200px)` | `clamp(80px, 18cqw, 190px)` |
-  | Escala | 0.7 – 1.5 | 0.6 – 1.05 |
-  | Pesos emparejados | no | sí |
-  | Opacidad claro / oscuro | 0.028 / 0.015 | 0.035 / 0.022 |
+  | | `catalogo` | `panel` | `modal` |
+  |---|---|---|---|
+  | Dónde | fondo de toda la página de producto | cintillo arriba de los paneles crema del Nosotros | fondo del modal de producto |
+  | Reja | 1 columna × 60 renglones | 8 columnas × 4 renglones | 5 columnas × 4 renglones |
+  | Hasta | 100% del alto | 15% | 100% |
+  | Ancho de pieza | `clamp(90px, 12vw, 200px)` | `clamp(80px, 18cqw, 190px)` | `clamp(70px, 13cqw, 165px)` |
+  | Escala | 0.7 – 1.5 | 0.6 – 1.05 | 0.6 – 1.05 |
+  | Pesos emparejados | no | sí | sí |
+  | Opacidad claro / oscuro | 0.028 / 0.015 | 0.035 / 0.022 | 0.03 / 0.018 |
+
+  > **`modal` (7-ago-2026): NO se podía reusar `catalogo` tal cual.** Allá son 60
+  > renglones repartidos en una página de varias pantallas; metidos en una caja
+  > de una pantalla saldrían todos encimados en una plasta. Por eso reparte en
+  > los DOS sentidos (5 × 4) en vez de solo a lo largo, y se mide contra la caja
+  > (`cqw`) y no contra la ventana — el modal es casi la pantalla en teléfono y
+  > un pedazo en computadora. **Es la más tenue de las tres** a propósito: aquí
+  > el fondo compite con lo único que importa de esa pantalla, la playera y el
+  > botón de comprar. En el catálogo el papel acompaña un recorrido; aquí
+  > acompaña una decisión.
+  > Va en **todos los aparatos y en los dos temas**. Y ojo: es un hijo
+  > `absolute`, así que **no ocupa celda** de la rejilla de dos columnas del
+  > modal; las dos columnas llevan `relative` para quedar encima (un elemento
+  > posicionado se pinta después que el contenido de los que no lo están).
 
   **EL REPARTO ES UNA REJA**, y la forma de la reja es la del hueco que hay que
   llenar: el catálogo es una columna larguísima (por eso 1 × 60), el cintillo de
@@ -490,7 +505,26 @@ indego/
   nombre). En **móvil** ocupa la pantalla completa (`100svh`, sin scroll: imagen
   arriba flexible, controles abajo, precio junto al nombre) y se puede **deslizar
   (swipe)** para cambiar de foto; bloquea el scroll del fondo al abrir. Incluye
-  la rayita, talla, cantidad y agregar al carrito.
+  la rayita, talla, cantidad y agregar al carrito. Desde el **7-ago-2026** lleva
+  el **papel de envoltura** de fondo (variante `modal`, ver `patronDeFondo.tsx`):
+  es la única pantalla donde la playera se ve sola, y sin nada detrás el fondo
+  se leía como un cuadro de diálogo del navegador en vez de una caja de la marca.
+
+  > **EL SCROLL QUE SALÍA EN LAPTOP (7-ago-2026, corregido).** En computadora la
+  > caja de la imagen es CUADRADA y su alto lo manda el ancho de la columna: con
+  > el modal a 1152 px cada columna mide 516, así que la imagen medía 516 de
+  > alto y el contenido entero 610 con los rellenos. El modal está topado a
+  > `90vh`, o sea que **en cuanto la ventana bajaba de ~678 px de alto aparecía
+  > una barra de desplazamiento dentro del modal** — y una laptop de 1366×768
+  > deja unos 660. Se arregló topando la altura de la imagen
+  > (`md:max-h-[calc(90vh-8rem)]`): en pantallas altas no cambia nada porque el
+  > cuadrado sigue siendo más chico que el tope, y en las bajitas la caja se
+  > achata lo justo para caber. La playera no se deforma, es `object-contain`.
+  > El `overflow-y-auto` del modal **se queda de red**: si algún día el contenido
+  > crece por otro lado, mejor que se pueda recorrer a que se corte.
+  > (No se pudo reproducir en el navegador automatizado —no reescala el
+  > viewport— así que **el número salió de la geometría del CSS**. Vale la pena
+  > confirmarlo a mano en una laptop.)
 - **`swipeHint.tsx`** — **La rayita** que dice en qué foto vas (ago-2026,
   reemplazó a los puntitos en los tres lugares: catálogo, modal y página de
   producto). Es una línea fina y tenue con un relleno adentro que se carga a la
@@ -506,10 +540,18 @@ indego/
   al centro, con un halo del color de la página para que se lea sobre la cascada
   negra y sobre la banda invertida. No usa estado de React. El detalle completo
   está en la sección del riel de `/about`.
-- **`comoRecorrer.tsx`** — **El letrero de cómo recorrer** (7-ago-2026), abajo
-  del panel de entrada del Nosotros, sobre vidrio esmerilado, que se desvanece
-  al avanzar. Dice "Desliza →" en lo táctil y "Arrastra | Rueda | ←→" en lo que
-  tiene cursor. Tampoco usa estado de React. Detalle en la sección del riel.
+- **`comoRecorrer.tsx`** — **El letrero de cómo recorrer** (7-ago-2026), en la
+  esquina de abajo a la izquierda del panel de entrada del Nosotros, sobre
+  vidrio esmerilado que se difumina, y que se desvanece al avanzar. Dice
+  "Desliza →" en lo táctil y "Arrastra | Rueda | ←→" en lo que tiene cursor.
+  Tampoco usa estado de React. Detalle en la sección del riel.
+  > **Va pegado al filo de la pantalla, NO alineado con la columna de lectura**
+  > del panel (que va en 24 y 48 px). Es a propósito: no es contenido de la
+  > página sino un aviso pegado a la orilla, y alinearlo con el texto lo hacía
+  > parecer un párrafo más. Su relleno de abajo lleva
+  > `env(safe-area-inset-bottom)` **por lo mismo que el botón de pagar del
+  > carrito**: a diez píxeles del filo, en un iPhone caería debajo de la barra
+  > de gestos y se vería mochado.
 - **`cartDrawer.tsx`** — Carrito lateral: lista de productos, cantidades,
   subtotal y botón para pagar. Va **al mismo estilo minimalista del modal**:
   sin recuadro en la cantidad y con el botón de pagar en puro texto. Mientras
@@ -834,10 +876,16 @@ medio segundo da 750, que es `200 + 0.5 × 1100`.
 
 #### El letrero de cómo recorrer (`components/comoRecorrer.tsx`)
 
-Un renglón chico abajo del panel de entrada, sobre vidrio esmerilado, que **se
-desvanece conforme se avanza**: a la mitad del panel ya está en cero y se apaga
-con `visibility` (a opacidad 0 el `backdrop-filter` se seguiría calculando en
-cada cuadro, y es de lo más caro que hay).
+Un renglón chico en la esquina de abajo a la izquierda del panel de entrada,
+sobre vidrio esmerilado.
+
+**SE QUEDA QUIETO.** No se atenúa ni se apaga con el scroll: vive DENTRO del
+panel de entrada, así que se va solo cuando el panel se va, y eso ya es toda la
+salida que necesita. Llegó a desvanecerse conforme se avanzaba y **se quitó el
+7-ago-2026** — un aviso que se apaga mientras lo estás leyendo se siente como
+que el sitio te lo arrebata, y encima obligaba a escuchar el scroll para algo
+que el propio panel resuelve gratis. Al quitarlo, el componente dejó de
+necesitar el `ref` del riel y todo su `useEffect`.
 
 Dice **una cosa distinta según el aparato**, y por eso es un componente y no un
 texto suelto:
@@ -875,6 +923,15 @@ antes que el texto.
 - **El relleno de arriba y de la derecha es MUCHO mayor que el de abajo y la
   izquierda**, y no es por gusto: ahí es donde el vidrio tiene que
   desvanecerse. Sin ese aire el degradado empezaría encima de las letras.
+- **ESE AIRE SE MIDE POR VARIANTE, no una sola vez para las dos** (7-ago-2026).
+  El renglón táctil ("Desliza →") es como un tercio de largo que el de cursor
+  ("Arrastra | Rueda | ←→"), así que con un relleno único el recuadro del
+  teléfono quedaba enorme y medio vacío. Con el relleno por variante bajó de
+  222 × 83 a **166 × 57** en táctil y de 319 × 83 a **295 × 65** con cursor, y
+  la máscara sigue valiendo 1.000 bajo todo el texto en los dos casos.
+  > Esto **no** rompe lo del idioma: aquí se elige por APARATO, y el aparato no
+  > cambia mientras alguien mira la página; el idioma sí, con un botón que está
+  > a la vista. El tamaño sigue siendo fijo entre idiomas.
 - **Los dos degradados terminan en 100%**, o sea en el borde de la caja. Si
   acabaran antes, el vidrio se cortaría a filo dentro del recuadro — que es
   exactamente lo que se está quitando.
@@ -972,20 +1029,28 @@ el mismo gesto contando dos cosas distintas.
      900 ms porque la página entra con un fundido de 0.55s y empujar durante el
      fundido se ve como un salto del render.
   2. **La rayita de avance** (`components/pistaDelRiel.tsx`), fija abajo al
-     centro. **En teléfono NO está desde el principio** (7-ago-2026): en la
-     primera pantalla ya vive el letrero, que ocupa media anchura justo abajo, y
-     la rayita cae centrada encima de él — dos avisos apretados en la misma
-     esquina se estorban y no se lee ninguno. Se reparten el trabajo **en el
-     tiempo, no en el espacio**: el letrero manda en la primera pantalla y se
-     apaga a la mitad del panel; la rayita entra justo ahí y llega entera al
-     final del panel, o sea cuando aparece el manifiesto. En computadora se
-     queda visible siempre, porque ahí el letrero está metido en la esquina de
-     una pantalla ancha y la rayita ni lo roza.
-     > **El relevo se mide contra el PRIMER PANEL, no contra el recorrido
-     > completo.** Tiene que pasar cuando la entrada se va, y ese momento
-     > depende del ancho del panel, no de cuántos bloques traiga hoy
-     > `config/about.ts`. Con un porcentaje del total, agregar una sección
-     > movería el punto de entrada sin que nadie lo pidiera. Es **la misma rayita del catálogo** a propósito: en
+     centro. **En teléfono solo se ve MIENTRAS TE MUEVES** (7-ago-2026):
+     aparece al primer deslizón y se retira sola un momento después de que la
+     página se queda quieta, como la barra de desplazamiento del propio
+     teléfono. Dos motivos: en la primera pantalla **estorbaba** (ahí abajo ya
+     vive el letrero, que ocupa media anchura, y la rayita cae centrada encima
+     de él), y **una barra de avance solo informa mientras algo avanza** —
+     quieta no dice nada que no diga ya la pantalla, y sobra en una página que
+     quiere verse como un objeto y no como una interfaz. En computadora se queda
+     visible siempre: el letrero está metido en la esquina de una pantalla
+     ancha, la rayita centrada ni lo roza, y con ratón no existe la costumbre de
+     que las barras se escondan.
+     > **La espera antes de esconderla (900 ms) tiene que sobrevivir a la
+     > INERCIA.** Al soltar el dedo el teléfono sigue desplazando solo y va
+     > soltando eventos de scroll cada vez más espaciados; con un tiempo corto
+     > la rayita parpadearía al final de cada deslizón, justo cuando la página
+     > se está frenando.
+     > **Antes se resolvía distinto**: entraba en función de cuánto llevaba
+     > salido el panel de entrada, para relevar al letrero cuando ése se
+     > apagaba. Se cambió porque el letrero **dejó de apagarse**, y porque esto
+     > es más simple y se explica solo al usarlo.
+
+     Es **la misma rayita del catálogo** a propósito: en
      `swipeHint.tsx` ya significa "hay más de este lado", así que repetir el
      trazo es enseñar un vocabulario y no inventar otro adorno. No usa estado de
      React —mueve el nodo directo desde el `scroll`— porque con estado cada
@@ -1464,8 +1529,8 @@ Lo que se buscó: seguridad, rendimiento, código muerto y correctitud.
    diferida, así que hoy no duele; si algún día se suben fotos pesadas, sí.
 5. **El video del countdown sigue siendo 5.29 MB**, con diferencia lo más
    pesado del sitio. Sigue pendiente la decisión de comprimirlo.
-6. **`DROP_NAME` en `config/drop.ts` ya no se usa** (el catálogo dejó de tener
-   título cuando entró el manifiesto). Se deja por si vuelve.
+6. ~~**`DROP_NAME` en `config/drop.ts` ya no se usa.**~~ **RESUELTO el
+   7-ago-2026**: volvió a usarse, ahora como el enlace al catálogo de la barra.
 7. **`router.back()` en `/order` y `/terms`** no hace nada si alguien llega
    directo desde un enlace compartido, porque no hay historial.
 

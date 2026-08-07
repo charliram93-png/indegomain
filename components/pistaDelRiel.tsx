@@ -87,28 +87,48 @@ export default function PistaDelRiel({
     if (!el || !barra || !marco) return;
 
     /*
-      EN TELÉFONO LA RAYITA NO ESTÁ DESDE EL PRINCIPIO (7-ago-2026).
+      EN TELÉFONO LA RAYITA SOLO SE VE MIENTRAS TE MUEVES (7-ago-2026).
 
-      En la primera pantalla ya vive el letrero de cómo recorrer
-      (`components/comoRecorrer.tsx`), que ocupa media anchura del teléfono
-      justo abajo — y la rayita cae centrada encima de él. Dos avisos apretados
-      en la misma esquina se estorban y ninguno se lee.
+      Aparece al primer deslizón y se retira sola un momento después de que la
+      página se queda quieta, como la barra de desplazamiento del propio
+      teléfono. Dos motivos:
 
-      Se reparten el trabajo en el tiempo en vez de en el espacio: el letrero
-      manda en la primera pantalla y se apaga; la rayita entra cuando aquél ya
-      se fue, o sea cuando aparece el manifiesto. A partir de ahí no hay nada
-      más abajo con qué pelearse.
+       · EN LA PRIMERA PANTALLA ESTORBABA. Ahí abajo ya vive el letrero de cómo
+         recorrer (`components/comoRecorrer.tsx`), que ocupa media anchura del
+         teléfono, y la rayita cae centrada encima de él. Dos avisos apretados
+         en la misma esquina se tapan y no se lee ninguno.
+       · UNA BARRA DE AVANCE SOLO INFORMA MIENTRAS ALGO AVANZA. Quieta no dice
+         nada que no diga ya la propia pantalla, y en una página que quiere
+         verse como un objeto y no como una interfaz, es un elemento de más.
+
+      ANTES SE RESOLVÍA DISTINTO: la rayita entraba en función de cuánto llevaba
+      salido el panel de entrada, para relevar al letrero cuando éste se
+      apagaba. Se cambió porque el letrero dejó de apagarse —ahora se queda
+      quieto— y porque esto es más simple y se explica solo al usarlo.
 
       EN COMPUTADORA SE QUEDA SIEMPRE VISIBLE: ahí el letrero está metido en la
-      esquina de una pantalla ancha y la rayita, centrada, ni lo roza.
+      esquina de una pantalla ancha, la rayita centrada ni lo roza, y con ratón
+      no existe la costumbre de que las barras se escondan.
     */
     const enTelefono =
       window.matchMedia("(pointer: coarse)").matches &&
       !window.matchMedia("(pointer: fine)").matches;
 
+    /**
+     * CUÁNTO AGUANTA VISIBLE DESPUÉS DEL ÚLTIMO MOVIMIENTO.
+     *
+     * Tiene que sobrevivir a la INERCIA: al soltar el dedo, el teléfono sigue
+     * desplazando solo y va soltando eventos de scroll cada vez más
+     * espaciados. Con un tiempo corto la rayita parpadearía al final de cada
+     * deslizón, justo cuando la página se está frenando. Con esto se apaga una
+     * sola vez, cuando de verdad se detuvo.
+     */
+    const ESPERA = 900;
+
     /* El `scroll` se dispara muchas más veces que cuadros dibuja la pantalla.
        Esta banderita deja pasar UNO por cuadro y tira los demás. */
     let pedido = false;
+    let apagar: number | undefined;
 
     const pintar = () => {
       pedido = false;
@@ -118,42 +138,48 @@ export default function PistaDelRiel({
       const avance = recorrible > 0 ? el.scrollLeft / recorrible : 0;
       const acotado = Math.min(Math.max(avance, 0), 1);
       barra.style.transform = `translateX(${acotado * RECORRIDO}%)`;
+    };
 
+    /** La muestra y reinicia la cuenta para esconderla. Solo en teléfono. */
+    const asomar = () => {
       if (!enTelefono) return;
-
-      /*
-        SE MIDE CONTRA EL PRIMER PANEL, no contra el recorrido completo: el
-        relevo tiene que pasar cuando el panel de entrada se va, y ese momento
-        depende del ancho del panel, no de cuántos bloques traiga hoy
-        `config/about.ts`. Con un porcentaje del total, agregar una sección
-        movería el punto de entrada sin que nadie lo pidiera.
-
-        Arranca a la MITAD del panel, que es justo donde el letrero termina de
-        apagarse (ver `HASTA` en `comoRecorrer.tsx`), y llega entera al final
-        del panel. Así uno no se ha ido cuando el otro ya viene.
-      */
-      const panel = (el.firstElementChild as HTMLElement | null)?.offsetWidth;
-      const salida = panel && panel > 0 ? el.scrollLeft / panel : 1;
-      const entrada = Math.min(Math.max((salida - 0.5) / 0.5, 0), 1);
-
-      marco.style.opacity = String(entrada);
-      /* A cero no se ve, pero el `filter` del halo se seguiría calculando. */
-      marco.style.visibility = entrada <= 0.01 ? "hidden" : "visible";
+      marco.style.visibility = "visible";
+      marco.style.opacity = "1";
+      window.clearTimeout(apagar);
+      apagar = window.setTimeout(() => {
+        marco.style.opacity = "0";
+        /*
+          Se esconde DEL TODO al terminar de atenuarse, no solo transparente: el
+          halo es un `filter`, y a opacidad 0 el navegador lo seguiría
+          calculando. La espera es la misma que dura la transición del CSS.
+        */
+        apagar = window.setTimeout(() => {
+          marco.style.visibility = "hidden";
+        }, 250);
+      }, ESPERA);
     };
 
     const alRecorrer = () => {
+      asomar();
       if (pedido) return;
       pedido = true;
       requestAnimationFrame(pintar);
     };
 
     pintar();
+    /* De entrada, en teléfono NO se ve: nadie se ha movido todavía. */
+    if (enTelefono) {
+      marco.style.opacity = "0";
+      marco.style.visibility = "hidden";
+    }
+
     el.addEventListener("scroll", alRecorrer, { passive: true });
     /* Al girar el teléfono cambia cuánto hay que recorrer, y con él la
        proporción que representa la posición actual. */
     window.addEventListener("resize", alRecorrer);
 
     return () => {
+      window.clearTimeout(apagar);
       el.removeEventListener("scroll", alRecorrer);
       window.removeEventListener("resize", alRecorrer);
     };
