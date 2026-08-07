@@ -19,24 +19,26 @@ import { HELVETICA } from "@/lib/fonts";
  * (6-ago-2026): repetida a los pocos segundos de scroll se leía como relleno y
  * le quitaba fuerza a esta, que es la que tiene que llamar.
  *
- * VA PEGADA A LA PANTALLA, no a la página: se queda quieta a la derecha,
- * bastante más abajo del navbar, mientras todo lo demás pasa por detrás. Antes
- * iba montada a caballo sobre el borde de la barra; se cambió el 6-ago-2026
- * para que acompañe toda la lectura y no solo el arranque.
+ * VA MONTADA SOBRE EL BORDE DE LA BARRA, a caballo: la mayor parte dentro del
+ * navbar y el resto colgando sobre la página. La dibuja `components/navbar.tsx`.
  *
- * NO SE DIBUJA DESDE EL NAVBAR, y no es por orden: la barra lleva
- * `backdrop-blur`, y un elemento `fixed` dentro de algo desenfocado se
- * posiciona contra ESE elemento en vez de contra la ventana. Colgando del
- * navbar, sencillamente no se podía fijar a la pantalla.
+ * SE PROBÓ SUELTA, PEGADA A LA PANTALLA (fija, a la derecha y muy abajo de la
+ * barra) y se regresó aquí el 6-ago-2026. Si se vuelve a intentar, ojo con dos
+ * cosas que ya se aprendieron:
+ *   · siendo `fixed` se encimaba con lo que iba pasando por detrás del riel del
+ *     Nosotros — en el panel de museos le caía cerca del titular;
+ *   · NO se puede fijar a la pantalla desde dentro de la barra: el
+ *     `backdrop-blur` del navbar hace que un `position: fixed` se posicione
+ *     contra la BARRA y no contra la ventana. Habría que dibujarla desde la
+ *     página, como se hizo aquella vez.
  *
- * QUIÉN DECIDE DÓNDE SALE: la página que la dibuje. Hoy solo `/about`, que es
- * exactamente donde salía antes (era la única con navbar que no la escondía).
- * Como está posicionada contra la ventana, da igual en qué parte del árbol se
- * ponga — mientras no cuelgue de algo con `backdrop-filter` o `transform`.
+ * POSICIONADA `absolute` CONTRA LA BARRA (`top-full` la baja hasta el borde y
+ * el `-translate-y-*` la vuelve a subir), y NO en la fila del logo: en la fila
+ * quedaría contenida y no podría asomarse.
  *
- * VA DERECHA, sin inclinar. Se probó ladeada mientras estaba montada en la
- * barra, donde funcionaba —ahí se leía como calcomanía pegada al borde—, pero
- * suelta en medio de la pantalla la inclinación se veía como un descuido.
+ * VA LADEADA: derecha se leería como un botón más de la barra, que es justo lo
+ * que no es. Al pasar el cursor se endereza un poco, que es el único movimiento
+ * que tiene.
  *
  * LA IMAGEN sale de `DROP_TAG_IMAGE` (`config/drop.ts`) y es APAISADA (el PNG
  * mide 1681 × 936, con fondo transparente): el tamaño se manda POR ALTURA y el
@@ -48,10 +50,11 @@ export default function DropTag() {
   const pathname = usePathname();
 
   /*
-    NUNCA DENTRO DEL CATÁLOGO, aunque alguien la ponga ahí por descuido: una
-    etiqueta que te lleva a donde ya estás sobra. Cubre `/product` y también
-    `/product/idg-01` y demás. El resto de "dónde sale" lo decide quien la
-    dibuje (ver el comentario de arriba).
+    NUNCA DENTRO DEL CATÁLOGO: una etiqueta que te lleva a donde ya estás sobra.
+    Cubre `/product` y también `/product/idg-01` y demás.
+
+    Como la dibuja el navbar, y el navbar solo existe en el Nosotros y en el
+    catálogo, en la práctica esto la deja saliendo SOLO en el Nosotros.
   */
   if (pathname === "/product" || pathname.startsWith("/product/")) return null;
 
@@ -60,23 +63,29 @@ export default function DropTag() {
       href="/product"
       aria-label="Drop #1"
       /*
-        DÓNDE QUEDA: pegada a la ventana, a la derecha y MUY por debajo del
-        navbar — no colgando de él.
+        DÓNDE QUEDA, que es distinto en cada tamaño:
 
-        · La barra mide 80 px. `top-40` la deja en 160, o sea a otro navbar
-          entero de distancia; en computadora baja a 192 (`md:top-48`), que
-          ahí sobra pantalla. La separación es el punto: pegada al borde volvía
-          a leerse como parte de la barra, que es justo lo que se quiso quitar.
-        · `right-6` / `md:right-12` son los MISMOS márgenes que usa el navbar,
-          para que quede a plomo con el botón del carrito.
-        · `z-40` la deja debajo de la barra (z-50), del modal (z-50) y del
-          carrito (z-60/70): nunca estorba a algo que se abra encima.
+        LAS DOS SE ENCIMAN AL LOGO, y es a propósito: así se lee como una
+        calcomanía PEGADA ENCIMA y no como algo acomodado a un lado. Lo que tapa
+        es aire del recuadro del logo, no dibujo.
 
-        AL PASAR EL CURSOR solo crece. Ya no se endereza, porque ya está
-        derecha. Medio segundo, no un tercio: a 300 ms se sentía un tirón seco,
+        · TELÉFONO — `left-[64px]`. El logo mide 56 px y arranca en el margen de
+          24, o sea que termina en 80: la etiqueta le monta los últimos 16 px.
+          Y sube un poco más de lo normal (`-translate-y-[64%]` en vez de la
+          mitad): en pantalla chica, colgando media etiqueta se comía demasiado
+          de lo que hay debajo.
+
+        · COMPUTADORA — `left-[112px]` y centrada en el borde. El logo mide 80 y
+          arranca en 48, así que termina en 128: le monta los últimos 16 px,
+          igual que en teléfono. Antes iba en 146, después del logo y sin
+          tocarlo, y se veía despegada.
+
+        LA INCLINACIÓN es de 10°, no de 7: con 7 se leía casi derecha y el gesto
+        de "pegada a mano" se perdía. Al pasar el cursor se endereza a 5° y
+        crece. Medio segundo, no un tercio: a 300 ms se sentía un tirón seco,
         más un cambio de estado que un movimiento.
       */
-      className="fixed right-6 top-40 z-40 select-none drop-shadow-sm transition-transform duration-500 ease-out hover:scale-105 md:right-12 md:top-48"
+      className="absolute left-[64px] top-full z-10 -translate-y-[64%] -rotate-[10deg] select-none drop-shadow-sm transition-transform duration-500 ease-out hover:-rotate-[5deg] hover:scale-105 md:left-[112px] md:-translate-y-1/2"
     >
       {DROP_TAG_IMAGE ? (
         /* 44 px de alto en teléfono y 64 en computadora — o sea unos 79 y 115

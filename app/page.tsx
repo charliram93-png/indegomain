@@ -14,16 +14,18 @@ import { DROP_VIDEO, DROP_POSTER, isDropOpen } from "@/config/drop";
 /**
  * A DÓNDE LLEVA "ENTRAR"
  *
- * AL CATÁLOGO, derecho. Se probó durante unos días entrar por la página de
- * marca (`/about`) y se echó para atrás el 6-ago-2026: quien acaba de aguantar
- * el countdown viene a ver las playeras, y meterle una página de lectura antes
- * era ponerle una puerta de más.
+ * A LA PÁGINA DE MARCA. Quien sale del countdown entra por el Nosotros y de ahí
+ * pasa a las playeras por la banda de "GO TO DROP #1" o por la etiqueta pegada
+ * a la pantalla.
  *
- * El Nosotros no se perdió, cambió de puerta: ahora está en el navbar, junto al
- * logo (antes solo en el pie). Para volver a probar la entrada por marca, aquí
- * se pone "/about".
+ * ESTO SE HA IDO Y VUELTO. Se probó llevar directo al catálogo y se regresó
+ * aquí (6-ago-2026): la marca se cuenta antes de vender, y el Nosotros ya no es
+ * una página de lectura larga sino un recorrido de lado que se pasa rápido.
+ * Es UNA línea: si se quiere entrar directo a la tienda, aquí va "/product".
+ * El logo del navbar apunta al mismo lugar que esta constante, así que si se
+ * cambia una hay que cambiar la otra (`components/navbar.tsx`).
  */
-const DESTINO = "/product";
+const DESTINO = "/about";
 
 /*
   LA SALIDA DEL COUNTDOWN, EN TRES TIEMPOS (ms)

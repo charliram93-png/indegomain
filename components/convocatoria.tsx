@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import Reveal from "@/components/reveal";
 import { CONVOCATORIA, ACEPTA } from "@/config/convocatoria";
 import { LINKTREE_URL } from "@/config/brand";
 import { useI18n } from "@/lib/i18n/context";
@@ -27,6 +26,39 @@ import { useI18n } from "@/lib/i18n/context";
  * archivo) y en el servidor de verdad, porque esto se puede saltar.
  */
 
+/**
+ * EL LLAMADO: el titular y la invitación. Es el PRIMERO de los dos paneles de
+ * la convocatoria; el segundo es el formulario (el `export default` de abajo).
+ *
+ * SIN ANTETÍTULO. Antes tenía un "CONVOCATORIA ABIERTA" chiquito encima; se
+ * quitó (6-ago-2026) porque le explicaba a la frase lo que la frase ya dice, y
+ * la volvía un apartado más de la página en vez de un golpe. Arranca en seco
+ * con el titular, del tamaño del título de la página.
+ */
+export function ConvocatoriaLlamado() {
+  const { lang } = useI18n();
+  if (!CONVOCATORIA.activa) return null;
+
+  return (
+    <section className="flex h-full flex-col justify-center px-6 md:px-12">
+      <h2
+        className="font-bold uppercase"
+        style={{
+          fontSize: "clamp(2.2rem, 8vw, 6rem)",
+          lineHeight: 0.9,
+          letterSpacing: "-0.03em",
+        }}
+      >
+        {CONVOCATORIA.titulo[lang]}
+      </h2>
+
+      <p className="mt-8 max-w-md text-base leading-[1.75] opacity-70 md:mt-12 md:text-lg">
+        {CONVOCATORIA.entrada[lang]}
+      </p>
+    </section>
+  );
+}
+
 /** Mismo estilo de etiqueta que la página de pedido y el carrito. */
 const etiqueta =
   "block text-[10px] font-bold uppercase tracking-[0.08em] opacity-50";
@@ -35,7 +67,7 @@ const campo =
   "mt-2 w-full border-b border-foreground/20 bg-transparent pb-2 text-base outline-none transition-colors placeholder:opacity-25 focus:border-foreground";
 
 export default function Convocatoria() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const inputArchivo = useRef<HTMLInputElement>(null);
 
   const [archivo, setArchivo] = useState<File | null>(null);
@@ -127,219 +159,193 @@ export default function Convocatoria() {
 
   return (
     /*
-      ES UN PANEL DEL RIEL, no una franja al final de la página (6-ago-2026).
-      Por eso `h-full` + `items-center`: se centra a media altura como los
-      demás paneles, en vez de apoyarse en un `py-32` que aquí lo desbordaba.
+      SOLO EL FORMULARIO. El titular y la invitación viven en el panel de al
+      lado (`ConvocatoriaLlamado`, aquí abajo).
 
-      EN COMPUTADORA TIENE QUE CABER SIN SCROLL. El aire de antes (80 y 128 px
-      arriba y abajo) sacaba el formulario de la pantalla y aparecía una segunda
-      barra de desplazamiento, vertical, encima de la del riel: dos barras a la
-      vez, que es exactamente lo que no se quiere. En teléfono sí se recorre por
-      dentro (el panel lo permite; ver `app/about/page.tsx`).
+      POR QUÉ SE PARTIÓ EN DOS (6-ago-2026): en computadora todo junto cabía,
+      pero en teléfono no — y ahí el panel se tenía que recorrer hacia abajo por
+      dentro, o sea que en una página que se recorre de lado aparecía un scroll
+      vertical justo al final. Partido en dos, cada mitad cabe en su pantalla y
+      el recorrido sigue siendo de una sola dirección, que era el punto.
+
+      `h-full` + `items-center` lo centran a media altura, como los demás
+      paneles del riel.
+
+      EL AIRE ES MÁS APRETADO EN TELÉFONO (`py-6` y `space-y-6` en vez de 8) y
+      no es capricho: medido, el formulario mide 529 px, y en un iPhone SE el
+      panel solo tiene 587. Con el aire de computadora se pasaba por seis
+      píxeles — o sea, volvía a aparecer el scroll vertical justo en el aparato
+      más chico. Apretándolo queda con margen de sobra en cualquier teléfono.
     */
-    <section className="flex h-full items-center px-6 py-10 md:px-12 md:py-0">
-      <div className="w-full">
-        <Reveal>
-          {/*
-            SIN ANTETÍTULO. Antes tenía un "CONVOCATORIA ABIERTA" chiquito
-            encima; se quitó (6-ago-2026) porque le explicaba a la frase lo que
-            la frase ya dice, y la volvía un apartado más de la página en vez de
-            un golpe. La sección arranca en seco con el titular.
-
-            Del tamaño del título de la página: es el segundo golpe de la
-            lectura, no un subtítulo.
-          */}
-          <h2
-            className="font-bold uppercase"
-            style={{
-              fontSize: "clamp(2.2rem, 8vw, 6rem)",
-              lineHeight: 0.9,
-              letterSpacing: "-0.03em",
-            }}
-          >
-            {CONVOCATORIA.titulo[lang]}
-          </h2>
-        </Reveal>
-
-        {/* Misma rejilla asimétrica del resto del Nosotros: la invitación a la
-            izquierda, el formulario descolgado a la derecha. */}
-        <div className="mt-12 grid gap-10 md:grid-cols-12 md:gap-10">
-          <div className="md:col-span-5">
-            <p className="max-w-sm text-base leading-[1.75] opacity-70 md:text-lg">
-              {CONVOCATORIA.entrada[lang]}
-            </p>
-          </div>
-
-          <div className="md:col-span-6 md:col-start-7">
-            {listo ? (
-              /* ACUSE. Reemplaza al formulario en lugar de ponerse encima:
+    <section className="flex h-full items-center px-6 py-6 md:px-12 md:py-0">
+      <div className="w-full max-w-xl">
+        {listo ? (
+          /* ACUSE. Reemplaza al formulario en lugar de ponerse encima:
                  quien ya mandó no necesita volver a ver los campos. */
-              <div>
-                <p className="text-2xl font-bold uppercase tracking-tight">
-                  {t.convocatoria.doneTitle}
-                </p>
-                <p className="mt-3 max-w-sm text-sm leading-relaxed opacity-60">
-                  {t.convocatoria.doneBody}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setListo(false);
-                    quitarArchivo();
-                  }}
-                  className="mt-8 cursor-pointer py-2 text-xs font-bold uppercase tracking-[0.08em] opacity-50 transition-opacity hover:opacity-100"
-                >
-                  {t.convocatoria.again}
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={enviar} className="space-y-8">
-                {/* TRAMPA PARA ROBOTS. Escondida de la vista Y del teclado y de
+          <div>
+            <p className="text-2xl font-bold uppercase tracking-tight">
+              {t.convocatoria.doneTitle}
+            </p>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed opacity-60">
+              {t.convocatoria.doneBody}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setListo(false);
+                quitarArchivo();
+              }}
+              className="mt-8 cursor-pointer py-2 text-xs font-bold uppercase tracking-[0.08em] opacity-50 transition-opacity hover:opacity-100"
+            >
+              {t.convocatoria.again}
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={enviar} className="space-y-6 md:space-y-8">
+            {/* TRAMPA PARA ROBOTS. Escondida de la vista Y del teclado y de
                     los lectores de pantalla (`aria-hidden` + `tabIndex`), para
                     que ninguna persona la llene por accidente. La revisa el
                     servidor. */}
-                <input
-                  type="text"
-                  name="sitio"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  aria-hidden
-                  className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
-                />
+            <input
+              type="text"
+              name="sitio"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden
+              className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
+            />
 
-                <div>
-                  <label htmlFor="conv-nombre" className={etiqueta}>
-                    {t.convocatoria.nameLabel}
-                  </label>
-                  <input
-                    id="conv-nombre"
-                    name="nombre"
-                    required
-                    maxLength={120}
-                    autoComplete="name"
-                    placeholder={t.convocatoria.namePlaceholder}
-                    className={campo}
-                  />
-                </div>
+            <div>
+              <label htmlFor="conv-nombre" className={etiqueta}>
+                {t.convocatoria.nameLabel}
+              </label>
+              <input
+                id="conv-nombre"
+                name="nombre"
+                required
+                maxLength={120}
+                autoComplete="name"
+                placeholder={t.convocatoria.namePlaceholder}
+                className={campo}
+              />
+            </div>
 
-                <div>
-                  <label htmlFor="conv-contacto" className={etiqueta}>
-                    {t.convocatoria.contactLabel}
-                  </label>
-                  {/* A propósito NO es `type="email"`: mucha gente vive en
+            <div>
+              <label htmlFor="conv-contacto" className={etiqueta}>
+                {t.convocatoria.contactLabel}
+              </label>
+              {/* A propósito NO es `type="email"`: mucha gente vive en
                       Instagram y no quiere dar correo. Cabe cualquiera de los
                       dos, y por eso tampoco se valida el formato. */}
-                  <input
-                    id="conv-contacto"
-                    name="contacto"
-                    required
-                    maxLength={200}
-                    autoComplete="email"
-                    placeholder={t.convocatoria.contactPlaceholder}
-                    className={campo}
-                  />
-                </div>
+              <input
+                id="conv-contacto"
+                name="contacto"
+                required
+                maxLength={200}
+                autoComplete="email"
+                placeholder={t.convocatoria.contactPlaceholder}
+                className={campo}
+              />
+            </div>
 
-                <div>
-                  <label htmlFor="conv-mensaje" className={etiqueta}>
-                    {t.convocatoria.messageLabel}
-                  </label>
-                  <textarea
-                    id="conv-mensaje"
-                    name="mensaje"
-                    required
-                    maxLength={4000}
-                    rows={4}
-                    placeholder={t.convocatoria.messagePlaceholder}
-                    className={`${campo} resize-y leading-relaxed`}
-                  />
-                </div>
+            <div>
+              <label htmlFor="conv-mensaje" className={etiqueta}>
+                {t.convocatoria.messageLabel}
+              </label>
+              <textarea
+                id="conv-mensaje"
+                name="mensaje"
+                required
+                maxLength={4000}
+                rows={4}
+                placeholder={t.convocatoria.messagePlaceholder}
+                className={`${campo} resize-y leading-relaxed`}
+              />
+            </div>
 
-                <div>
-                  <span className={etiqueta}>{t.convocatoria.fileLabel}</span>
+            <div>
+              <span className={etiqueta}>{t.convocatoria.fileLabel}</span>
 
-                  {/* El input de archivo del navegador no se puede estilizar y
+              {/* El input de archivo del navegador no se puede estilizar y
                       se veía como de otro sitio. Va escondido y lo dispara el
                       botón de texto, que sí es del sitio. */}
-                  <input
-                    ref={inputArchivo}
-                    id="conv-archivo"
-                    type="file"
-                    name="archivo"
-                    accept={ACEPTA}
-                    onChange={elegirArchivo}
-                    className="sr-only"
-                  />
+              <input
+                ref={inputArchivo}
+                id="conv-archivo"
+                type="file"
+                name="archivo"
+                accept={ACEPTA}
+                onChange={elegirArchivo}
+                className="sr-only"
+              />
 
-                  <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-                    <label
-                      htmlFor="conv-archivo"
-                      className="cursor-pointer text-xs font-bold uppercase tracking-[0.08em] underline underline-offset-4 transition-opacity hover:opacity-50"
-                    >
-                      {archivo
-                        ? t.convocatoria.fileChange
-                        : t.convocatoria.filePick}
-                    </label>
+              <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
+                <label
+                  htmlFor="conv-archivo"
+                  className="cursor-pointer text-xs font-bold uppercase tracking-[0.08em] underline underline-offset-4 transition-opacity hover:opacity-50"
+                >
+                  {archivo
+                    ? t.convocatoria.fileChange
+                    : t.convocatoria.filePick}
+                </label>
 
-                    {archivo && (
-                      <>
-                        <span className="min-w-0 flex-1 truncate text-xs opacity-60">
-                          {archivo.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={quitarArchivo}
-                          className="cursor-pointer text-xs uppercase tracking-[0.08em] opacity-40 transition-opacity hover:opacity-100"
-                        >
-                          {t.convocatoria.fileRemove}
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  <p className="mt-2 text-[10px] uppercase tracking-[0.06em] opacity-30">
-                    {t.convocatoria.fileHint}
-                  </p>
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={enviando}
-                    className="w-fit cursor-pointer py-2 text-xs font-bold uppercase tracking-[0.08em] transition-opacity hover:opacity-50 disabled:cursor-not-allowed disabled:opacity-30"
-                  >
-                    {enviando ? t.convocatoria.sending : t.convocatoria.submit}
-                  </button>
-
-                  <p className="mt-4 max-w-sm text-[10px] leading-relaxed opacity-30">
-                    {t.convocatoria.privacy}
-                  </p>
-                </div>
-              </form>
-            )}
-
-            {error && (
-              <p
-                role="alert"
-                className="mt-6 max-w-sm text-xs leading-relaxed text-accent"
-              >
-                {error}
-                {ofrecerSalida && (
+                {archivo && (
                   <>
-                    {" "}
-                    <Link
-                      href={LINKTREE_URL}
-                      target="_blank"
-                      className="underline underline-offset-4"
+                    <span className="min-w-0 flex-1 truncate text-xs opacity-60">
+                      {archivo.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={quitarArchivo}
+                      className="cursor-pointer text-xs uppercase tracking-[0.08em] opacity-40 transition-opacity hover:opacity-100"
                     >
-                      {t.convocatoria.fallback}
-                    </Link>
+                      {t.convocatoria.fileRemove}
+                    </button>
                   </>
                 )}
+              </div>
+
+              <p className="mt-2 text-[10px] uppercase tracking-[0.06em] opacity-30">
+                {t.convocatoria.fileHint}
               </p>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={enviando}
+                className="w-fit cursor-pointer py-2 text-xs font-bold uppercase tracking-[0.08em] transition-opacity hover:opacity-50 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                {enviando ? t.convocatoria.sending : t.convocatoria.submit}
+              </button>
+
+              <p className="mt-4 max-w-sm text-[10px] leading-relaxed opacity-30">
+                {t.convocatoria.privacy}
+              </p>
+            </div>
+          </form>
+        )}
+
+        {error && (
+          <p
+            role="alert"
+            className="mt-6 max-w-sm text-xs leading-relaxed text-accent"
+          >
+            {error}
+            {ofrecerSalida && (
+              <>
+                {" "}
+                <Link
+                  href={LINKTREE_URL}
+                  target="_blank"
+                  className="underline underline-offset-4"
+                >
+                  {t.convocatoria.fallback}
+                </Link>
+              </>
             )}
-          </div>
-        </div>
+          </p>
+        )}
       </div>
     </section>
   );

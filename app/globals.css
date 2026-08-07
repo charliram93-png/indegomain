@@ -335,8 +335,14 @@ body {
   calcular la página.
 */
 .carrusel {
-  /* Lento a propósito: es un fondo, no algo que quiera que lo mires. */
-  animation: carrusel 60s linear infinite;
+  /*
+    LENTO, pero no tanto que parezca detenido. A 60 s la vuelta el movimiento
+    era tan poco que había que quedarse viendo para notarlo. Se bajó a 40 y luego
+    a 30, que es donde se lee que algo está pasando de fondo sin llegar a
+    distraer de la frase. Si algún día compite con el texto, este es el número
+    que hay que SUBIR.
+  */
+  animation: carrusel 30s linear infinite;
 
   /*
     POR QUÉ LAS PLAYERAS VAN ACLARADAS EN TEMA CLARO, y no simplemente con una

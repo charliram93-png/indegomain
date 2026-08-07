@@ -180,9 +180,14 @@ indego/
   el helper `foto()`, que les aplica transformaciones de Cloudinary al vuelo —
   ver "Las fotos de las playeras" en la sección 9.
 - **`config/brand.ts`** — Lo que el sitio dice de sí mismo: `CONTACT_EMAIL`,
-  `INSTAGRAM_URL`, `LINKTREE_URL` y el `MANIFESTO`. El correo y el Instagram
-  **solo aparecen en el footer si están llenos** (vacío = no se muestra el
-  enlace), para no publicar un dato inventado.
+  `INSTAGRAM_URL`, `LINKTREE_URL`, el `MANIFESTO` y el `LOGO_PALABRA`. El correo
+  y el Instagram **solo aparecen en el footer si están llenos** (vacío = no se
+  muestra el enlace), para no publicar un dato inventado.
+  **`LOGO_PALABRA`** es el logo alterno (la palabra INDEGO), en sus dos
+  versiones: `claro` (el negro, para fondos claros) y `oscuro` (el blanco). Vive
+  aquí y no en una página porque ya lo usan dos —la cascada de la entrada del
+  Nosotros y la lluvia de fondo del catálogo—, así que cambiar el archivo se
+  hace en un solo lugar.
 - **`config/dropIntro.ts`** — El **guion del texto del countdown**: qué palabra
   entra, en qué segundo del video, de qué tamaño y en qué lugar. Los valores
   salieron de medir cuadro por cuadro el video original que traía las letras
@@ -303,40 +308,66 @@ indego/
   traduce: es identidad de marca, no interfaz.
 - **`navbar.tsx`** — Barra superior. El ícono de bolsa abre el carrito y muestra
   cuántos productos hay.
-  **EL LOGO LLEVA A `/product`, no a la raíz** (6-ago-2026). La raíz es el
-  countdown: mandar ahí a alguien que ya entró es sacarlo de la tienda y
-  ponerlo otra vez en la puerta. El logo lleva "a casa", y desde adentro la
-  casa son las playeras. La raíz sigue siendo los caballos y nada más, a
-  propósito: quien escribe el dominio pelado ve el countdown.
+  **EL LOGO LLEVA A `/about`, no a la raíz** (6-ago-2026). La raíz es el
+  countdown: mandar ahí a alguien que ya entró es sacarlo del sitio y ponerlo
+  otra vez en la puerta. El logo lleva "a casa", y la casa de la marca es su
+  página. Apunta al MISMO lugar que `DESTINO` en `app/page.tsx` (a dónde lleva
+  ENTRAR): **si se cambia uno hay que cambiar el otro**. La raíz sigue siendo
+  los caballos y nada más, a propósito: quien escribe el dominio pelado ve el
+  countdown.
   **NOSOTROS NO VA EN LA BARRA.** Se probó junto al logo y se regresó al pie:
   competía con el logo y con el carrito por la misma mirada y no es un enlace
   de esa jerarquía.
-- **`dropTag.tsx`** — **PRUEBA (ago-2026)**: el sticker "SPECIAL DROP #1", la
-  salida al catálogo desde la página de marca.
-  **Va PEGADO A LA PANTALLA** (derecha, `top-40` en teléfono y `top-48` en
-  computadora, o sea bastante más abajo del navbar), **derecho**, y solo crece
-  al pasar el cursor. Se esconde solo dentro de `/product`, que es donde
-  sobraría.
-
-  **NO SE DIBUJA DESDE EL NAVBAR, y no es por gusto:** la barra lleva
-  `backdrop-blur`, y un elemento con `position: fixed` dentro de algo
-  desenfocado se posiciona contra ESE elemento y no contra la ventana. Mientras
-  colgó del navbar no había forma de fijarlo a la pantalla. Ahora lo dibuja
-  `app/about/page.tsx`. **Tampoco va en el layout**, para que no se cuele en el
-  countdown, el pago, los términos ni el panel — hoy sale solo en Nosotros, que
-  es exactamente donde salía antes.
+- **`dropTag.tsx`** — El sticker "SPECIAL DROP #1", la salida al catálogo desde
+  la página de marca. **Va MONTADO A CABALLO en el borde de abajo del navbar**
+  —la mayor parte adentro, el resto colgando— y **ladeado**: derecho se leería
+  como un botón más de la barra, que es justo lo que no es. Al pasar el cursor
+  se endereza un poco y crece. Lo dibuja `components/navbar.tsx`, y se esconde
+  solo dentro de `/product`; como el navbar solo existe en el Nosotros y en el
+  catálogo, en la práctica sale SOLO en el Nosotros.
+  **LAS DOS SE ENCIMAN AL LOGO** por 16 px, sobre aire y no sobre dibujo: así se
+  lee como calcomanía pegada encima y no como algo acomodado a un lado. En
+  teléfono va en `left-[64px]` y además un poco más arriba (colgando media
+  etiqueta se comía demasiada pantalla); en computadora, en `left-[112px]` y
+  centrada en el borde. Antes iba en 146, después del logo y sin tocarlo, y se
+  veía despegada.
+  La inclinación es de **10°** (era 7, y así se leía casi derecha); al pasar el
+  cursor se endereza a 5.
 
   **Dos cosas que ya se probaron y se echaron para atrás**, para no volver a
-  proponerlas: (1) montarlo a caballo en el borde de la barra y **ladeado** —
-  ahí sí funcionaba, pero suelto en medio de la pantalla la inclinación se veía
-  como descuido; (2) repetirlo cerrando el Nosotros en lugar del "VER DROP #1"
-  de texto — repetido a los pocos segundos de scroll se leía como relleno.
+  proponerlas:
+  (1) **suelto, pegado a la pantalla** (fijo, a la derecha y muy abajo de la
+  barra): siendo `fixed` se encimaba con lo que iba pasando por detrás del riel
+  del Nosotros, y en el panel de museos le caía cerca del titular. Y ojo si se
+  reintenta: **no se puede fijar a la pantalla desde dentro de la barra**,
+  porque el `backdrop-blur` del navbar hace que un `position: fixed` se
+  posicione contra la BARRA y no contra la ventana — habría que dibujarlo desde
+  la página.
+  (2) **repetirlo cerrando el Nosotros** en lugar del "VER DROP #1" de texto:
+  repetido a los pocos segundos de scroll se leía como relleno.
 
   La imagen sale de `DROP_TAG_IMAGE` (`config/drop.ts`) y **es apaisada**
   (1681 × 936). Se mide POR ALTURA y el ancho lo saca de la imagen, así que
   cambiarla por otra no la deforma, pero sí cambia cuánto ocupa a lo ancho.
   Mientras esa variable esté vacía se dibuja una de respaldo en SVG con los
   colores del tema, para que nunca quede un hueco.
+- **`lluviaDeLogos.tsx`** — **(6-ago-2026)** El fondo de los costados del
+  catálogo: la palabra INDEGO cayendo, muy tenue, pegada a los dos bordes de la
+  pantalla y cortada por ellos. Llena el aire que queda a los lados de la
+  columna del catálogo (1152 px) cuando la pantalla es ancha. Es la misma idea
+  de la cascada del Nosotros, pero en oficio de fondo: allá la palabra se lee,
+  aquí apenas se adivina.
+  **Solo en computadora** (`hidden md:block`): en teléfono no hay costados que
+  llenar. Va detrás de todo (`z-0`, con `main` y el pie en `relative z-10`) y
+  `fixed`, para que se quede quieta mientras el catálogo pasa por encima — si se
+  moviera con el scroll se leería como contenido.
+  **Qué tan tenue** se controla con `OPACIDAD` (hoy `0.10`), el único número que
+  hay que mover. Pasando de ~0.15 empieza a competir con las playeras.
+  > **No es un componente de cliente, a propósito.** El cambio de tema se
+  > resuelve dibujando LAS DOS versiones del logo y escondiendo una con CSS
+  > (`dark:hidden` / `hidden dark:block`) en vez de preguntarle el tema a
+  > JavaScript. Así no hay parpadeo al hidratar ni hace falta el truco de
+  > `montado` que sí usan el navbar y el Nosotros.
 - **`convocatoria.tsx`** — **"NUESTROS MUSEOS ESTÁN VACÍOS"**, la sección que
   cierra el Nosotros: una puerta abierta para que quien haga algo lo mande y se
   pueda colaborar. Va DESPUÉS de la banda que lleva al catálogo, a propósito —
@@ -492,14 +523,14 @@ indego/
    - Esto **no se puede burlar** cambiando el reloj del navegador, porque la fecha
      se valida en el servidor.
 3. Cuando el countdown llega a cero, la home muestra el botón **ENTRAR**, que
-   lleva **directo al catálogo** (`/product`). Antes de darle, la pantalla se
+   lleva a la **página de marca** (`/about`), y de ahí se pasa a las playeras. Antes de darle, la pantalla se
    funde al color del tema y aparece el manifiesto un momento — el puente entre
    el video y la tienda. Los tres tiempos de esa salida están en `app/page.tsx`
    (`T_CORTINA`, `T_FRASE`, `T_DIFUMINA`).
-   Se probó unos días entrar por la página de marca (`/about`) y se echó para
-   atrás el 6-ago-2026: quien acaba de aguantar el countdown viene a ver las
-   playeras, y meterle una página de lectura antes era una puerta de más. Para
-   volver a probarlo, se cambia `DESTINO` en ese archivo.
+   Esto se ha ido y vuelto: se probó llevar directo al catálogo y se regresó al
+   Nosotros (6-ago-2026), ya que dejó de ser una página de lectura larga y pasó
+   a ser un recorrido de lado que se pasa rápido. Es UNA línea (`DESTINO` en
+   ese archivo), pero hay que cambiar también el logo del navbar.
 
 ---
 
@@ -650,6 +681,14 @@ cosas para que no se sienta secuestrado:
   > se aguanta porque los paneles quedan cortados en la orilla y eso invita a
   > seguir; si algún día se acomodan para que quepan justos, hay que poner otra
   > pista en su lugar.
+- **EL FONDO DE LOS PANELES SE ALTERNA, uno y uno**: uno lleva el color de la
+  página y el siguiente el mismo de la entrada (`bg-surface`). Marca el ritmo
+  del recorrido y hace que se note dónde termina un panel y empieza el otro sin
+  depender solo de la línea. La cuenta arranca de manera que el primero
+  alternado sea el que va **después de "El origen"**, y el manifiesto se queda
+  con el fondo de la página — si no, quedaría pegado a la entrada, que ya es
+  `bg-surface`, y los dos se leerían como un solo panel gigante. La banda de
+  "GO TO DROP #1" queda fuera de la cuenta: es la invertida.
 - **Las fotos se miden POR ALTURA, no por proporción sobre el ancho.** Los
   bloques `foto`, `duo` y `video` eran `aspect-*` a todo el ancho de su columna:
   en una página que bajaba eso daba igual, crecía el alto y ya. En el riel el
@@ -658,10 +697,16 @@ cosas para que no se sienta secuestrado:
   (siempre cabe) y el ancho lo saca la proporción. **Si tocas esto, el padre
   tiene que llevar `h-full`**: un porcentaje de alto necesita contra qué
   medirse, y sin eso las fotos vuelven a crecer por el ancho.
-- **La convocatoria CABE SIN SCROLL en computadora.** Se le quitó el aire de
-  arriba y abajo (que venía de cuando era una franja al final de una página
-  vertical) y se centra a media altura como los demás paneles. En teléfono sí se
-  recorre por dentro.
+- **La convocatoria va en DOS PANELES**, y eso también es por el teléfono:
+  primero el llamado (titular + invitación) y luego el formulario. Todo junto en
+  uno solo cabía en computadora pero no en teléfono, y ahí el panel se tenía que
+  recorrer hacia abajo por dentro — o sea que en una página que se recorre de
+  lado aparecía un scroll vertical justo al final. Partido, cada mitad cabe en
+  su pantalla.
+  El formulario lleva el aire más apretado en teléfono (`py-6` y `space-y-6` en
+  vez de 8): medido, mide 528 px con ese espaciado y en un iPhone SE el panel
+  solo tiene 587. Con el aire de computadora se pasaba por unos píxeles y
+  reaparecía el scroll en el aparato más chico.
 - **Los bloques sin archivo ya no ocupan lugar.** Antes una foto vacía
   simplemente no ocupaba alto y no se notaba; en el riel reservaba un panel de
   mil píxeles de nada. Ahora se filtran (`tieneContenido`), salvo en
@@ -700,7 +745,54 @@ lado (la barra de desplazamiento se esconde, ver arriba).
 Todo se edita en **`config/about.ts`**; la página (`app/about/page.tsx`) no se
 toca. Tres partes:
 
-1. **`ABOUT_PORTADA`** — la foto grande de arriba y el párrafo de entrada.
+1. **`ABOUT_PORTADA`** — el panel de entrada, el primero del recorrido:
+   - `entrada` — el párrafo debajo del título "Nosotros".
+   - `imagen` / `imagenOscuro` — **el LOGO ALTERNO** (la palabra INDEGO), que se
+     dibuja **EN CASCADA dentro de ese mismo panel**: dos repeticiones apiladas
+     encima del título y otras dos debajo del párrafo, cuatro en total. Pegadas
+     entre sí a propósito — es lo que las vuelve cascada y no cuatro logos
+     sueltos. Son dos archivos porque el logo es de un solo color: el negro se
+     pierde sobre el olivo del tema oscuro igual que el blanco sobre el crema
+     del claro, y la página elige según el tema. Las dos URLs llevan `e_trim`,
+     que le recorta al archivo el enorme margen transparente que trae (la
+     palabra ocupa 345 × 89 de un lienzo de 500 × 500) para que llene el ancho
+     en vez de quedar chiquita en medio.
+     **LA CASCADA SE SALE DEL PANEL POR LOS TRES LADOS, a propósito**, para que
+     se sienta que sigue más allá de lo que se ve: por arriba se pierde bajo el
+     navbar, por abajo se va por el borde de la pantalla, y por la izquierda
+     arranca fuera del panel — lo primero que se ve es **media "I"**.
+     Se dibujan 8 repeticiones por lado y el panel corta las que sobran; el
+     texto se queda con su espacio y las cascadas se comen el resto, así que en
+     una pantalla alta se ven más y en una bajita menos, pero el título nunca se
+     mueve.
+     Los tres números están arriba de `app/about/page.tsx`:
+     `REPETICIONES_DEL_LOGO`, `ALTO_LOGO` y `CORTE_IZQUIERDA`.
+     > **`ALTO_LOGO` va en PÍXELES, no en porcentaje**, y costó descubrirlo: un
+     > porcentaje se mide contra el contenedor de la cascada —que es el que se
+     > lleva "lo que sobre" del panel—, así que las repeticiones salían de 32 px
+     > en vez de 96, diminutas, y encima cambiaban de tamaño según el largo del
+     > texto de al lado. Hoy son 96 px en teléfono y 112 en computadora: en
+     > teléfono casi no baja aunque quepan menos, porque achicándola se leía
+     > como un patrón de fondo cualquiera en vez de una palabra cortada.
+     > **`CORTE_IZQUIERDA` está medido, no a ojo:** a 112 px de alto la palabra
+     > mide unos 430 de ancho y la "I" unos 52. Se fue ajustando a la baja: con
+     > 4% dejaba un hilito de "I" y arrancaba casi en la "N", con 3% quedaba
+     > media letra, y hoy está en 2.5%.
+   - **Este panel lleva `bg-surface`**, no el fondo de la página. Es el tono que
+     tenía el recuadro donde vivía el logo cuando iba solo; se conservó al
+     juntarlos, y de paso separa la entrada del resto del recorrido sin
+     necesidad de una línea.
+   > Se probó tener el logo en su PROPIO panel, después de la entrada, y se
+   > quitó: metido en el panel del título y repetido arriba y abajo, la palabra
+   > enmarca en vez de competir, y el recorrido se ahorra una parada.
+   **HOY ESA IMAGEN ES EL LOGO ALTERNO** (la palabra INDEGO), no una foto, y por
+   eso son DOS: `imagen` (la negra) e `imagenOscuro` (la blanca). El logo es de
+   un solo color, así que el negro se pierde sobre el olivo del tema oscuro
+   igual que el blanco sobre el crema del claro; la página elige según el tema.
+   Si algún día vuelve a ser una foto, se vacía `imagenOscuro` y se usa la misma
+   en los dos temas. Las dos URLs llevan `e_trim`, que le recorta al archivo el
+   enorme margen transparente que trae (la palabra ocupa 345 × 89 de un lienzo
+   de 500 × 500) para que llene el recuadro en vez de quedar chiquita en medio.
 2. **`BLOQUES`** — la lista que se pinta en orden (de izquierda a derecha, desde
    que la página se recorre de lado). Agrega, quita o reordena a gusto. Hay
    seis tipos:
@@ -737,7 +829,7 @@ que reordenar `BLOQUES` no la deja en un lugar absurdo: se pega a la primera
 antes.
 
 **LA BANDA TRAE UN CARRUSEL DE FONDO**: **tres tiras** con las playeras del
-catálogo pasando despacio y en bucle detrás del texto (60 s por vuelta). Se
+catálogo pasando despacio y en bucle detrás del texto (30 s por vuelta). Se
 alimenta de `config/products.ts`, así que si cambian las fotos del drop cambian
 solas aquí. Cuatro detalles que importan si se toca:
 
@@ -1234,6 +1326,11 @@ Anotadas para que nadie las "arregle" pensando que urgen:
 - **Fecha real del drop** (`DROP_DATE`), hoy placeholder 1-sep-2026.
 - **Stripe en modo LIVE** + activar **OXXO** + webhook live.
 - **Rellenar `/terms`** (textos entre `[corchetes]`, en los dos idiomas).
+- ⚠️ **`MOSTRAR_HUECOS` de vuelta en `false`** (`config/about.ts`). Está en
+  `true` a propósito y de forma TEMPORAL, para poder ver la forma del recorrido
+  de Nosotros con sus paneles de foto en el sitio desplegado mientras llegan las
+  fotos de verdad. Si se queda así, los clientes van a ver recuadros punteados
+  que dicen "[Foto de detalle]".
 - **Variables de entorno en Vercel** (STRIPE, NEXT_PUBLIC_URL, ADMIN_PASSWORD,
   y **CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET** para la convocatoria).
 - **Probar la convocatoria de punta a punta** (6-ago-2026): se probó todo el

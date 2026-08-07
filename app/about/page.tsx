@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Fragment, useEffect, useRef, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import Navbar from "@/components/navbar";
 import CartDrawer from "@/components/cartDrawer";
 import AboutBlock from "@/components/aboutBlock";
-import Convocatoria from "@/components/convocatoria";
-import DropTag from "@/components/dropTag";
+import Convocatoria, { ConvocatoriaLlamado } from "@/components/convocatoria";
 import { Line } from "@/components/manifesto";
-import { ABOUT_PORTADA, ABOUT_CIERRE, BLOQUES } from "@/config/about";
+import {
+  ABOUT_PORTADA,
+  ABOUT_CIERRE,
+  BLOQUES,
+  MOSTRAR_HUECOS,
+} from "@/config/about";
 import { PRODUCTS } from "@/config/products";
 import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
@@ -46,13 +51,13 @@ function TiraDeFondo({ alReves = false }: { alReves?: boolean }) {
           Con el espacio metido en cada pieza, las seis miden exactamente lo
           mismo, la mitad cae justo en la copia y el salto es invisible.
         */
-        <div key={i} className="h-4/5 shrink-0 pr-10 md:pr-20">
-          <div className="relative h-full w-28 md:w-48">
+        <div key={i} className="h-[88%] shrink-0 pr-10 md:pr-20">
+          <div className="relative h-full w-36 md:w-60">
             <Image
               src={producto.images[0]}
               alt=""
               fill
-              sizes="(max-width: 768px) 30vw, 200px"
+              sizes="(max-width: 768px) 40vw, 240px"
               className="object-contain"
             />
           </div>
@@ -91,47 +96,154 @@ function CarruselDeFondo() {
   );
 }
 
-/** Next reemplaza esto por `true`/`false` al compilar; no queda en el bundle. */
-const EN_DESARROLLO = process.env.NODE_ENV === "development";
-
 /**
- * ¿ESTE BLOQUE TIENE ALGO QUE ENSEÑAR?
+ * ¿ESTE BLOQUE OCUPA UN PANEL?
  *
- * Los bloques de foto y video sin archivo (`src: ""`) no se publican. Cuando la
- * página iba hacia abajo eso no se notaba —simplemente no ocupaban alto—, pero
- * en el riel cada bloque reserva un panel ANCHO, así que un bloque vacío dejaba
- * mil píxeles de nada en medio del recorrido. Aquí se filtran.
+ * Un bloque de foto o video sin archivo no dibuja nada. Cuando la página iba
+ * hacia abajo eso no se notaba —simplemente no ocupaba alto—, pero en el riel
+ * cada bloque reserva un panel ANCHO, así que uno vacío dejaba mil píxeles de
+ * nada en medio del recorrido. Por eso se filtran.
  *
- * EN `npm run dev` SÍ SE DIBUJAN, con su recuadro punteado: es la misma
- * convención de siempre (ver `components/aboutBlock.tsx`), para poder ver la
- * forma de la página mientras se llena sin que se escape un hueco a producción.
+ * SALVO cuando se están dibujando los recuadros punteados: ahí sí ocupan su
+ * panel, que es justamente lo que se quiere ver. La condición es la MISMA que
+ * usa `components/aboutBlock.tsx` para decidir si pinta el recuadro — si se
+ * separan, quedarían paneles vacíos o recuadros sin panel.
  */
+const HAY_QUE_DIBUJAR_HUECOS =
+  process.env.NODE_ENV === "development" || MOSTRAR_HUECOS;
+
 function tieneContenido(block: (typeof BLOQUES)[number]): boolean {
-  if (EN_DESARROLLO) return true;
+  if (HAY_QUE_DIBUJAR_HUECOS) return true;
   if (block.tipo === "foto" || block.tipo === "video") return !!block.src;
   if (block.tipo === "duo") return !!(block.a.src || block.b.src);
   return true;
 }
 
 /**
- * UN PANEL DEL RIEL: una "pantalla" del recorrido horizontal.
+ * CUÁNTAS REPETICIONES DEL LOGO SE DIBUJAN DE CADA LADO DEL TÍTULO.
  *
- * `shrink-0` es lo que impide que los paneles se apachurren para caber —sin
- * eso, flex los encogería y no habría nada que recorrer—, y `h-full` los hace
- * del alto de la ventana. La línea de la izquierda hace de separación, igual
- * que las líneas horizontales hacían de separación cuando la página iba hacia
- * abajo.
+ * DE SOBRA A PROPÓSITO: la idea es que la cascada se SALGA del panel por arriba
+ * y por abajo, para que se sienta que sigue más allá de lo que se ve. Las que
+ * no caben las corta el panel (`overflow-hidden`) y no estorban. Si algún día
+ * la pantalla es mucho más alta que ancha y se alcanza a ver dónde termina la
+ * cascada, este es el número que hay que subir.
  */
-function Panel({ ancho, children }: { ancho: string; children: ReactNode }) {
+const REPETICIONES_DEL_LOGO = 8;
+
+/**
+ * ALTO DE CADA REPETICIÓN.
+ *
+ * VA EN PÍXELES, NO EN PORCENTAJE, y esto costó un rato: un porcentaje se mide
+ * contra el contenedor de la cascada, que es el que se lleva "lo que sobre"
+ * del panel — así que las repeticiones salían de 32 px en vez de 90, o sea
+ * diminutas, y encima cambiaban de tamaño según el largo del texto de al lado.
+ * Con un alto fijo, la palabra mide siempre lo mismo y lo único que cambia con
+ * la pantalla es CUÁNTAS se alcanzan a ver, que es justo el efecto que se
+ * busca.
+ *
+ * El ancho lo saca la propia imagen: como es apaisada (casi 4 a 1), a 112 px de
+ * alto la palabra mide unos 430 de ancho.
+ *
+ * EN TELÉFONO CASI NO BAJA (96 contra 112), aunque eso signifique ver menos
+ * repeticiones: el punto de la cascada es que la palabra se lea grande y
+ * cortada, y achicándola para que cupieran más se veía como un patrón de fondo
+ * cualquiera. Caben menos y está bien — igual se salen de la pantalla.
+ */
+const ALTO_LOGO = "h-24 md:h-28";
+
+/**
+ * CUÁNTO SE SALE EL LOGO POR LA IZQUIERDA.
+ *
+ * La palabra arranca FUERA del panel, así que lo primero que se ve es una "I"
+ * partida a la mitad. Es lo que hace que se lea como un fragmento de algo más
+ * grande y no como un logo acomodado.
+ *
+ * MEDIDO, no a ojo: a 112 px de alto la palabra mide unos 430 de ancho y la "I"
+ * unos 52 de esos. Con 2.5% del panel se come ~18 px, o sea poco más de un
+ * tercio de la letra.
+ *
+ * SE HA IDO AJUSTANDO A LA BAJA: con 4% dejaba un hilito de "I" y arrancaba
+ * casi en la "N"; con 3% quedaba media letra. Ahora arranca un pelín más a la
+ * derecha todavía.
+ */
+const CORTE_IZQUIERDA = "-2.5%";
+
+/**
+ * LA CASCADA: la palabra INDEGO repetida, apilada y cortada por los cuatro
+ * lados.
+ *
+ * Va una arriba del título y otra abajo del párrafo. Lo que la vuelve cascada
+ * —y no cuatro logos acomodados— son tres cosas:
+ *
+ *  1. REPETIDAS Y PEGADAS, sin aire entre ellas: se leen como una sola mancha
+ *     que cae.
+ *  2. SE SALEN POR ARRIBA Y POR ABAJO. Se dibujan de más y el panel las corta,
+ *     así que no se ve dónde empieza ni dónde termina: la de arriba se pierde
+ *     bajo el navbar y la de abajo se va por el borde de la pantalla.
+ *  3. SE SALEN POR LA IZQUIERDA, media letra. Ver `CORTE_IZQUIERDA`.
+ *
+ * `justify-end` en la de arriba y `justify-start` en la de abajo: cada una se
+ * ancla al texto y crece hacia AFUERA, para que la repetición pegada al título
+ * siempre se vea completa y las que se cortan sean las de las orillas.
+ *
+ * SOLO LA PRIMERA LLEVA TEXTO ALTERNATIVO. Las demás van con `alt=""`: es la
+ * misma palabra repetida, y un lector de pantalla diciéndola dieciséis veces
+ * seguidas sería ruido, no información.
+ */
+function CascadaDeLogos({
+  src,
+  alt,
+  haciaArriba = false,
+}: {
+  src: string;
+  alt: string;
+  /** La de encima del título: se ancla abajo y se corta por arriba. */
+  haciaArriba?: boolean;
+}) {
+  if (!src) return null;
+
   return (
+    /* `min-h-0` es lo que le permite a un hijo de flex ser MÁS CHICO que su
+       contenido; sin eso el contenedor se estiraría para que quepan las ocho
+       repeticiones y empujaría el texto fuera del panel. */
     <div
-      data-panel
-      className={`flex h-full shrink-0 flex-col justify-center border-l border-foreground/10 px-6 first:border-l-0 md:px-12 ${ancho}`}
+      className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+        haciaArriba ? "justify-end" : "justify-start"
+      }`}
     >
-      {children}
+      {Array.from({ length: REPETICIONES_DEL_LOGO }).map((_, i) => (
+        <div
+          key={i}
+          className={`relative w-full shrink-0 ${ALTO_LOGO}`}
+          style={{ left: CORTE_IZQUIERDA }}
+        >
+          <Image
+            src={src}
+            alt={i === 0 ? alt : ""}
+            fill
+            priority={i < 2}
+            sizes="(max-width: 768px) 92vw, 720px"
+            className="object-contain object-left"
+          />
+        </div>
+      ))}
     </div>
   );
 }
+
+/*
+  AQUÍ VIVÍA UN COMPONENTE `Panel` GENÉRICO. Se quitó (6-ago-2026) porque acabó
+  sin usuarios: cada panel del riel terminó necesitando algo distinto —el de
+  entrada no puede llevar relleno lateral (la cascada tiene que llegar al borde
+  para cortarse), los de bloque los envuelve la lista, la banda del cierre es un
+  enlace y los de la convocatoria llevan sus propias medidas—, así que un molde
+  común solo escondía las diferencias.
+
+  LO QUE SÍ COMPARTEN TODOS, y hay que respetar al agregar uno nuevo:
+    h-full shrink-0 border-l border-foreground/10
+  `shrink-0` es lo importante: sin eso, flex apachurra los paneles para que
+  quepan y ya no hay nada que recorrer.
+*/
 
 /**
  * NOSOTROS — la página de marca.
@@ -158,7 +270,28 @@ function Panel({ ancho, children }: { ancho: string; children: ReactNode }) {
  */
 export default function AboutPage() {
   const { t, lang } = useI18n();
+  const { resolvedTheme } = useTheme();
   const riel = useRef<HTMLElement>(null);
+
+  /* Evita el parpadeo de hidratación: el servidor no sabe qué tema tiene quien
+     visita, así que la imagen que cambia con el tema (ver la portada) espera a
+     que esto sea `true`. Mismo truco que `components/navbar.tsx`. */
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
+  /*
+    CUÁL DE LAS DOS VERSIONES DEL LOGO. El archivo es de un solo color, así que
+    el negro se pierde sobre el olivo del tema oscuro igual que el blanco sobre
+    el crema del claro.
+
+    Hasta que `montado` sea `true` se usa el negro: en el servidor no se sabe qué
+    tema tiene quien visita, y elegir ahí provocaría un parpadeo al hidratar.
+    Mismo truco que el logo del navbar.
+  */
+  const logoDeEntrada =
+    montado && resolvedTheme === "dark" && ABOUT_PORTADA.imagenOscuro
+      ? ABOUT_PORTADA.imagenOscuro
+      : ABOUT_PORTADA.imagen;
 
   /*
     UNA SOLA BARRA DE DESPLAZAMIENTO, la del riel.
@@ -310,12 +443,9 @@ export default function AboutPage() {
     <div className="entrada flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <Navbar />
 
-      {/* LA ETIQUETA DEL DROP, pegada a la pantalla (derecha, bien abajo del
-          navbar). Va aquí y no dentro del navbar: el `backdrop-blur` de la
-          barra impide fijar nada a la ventana desde adentro. Se dibuja en esta
-          página y no en el layout para que no se cuele en el countdown, el
-          pago ni el panel. Ver `components/dropTag.tsx`. */}
-      <DropTag />
+      {/* LA ETIQUETA DEL DROP la dibuja el navbar, montada en su borde de
+          abajo (ver `components/dropTag.tsx`). Se probó suelta desde aquí,
+          pegada a la pantalla, y se regresó a la barra. */}
 
       {/*
         EL RIEL. Aquí es donde la página se voltea: en vez de apilarse hacia
@@ -328,54 +458,72 @@ export default function AboutPage() {
         style={{ fontFamily: HELVETICA }}
       >
         {/*
-          PORTADA. El catálogo arranca de golpe con el manifiesto pegado al
-          navbar; aquí se hace lo contrario: mucho aire, el título colgado de la
-          izquierda y la entrada descolgada abajo.
-        */}
-        <Panel ancho="w-[min(92vw,720px)]">
-          {/* SIN EL "INDEGO STUDIO" chiquito de encima (se quitó 6-ago-2026):
-              el logo ya está a dos dedos, en la barra. Decirlo otra vez ahí
-              arriba solo le robaba el arranque al título. */}
-          <h1
-            className="font-bold uppercase"
-            style={{
-              fontSize: "clamp(2.6rem, 7vw, 5.5rem)",
-              lineHeight: 0.9,
-              letterSpacing: "-0.03em",
-            }}
-          >
-            {t.about.title}
-          </h1>
-          {/* `whitespace-pre-line`: la entrada son DOS renglones que van uno
-              debajo del otro, y el salto se escribe en `config/about.ts`. */}
-          <p className="mt-8 max-w-sm whitespace-pre-line text-base leading-[1.75] opacity-70 md:text-lg">
-            {ABOUT_PORTADA.entrada[lang]}
-          </p>
-        </Panel>
+          EL PANEL DE ENTRADA. NO usa el `Panel` genérico, y es por una razón
+          concreta: aquí el relleno lateral NO puede ser del panel. El texto sí
+          lo lleva, pero la cascada de logos tiene que llegar hasta el borde —y
+          pasarse— para poder cortarse. Con el relleno arriba, el logo quedaría
+          acomodado dentro y no habría corte que valiera.
 
-        {/*
-          Foto de portada. En vertical iba de orilla a orilla; aquí manda la
-          ALTURA (llena el panel) y el ancho lo pone la foto.
+          LLEVA EL FONDO DE SUPERFICIE (`bg-surface`), no el de la página: es el
+          tono que tenía el recuadro donde vivía el logo cuando iba solo, y
+          gustó. De paso separa la entrada del resto del recorrido sin necesitar
+          una línea.
+
+          LAS CASCADAS SE COMEN TODO EL ESPACIO QUE SOBRE (`flex-1`) y el texto
+          se queda con el suyo (`shrink-0`). Así, en una pantalla alta se ven más
+          repeticiones y en una bajita menos, pero el título nunca se mueve ni se
+          aprieta.
         */}
-        {ABOUT_PORTADA.imagen && (
-          <div className="relative h-full w-[min(92vw,900px)] shrink-0 overflow-hidden border-l border-foreground/10 bg-surface">
-            <Image
-              src={ABOUT_PORTADA.imagen}
-              alt={ABOUT_PORTADA.alt[lang]}
-              fill
-              priority
-              sizes="900px"
-              className="object-cover"
-            />
+        <div
+          data-panel
+          className="flex h-full w-[min(92vw,720px)] shrink-0 flex-col overflow-hidden border-l border-foreground/10 bg-surface first:border-l-0"
+        >
+          <CascadaDeLogos
+            src={logoDeEntrada}
+            alt={ABOUT_PORTADA.alt[lang]}
+            haciaArriba
+          />
+
+          <div className="shrink-0 px-6 py-8 md:px-12">
+            {/* SIN EL "INDEGO STUDIO" chiquito de encima (se quitó 6-ago-2026):
+                el logo ya está a dos dedos, en la barra — y ahora, además, justo
+                aquí arriba, repetido. */}
+            <h1
+              className="font-bold uppercase"
+              style={{
+                fontSize: "clamp(2.6rem, 7vw, 5.5rem)",
+                lineHeight: 0.9,
+                letterSpacing: "-0.03em",
+              }}
+            >
+              {t.about.title}
+            </h1>
+            {/* `whitespace-pre-line`: la entrada son DOS renglones que van uno
+                debajo del otro, y el salto se escribe en `config/about.ts`. */}
+            <p className="mt-6 max-w-sm whitespace-pre-line text-base leading-[1.75] opacity-70 md:text-lg">
+              {ABOUT_PORTADA.entrada[lang]}
+            </p>
           </div>
-        )}
+
+          <CascadaDeLogos src={logoDeEntrada} alt="" />
+        </div>
 
         {/*
           LOS BLOQUES, en el orden de `config/about.ts`, con LA BANDA DEL CIERRE
-          INTERCALADA justo después de la frase ancla.
+          INTERCALADA justo después del manifiesto.
 
-          El ANCHO depende del tipo: los de leer van angostos (una columna de
+          EL ANCHO depende del tipo: los de leer van angostos (una columna de
           texto ancha se lee mal) y los de ver, anchos.
+
+          EL FONDO SE ALTERNA, uno y uno: uno lleva el color de la página y el
+          siguiente el mismo de la entrada (`bg-surface`). Así el recorrido
+          marca su propio ritmo y se nota dónde termina un panel y empieza el
+          otro sin depender solo de la línea divisoria.
+
+          La cuenta arranca de manera que el primero alternado sea el que va
+          DESPUÉS de "El origen", y el manifiesto (que es el bloque 0) se queda
+          con el fondo de la página — si no, quedaría pegado a la entrada, que
+          ya es `bg-surface`, y se leerían como un solo panel gigante.
         */}
         {BLOQUES.map((block, i) => (
           <Fragment key={i}>
@@ -386,8 +534,7 @@ export default function AboutPage() {
                   block.tipo === "texto" || block.tipo === "frase"
                     ? "w-[min(92vw,680px)]"
                     : "w-[min(94vw,1000px)]"
-                }`}
-                /* El manifiesto y las fotos van anchos; el texto de leer, no. */
+                } ${i > 0 && i % 2 === 0 ? "bg-surface" : ""}`}
               >
                 <AboutBlock block={block} numero={numeros[i]} />
               </div>
@@ -409,9 +556,24 @@ export default function AboutPage() {
           pantalla en casi cualquier aparato: este panel SÍ se recorre hacia
           abajo por dentro (ver cómo lo respeta la rueda, en el `useEffect`).
         */}
+        {/*
+          VA EN DOS PANELES: primero el llamado (titular + invitación) y luego
+          el formulario. Junto en uno solo cabía en computadora pero NO en
+          teléfono, y ahí el panel se tenía que recorrer hacia abajo por dentro
+          — o sea que en una página que se recorre de lado aparecía un scroll
+          vertical justo al final. Partido, cada mitad cabe en su pantalla.
+        */}
+        <div className="h-full w-[min(92vw,640px)] shrink-0 border-l border-foreground/10">
+          <ConvocatoriaLlamado />
+        </div>
+
+        {/* SIN LÍNEA ENTRE ESTOS DOS. Las líneas separan bloques distintos, y
+            esto es UNA cosa partida en dos pantallas: el llamado y el cupón
+            para contestarlo. Con línea en medio se leían como dos secciones que
+            no tienen que ver. */}
         <div
           data-panel
-          className="h-full w-[min(94vw,1100px)] shrink-0 overflow-y-auto border-l border-foreground/10 md:overflow-hidden"
+          className="h-full w-[min(92vw,620px)] shrink-0 overflow-y-auto"
         >
           <Convocatoria />
         </div>

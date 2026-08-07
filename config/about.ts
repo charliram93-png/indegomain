@@ -30,14 +30,35 @@
  * `f_auto,q_auto,w_1600` (o `q_auto,vc_h264,w_1280` si es video) para que no
  * pesen de más — ver el helper `foto()` en `config/products.ts`.
  *
- * MIENTRAS NO HAYA ARCHIVO, deja el `src` VACÍO (""). El bloque simplemente no
- * se publica: en el sitio en vivo no aparece nada roto, y en `npm run dev` sí
- * se ve un recuadro punteado marcando el hueco, para que sepas qué falta.
+ * MIENTRAS NO HAYA ARCHIVO, deja el `src` VACÍO (""). En su lugar se dibuja un
+ * recuadro punteado marcando el hueco, para que sepas qué falta y para poder
+ * ver la forma de la página mientras se llena. Ver `MOSTRAR_HUECOS`, aquí
+ * abajo, para dónde se muestran.
  *
  * LOS TEXTOS ENTRE [CORCHETES] SON RELLENO. Están puestos como guion para que
  * se vea la forma de la página; hay que reemplazarlos por los de verdad antes
  * de enseñársela a nadie (misma convención que los términos).
  */
+
+/**
+ * ¿LOS HUECOS DE FOTO SE VEN TAMBIÉN EN EL SITIO EN VIVO?
+ *
+ * Un bloque de foto o video sin archivo dibuja un recuadro punteado que dice
+ * qué debería ir ahí. Hasta ahora eso solo pasaba en `npm run dev`, para que
+ * NUNCA se escapara un hueco a producción.
+ *
+ * **ESTÁ EN `true` A PROPÓSITO Y ES TEMPORAL (6-ago-2026).** Se prendió para
+ * poder ver la forma del recorrido horizontal completo desde el sitio
+ * desplegado, con los paneles de foto en su lugar, mientras llegan las fotos
+ * de verdad.
+ *
+ * ⚠️ HAY QUE REGRESARLO A `false` ANTES DE ABRIR LA TIENDA, o los clientes van
+ * a ver recuadros punteados que dicen "[Foto de detalle]". Está anotado en la
+ * lista de pendientes del MANUAL, sección 11.
+ */
+export const MOSTRAR_HUECOS = true;
+
+import { LOGO_PALABRA } from "@/config/brand";
 
 /** Un texto en los dos idiomas. */
 export type Texto = { en: string; es: string };
@@ -59,13 +80,33 @@ export type AboutBlock =
  * La frase va en inglés fijo, como el manifiesto.
  */
 export const ABOUT_PORTADA = {
-  /** Foto grande de arriba (horizontal se ve mejor). Vacío = no se muestra. */
-  imagen: "",
-  /** Texto alternativo de esa foto (accesibilidad y buscadores). */
+  /**
+   * EL LOGO ALTERNO (la palabra INDEGO). Se dibuja DOS VECES en el panel de
+   * entrada: una encima del título "Nosotros" y otra debajo del párrafo, así que
+   * la palabra enmarca al título. Vacío = no se dibuja ninguna de las dos.
+   *
+   * `e_trim` le recorta al archivo el enorme margen transparente que trae (la
+   * palabra ocupa 345 × 89 de un lienzo de 500 × 500), para que llene el ancho
+   * en vez de quedar chiquita en medio.
+   */
+  imagen: LOGO_PALABRA.claro,
+
+  /**
+   * LA MISMA IMAGEN PARA TEMA OSCURO. Vacío = se usa la de arriba en los dos
+   * temas, que es lo normal para una FOTO.
+   *
+   * Aquí sí hace falta porque el logo es de un solo color: el negro desaparece
+   * sobre el fondo olivo del tema oscuro, y el blanco desaparece sobre el crema
+   * del claro. Si algún día esto vuelve a ser una foto, esta línea se vacía.
+   */
+  imagenOscuro: LOGO_PALABRA.oscuro,
+
+  /** Texto alternativo del logo (accesibilidad y buscadores). */
   alt: {
     en: "Indego Studio",
     es: "Indego Studio",
   } as Texto,
+
   /**
    * Entrada corta, debajo del título. Se traduce.
    * TEXTO REAL (6-ago-2026). Los saltos de línea se respetan.

@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useCart } from "@/store/cart";
 import ThemeToggle from "@/components/themeToggle";
+import DropTag from "@/components/dropTag";
 import LangToggle from "@/components/langToggle";
 import { useFlag } from "@/lib/flags";
 import { useI18n } from "@/lib/i18n/context";
@@ -52,17 +53,20 @@ const Navbar: React.FC = () => {
       {/* LOGO */}
       <div className="flex select-none items-center">
         {/*
-          EL LOGO LLEVA AL CATÁLOGO, no a la raíz (6-ago-2026).
+          EL LOGO LLEVA AL NOSOTROS, no a la raíz (6-ago-2026).
 
           La raíz es el countdown: los caballos a pantalla completa. Mandar ahí
-          a alguien que ya entró es sacarlo de la tienda y ponerlo otra vez en
-          la puerta. El logo tiene que llevar "a casa", y desde adentro la casa
-          son las playeras.
+          a alguien que ya entró es sacarlo del sitio y ponerlo otra vez en la
+          puerta. El logo tiene que llevar "a casa", y la casa de la marca es su
+          página, no el catálogo.
+
+          Apunta al MISMO lugar que `DESTINO` en `app/page.tsx` (a dónde lleva
+          ENTRAR). Si se cambia uno, hay que cambiar el otro.
 
           La raíz sigue siendo los caballos y nada más, a propósito: quien
           escribe el dominio pelado ve el countdown.
         */}
-        <Link href="/product" className="select-none">
+        <Link href="/about" className="select-none">
           <Image
             src={logoSrc}
             width={100}
@@ -81,15 +85,12 @@ const Navbar: React.FC = () => {
       */}
 
       {/*
-        LA ETIQUETA DEL DROP NO VIVE AQUÍ (6-ago-2026). La dibuja la página que
-        la quiera (hoy solo `/about`), para que quede pegada a la PANTALLA y no
-        a la barra.
-
-        Y no es solo por orden: esta barra lleva `backdrop-blur`, y un elemento
-        con `position: fixed` dentro de algo desenfocado se posiciona contra ESE
-        elemento, no contra la ventana. Mientras colgara de aquí, no había forma
-        de fijarla a la pantalla. Ver `components/dropTag.tsx`.
+        ETIQUETA DEL DROP. Va FUERA de la fila del logo: está posicionada contra
+        la barra para poder montarse sobre su borde de abajo, la mayor parte
+        adentro y el resto colgando. Se esconde sola dentro del catálogo.
+        Ver `components/dropTag.tsx`.
       */}
+      <DropTag />
 
       {/* CONTROLES */}
       <div className="flex select-none items-center gap-1">

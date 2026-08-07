@@ -8,6 +8,7 @@ import ProductCard from "@/components/productCard";
 import ProductModal from "@/components/productModal";
 import ProductTeaser from "@/components/productTeaser";
 import Manifesto from "@/components/manifesto";
+import LluviaDeLogos from "@/components/lluviaDeLogos";
 import { PRODUCTS } from "@/config/products";
 
 export default function Catalog() {
@@ -19,7 +20,15 @@ export default function Catalog() {
     <div className="entrada flex min-h-dvh flex-col bg-background">
       <Navbar />
 
-      <main className="flex-1">
+      {/*
+        LLUVIA DE LOGOS en los costados. Llena el aire que queda a los lados de
+        la columna del catálogo en pantallas anchas. Va ANTES del contenido y sin
+        z propio para que quede por debajo de todo; el `main` y el pie llevan
+        `relative z-10` justo por eso. Ver `components/lluviaDeLogos.tsx`.
+      */}
+      <LluviaDeLogos />
+
+      <main className="relative z-10 flex-1">
         {/*
           Hueco del navbar: la barra es fija y mide h-20 (80px). Así el bloque
           del manifiesto ARRANCA debajo de ella y el fondo contrastante no se
@@ -55,7 +64,9 @@ export default function Catalog() {
       />
 
       <CartDrawer />
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </div>
   );
 }

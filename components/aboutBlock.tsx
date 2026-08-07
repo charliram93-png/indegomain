@@ -6,7 +6,7 @@ import { Line } from "@/components/manifesto";
 import { MANIFESTO } from "@/config/brand";
 import { HELVETICA } from "@/lib/fonts";
 import { useI18n } from "@/lib/i18n/context";
-import type { AboutBlock } from "@/config/about";
+import { MOSTRAR_HUECOS, type AboutBlock } from "@/config/about";
 
 /**
  * UN BLOQUE DE LA PÁGINA "NOSOTROS".
@@ -36,15 +36,22 @@ import type { AboutBlock } from "@/config/about";
  *
  * LOS HUECOS
  * ----------
- * Un bloque de foto o video sin archivo (`src: ""`) no se publica: en el sitio
- * en vivo no aparece nada. Pero en `npm run dev` sí se pinta un recuadro
- * punteado, para poder ver la estructura de la página mientras se llena. Así
- * nunca se escapa un hueco a producción, pero tampoco hay que trabajar a
- * ciegas.
+ * Un bloque de foto o video sin archivo (`src: ""`) dibuja un recuadro punteado
+ * diciendo qué debería ir ahí, para poder ver la forma de la página mientras se
+ * llena. Siempre en `npm run dev`; en el sitio en vivo depende de
+ * `MOSTRAR_HUECOS` (`config/about.ts`), que hoy está PRENDIDO a propósito y de
+ * forma temporal — ahí se explica y ahí se apaga.
  */
 
-/** Next reemplaza esto por `true`/`false` al compilar, no queda en el bundle. */
-const EN_DESARROLLO = process.env.NODE_ENV === "development";
+/**
+ * ¿SE DIBUJA EL RECUADRO PUNTEADO DE UN BLOQUE SIN ARCHIVO?
+ *
+ * Siempre en `npm run dev`. En el sitio en vivo, solo si `MOSTRAR_HUECOS` está
+ * prendido en `config/about.ts` — hoy lo está, a propósito y temporalmente, y
+ * ahí se explica por qué y cuándo hay que apagarlo.
+ */
+const HAY_QUE_DIBUJAR_HUECOS =
+  process.env.NODE_ENV === "development" || MOSTRAR_HUECOS;
 
 /*
   LA REJILLA DE LA PÁGINA. Todo cuelga de aquí.
@@ -76,7 +83,7 @@ const CONTENIDO = "md:col-span-8 md:col-start-5";
  * entonces estarías corrigiendo un problema que en producción no existe.
  */
 function Hueco({ etiqueta, caja }: { etiqueta: string; caja: string }) {
-  if (!EN_DESARROLLO) return null;
+  if (!HAY_QUE_DIBUJAR_HUECOS) return null;
   return (
     <div
       className={`flex items-center justify-center border border-dashed border-foreground/25 bg-surface/30 ${caja}`}
