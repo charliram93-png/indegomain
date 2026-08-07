@@ -985,6 +985,19 @@ antes que el texto.
 - **Los dos degradados terminan en 100%**, o sea en el borde de la caja. Si
   acabaran antes, el vidrio se cortaría a filo dentro del recuadro — que es
   exactamente lo que se está quitando.
+- **LA CAÍDA VA SUAVIZADA, NO RECTA** (7-ago-2026). Con dos paradas —macizo
+  hasta X%, transparente en el 100%— la opacidad baja en LÍNEA RECTA, y eso deja
+  un filo perceptible justo donde arranca la caída: el ojo detecta muy bien el
+  cambio brusco de pendiente, así que se seguía leyendo el borde del rectángulo
+  aunque técnicamente ya se estuviera desvaneciendo. Ahora la caída se reparte
+  en ocho pasos siguiendo una curva en S (`smoothstep`): arranca despacio, baja
+  fuerte por el medio y se acerca a cero otra vez despacio. Sin esquinas en la
+  pendiente, no hay dónde engancharse.
+  > Al suavizarla **sobró sitio y los topes de macizo BAJARON** (68 → 64 a lo
+  > ancho, 56 → 50 a lo alto): como los primeros pasos casi no quitan tinte, el
+  > desvanecido puede empezar antes sin tocar la legibilidad. Comprobado: bajo
+  > el texto la máscara sigue en **1.000** y en los dos bordes libres, en
+  > **0.000**.
 - **EL RECUADRO NO CAMBIA DE TAMAÑO AL CAMBIAR DE IDIOMA.** Se dibujan TODOS los
   idiomas uno encima de otro en la misma celda de una retícula y solo se ve el
   activo; los demás van con `invisible` (`visibility: hidden`), que **no se ve

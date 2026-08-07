@@ -68,9 +68,45 @@ import { useMontado } from "@/lib/useMontado";
  * MÁS vidrio macizo, no menos— y solo acorta un par de píxeles el tramo del
  * desvanecido.
  */
+/**
+ * LA CAÍDA VA SUAVIZADA, NO RECTA (7-ago-2026).
+ *
+ * Con dos paradas —macizo hasta X%, transparente en el 100%— la opacidad baja
+ * en LÍNEA RECTA, y eso deja un filo perceptible justo donde arranca la caída:
+ * el ojo detecta muy bien el cambio brusco de pendiente, así que se seguía
+ * leyendo el borde del rectángulo aunque técnicamente ya se estuviera
+ * desvaneciendo.
+ *
+ * Esto reparte la caída en varios pasos siguiendo una curva en S (`smoothstep`):
+ * arranca despacito, baja fuerte por el medio y se acerca a cero otra vez
+ * despacio. Sin esquinas en la pendiente, no hay dónde engancharse.
+ *
+ * `desde` es hasta dónde va MACIZO, y eso es lo que protege el contraste: el
+ * texto tiene que quedar dentro. Los porcentajes de abajo están puestos con el
+ * texto medido en pantalla, no a ojo.
+ */
+const suavizado = (desde: number) => {
+  const PASOS = 8;
+  const paradas = [`#000 ${desde}%`];
+  for (let i = 1; i <= PASOS; i++) {
+    const t = i / PASOS;
+    const s = t * t * (3 - 2 * t); // curva en S
+    const donde = desde + (100 - desde) * t;
+    paradas.push(`rgba(0,0,0,${(1 - s).toFixed(3)}) ${donde.toFixed(1)}%`);
+  }
+  return paradas.join(", ");
+};
+
+/*
+  HASTA DÓNDE VA MACIZO CADA EJE. Medido en pantalla: el renglón acaba en el
+  ~62% del ancho y su techo llega al ~43% del alto, así que estos números lo
+  dejan dentro con margen. Bajaron respecto de los de la caída recta (68 y 56)
+  porque ahora sobra sitio: como el desvanecido arranca suave, los primeros
+  pasos casi no quitan tinte.
+*/
 const DIFUMINADO =
-  "linear-gradient(to top, #000 56%, transparent 100%), " +
-  "linear-gradient(to right, #000 68%, transparent 100%)";
+  `linear-gradient(to top, ${suavizado(50)}), ` +
+  `linear-gradient(to right, ${suavizado(64)})`;
 
 export default function ComoRecorrer() {
   const { lang } = useI18n();
