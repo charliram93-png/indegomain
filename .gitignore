@@ -42,3 +42,10 @@ next-env.d.ts
 
 # Videos pesados: usar Cloudinary en producción, no subir a git
 /public/*.mp4
+
+# Instrucciones para agentes de IA que `next dev` escribe SOLO desde la 16.3.
+# No son del proyecto y se vuelven a generar cada vez que se levanta el
+# servidor, así que trackearlas solo ensuciaría el historial. La documentación
+# de este proyecto es MANUAL.md.
+/AGENTS.md
+/CLAUDE.md

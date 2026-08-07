@@ -9,6 +9,8 @@ import CartDrawer from "@/components/cartDrawer";
 import AboutBlock from "@/components/aboutBlock";
 import Convocatoria, { ConvocatoriaLlamado } from "@/components/convocatoria";
 import PatronDeFondo from "@/components/patronDeFondo";
+import PistaDelRiel from "@/components/pistaDelRiel";
+import ComoRecorrer from "@/components/comoRecorrer";
 import { Line } from "@/components/manifesto";
 import {
   ABOUT_PORTADA,
@@ -416,6 +418,426 @@ export default function AboutPage() {
   }, []);
 
   /*
+    LAS OTRAS DOS FORMAS DE MOVERLO: EL TECLADO Y EL ARRASTRE (7-ago-2026).
+
+    POR QUÉ HACEN FALTA. La rueda ya cubre al ratón y —traduciendo el giro
+    vertical— también al mousepad, que es como se mueve la mayoría. Pero en esta
+    página no hay barra de desplazamiento ni ningún control a la vista, así que
+    quien llegue con un ratón sin rueda, o sin saber el gesto lateral del
+    mousepad, se queda sin ninguna salida evidente. Estas dos la dan.
+
+    EL ARRASTRE ES, ADEMÁS, LA PISTA DE ESCRITORIO: el cursor se vuelve una mano
+    (`.riel-arrastrable` en `globals.css`), y eso ya dice "esto se jala" sin
+    dibujar ningún botón. Es el equivalente de escritorio a lo que el
+    empujoncito y la rayita hacen en teléfono.
+
+    SOLO CON RATÓN (`pointerType === "mouse"`). En pantalla táctil el dedo ya
+    arrastra solo, y meterse en medio nos costaría el desplazamiento con inercia
+    del sistema, que es mejor que cualquier cosa que escribamos aquí.
+
+    NUNCA SOBRE UN CAMPO DEL FORMULARIO. Ni el arrastre ni el teclado: en la
+    convocatoria hay que poder seleccionar texto con el ratón, y las flechas y
+    Inicio/Fin tienen que mover el cursor de escritura, no la página.
+  */
+  useEffect(() => {
+    const el = riel.current;
+    if (!el) return;
+
+    /** Dónde NO mandamos nosotros: ahí escribe la gente. */
+    const CAMPOS = "input, textarea, select, [contenteditable='true']";
+
+    /*
+      ------------------------------------------------------------------
+      ARRASTRE CON EL RATÓN
+      ------------------------------------------------------------------
+    */
+
+    /** Cuánto hay que mover antes de considerarlo arrastre y no un clic.
+        Sin este margen, un clic con la mano poco firme movería la página y
+        además se comería el clic (ver `matarElClic`). */
+    const UMBRAL = 6;
+
+    let apretado = false;
+    /** ¿Ya pasó el umbral? Es lo que distingue un clic de un arrastre. */
+    let arrastrando = false;
+    let xInicial = 0;
+    let scrollInicial = 0;
+    let puntero = -1;
+
+    /*
+      EL CLIC QUE VIENE DETRÁS DEL ARRASTRE HAY QUE MATARLO. Si no, soltar
+      encima de la banda del cierre —que es un enlace del tamaño del panel— te
+      manda al catálogo cuando lo único que querías era recorrer la página.
+      Va en fase de captura para llegar antes que el enlace, y `once` porque es
+      para ESE clic y ninguno más.
+    */
+    const matarElClic = (ev: MouseEvent) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+    };
+
+    const alApretar = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      if ((e.target as HTMLElement).closest(CAMPOS)) return;
+
+      apretado = true;
+      arrastrando = false;
+      xInicial = e.clientX;
+      scrollInicial = el.scrollLeft;
+      puntero = e.pointerId;
+    };
+
+    const alMover = (e: PointerEvent) => {
+      if (!apretado) return;
+
+      const avance = e.clientX - xInicial;
+
+      if (!arrastrando) {
+        if (Math.abs(avance) < UMBRAL) return;
+        arrastrando = true;
+        /* Capturar el puntero: si la mano se sale de la ventana a media
+           jalada, los eventos siguen llegando aquí y el riel no se queda
+           pegado a medio camino. */
+        el.setPointerCapture(puntero);
+        el.classList.add("arrastrando");
+      }
+
+      /* Sin esto el navegador empieza a SELECCIONAR el texto por debajo y
+         queda todo resaltado en azul al soltar. */
+      e.preventDefault();
+      el.scrollLeft = scrollInicial - avance;
+    };
+
+    const alSoltar = () => {
+      if (!apretado) return;
+      apretado = false;
+      if (!arrastrando) return;
+
+      arrastrando = false;
+      el.classList.remove("arrastrando");
+      if (el.hasPointerCapture(puntero)) el.releasePointerCapture(puntero);
+
+      window.addEventListener("click", matarElClic, {
+        capture: true,
+        once: true,
+      });
+      /* Si se soltó donde no hay nada que reciba clic, el de arriba nunca se
+         gasta y se quedaría esperando para comerse un clic legítimo después.
+         Este `setTimeout` lo retira: el clic del navegador llega antes. */
+      window.setTimeout(() => {
+        window.removeEventListener("click", matarElClic, { capture: true });
+      }, 0);
+    };
+
+    /*
+      ------------------------------------------------------------------
+      TECLADO
+      ------------------------------------------------------------------
+      Va en `window` y no en el riel: así funciona sin tener que picar la
+      página primero, que es justo lo que no se le ocurre a nadie.
+
+      SOLO IZQUIERDA Y DERECHA, no arriba y abajo: el panel del formulario se
+      recorre hacia abajo por dentro, y quitarle sus flechas lo volvería
+      imposible de llenar con el teclado.
+
+      POR QUÉ NO ES UN `scrollTo({behavior:"smooth"})` POR FLECHAZO, que es lo
+      obvio y fue lo primero que se hizo: **se sentía lento y trabado**, y con
+      razón. Al mantener la flecha, el sistema repite la tecla unas treinta
+      veces por segundo, y cada repetición ARRANCABA UNA ANIMACIÓN NUEVA que
+      pisaba la anterior antes de que terminara. El resultado es un tirón por
+      repetición en vez de un movimiento: mientras más rápido teclees, peor.
+
+      Lo que hay ahora es un solo bucle con DOS NÚMEROS: una META (a dónde
+      queremos llegar) y la posición real, que se acerca a la meta un pedacito
+      por cuadro. Nada reinicia nada:
+
+        · un toque suelto empuja la meta un IMPULSO y el riel se desliza hasta
+          allá;
+        · mantener la flecha corre la meta a VELOCIDAD constante, así que sale
+          un desplazamiento continuo y parejo en vez de treinta tirones;
+        · Inicio/Fin y Re Pág/Av Pág solo ponen la meta en otro lado y el mismo
+          bucle los lleva.
+    */
+
+    /** Lo que avanza un toque suelto. Las flechas del navegador mueven unos
+        40 px, y con paneles de 700 px eso serían veinte golpes por panel. */
+    const IMPULSO = 200;
+    /** A qué ritmo corre la meta mientras la flecha está apretada, en píxeles
+        por segundo. Se mide contra el TIEMPO y no contra los cuadros para que
+        se mueva igual en una pantalla de 60 Hz que en una de 120. */
+    const VELOCIDAD = 1100;
+    /** Qué fracción de lo que falta se recorre en un cuadro de 60 Hz. Más alto
+        llega antes y se siente más seco; más bajo se siente flotado. */
+    const SUAVIZADO = 0.16;
+    /** A menos de esto, ya llegamos: se asienta el número y el bucle para. */
+    const CERCA = 1;
+
+    const sinMovimiento = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    /** Direcciones apretadas ahora mismo. Es un conjunto y no un booleano
+        porque se pueden tener las dos flechas apretadas a la vez. */
+    const apretadas = new Set<number>();
+    let meta = 0;
+    let corriendo = false;
+    let cuadro = 0;
+    let ultimoInstante = 0;
+    /** Lo último que ESTE bucle escribió. Sirve para notar que alguien más
+        movió el riel (la rueda, un arrastre) y quitarse de en medio. */
+    let ultimoAplicado = -1;
+
+    const tope = () => Math.max(0, el.scrollWidth - el.clientWidth);
+    const acotar = (n: number) => Math.min(Math.max(n, 0), tope());
+
+    const parar = () => {
+      corriendo = false;
+      if (cuadro) cancelAnimationFrame(cuadro);
+      cuadro = 0;
+      apretadas.clear();
+    };
+
+    const avanzar = (instante: number) => {
+      if (!corriendo) return;
+
+      /* ¿Nos movieron por debajo? Entonces el teclado ya no manda. */
+      if (ultimoAplicado >= 0 && Math.abs(el.scrollLeft - ultimoAplicado) > 2) {
+        parar();
+        return;
+      }
+
+      const delta = Math.min((instante - ultimoInstante) / 1000, 0.05);
+      ultimoInstante = instante;
+
+      for (const direccion of apretadas) {
+        meta = acotar(meta + direccion * VELOCIDAD * delta);
+      }
+
+      const falta = meta - el.scrollLeft;
+      if (Math.abs(falta) < CERCA && apretadas.size === 0) {
+        el.scrollLeft = meta;
+        ultimoAplicado = el.scrollLeft;
+        parar();
+        return;
+      }
+
+      /* El suavizado está calibrado para 60 Hz; en pantallas más rápidas hay
+         que aplicarlo más veces por segundo o el movimiento saldría lento. */
+      const fraccion = 1 - Math.pow(1 - SUAVIZADO, delta * 60);
+      let paso = falta * fraccion;
+
+      /*
+        EL ÚLTIMO TRAMO SE DA DE UNA VEZ, y esto NO es un detalle estético.
+        Acercarse por fracciones significa que el paso se hace cada vez más
+        chico; en cuanto baja del píxel, el navegador lo redondea a CERO y el
+        riel deja de moverse — pero la meta sigue lejos, así que la condición de
+        "ya llegamos" nunca se cumple y el bucle se queda girando para siempre,
+        pidiendo un cuadro tras otro sin mover nada.
+        Se detectó midiendo: "Fin" se quedaba 3 px antes del tope e "Inicio" no
+        llegaba nunca a 0. Cuando el paso suavizado ya no alcanza un píxel, se
+        salta lo que falte de golpe: son unos pocos píxeles, no se ve, y el
+        bucle termina de verdad.
+      */
+      if (Math.abs(paso) < 1) paso = falta;
+
+      el.scrollLeft += paso;
+      ultimoAplicado = el.scrollLeft;
+
+      cuadro = requestAnimationFrame(avanzar);
+    };
+
+    const arrancar = () => {
+      if (!corriendo) {
+        corriendo = true;
+        /* La meta parte de donde REALMENTE está el riel, no de donde la dejamos
+           la última vez: en medio pudo haber un arrastre o una rueda. */
+        meta = acotar(el.scrollLeft);
+        ultimoAplicado = el.scrollLeft;
+      }
+      /*
+        SE PREGUNTA POR EL CUADRO PENDIENTE, no solo por `corriendo`. Son dos
+        cosas distintas —"el teclado manda" y "hay un cuadro en camino"— y
+        confundirlas deja un agujero: si alguna vez quedara marcado como
+        corriendo sin cuadro pendiente, el bucle estaría muerto y ninguna tecla
+        lo revivriría, porque la comprobación de `corriendo` se saldría antes de
+        pedir uno nuevo. Con esto, cualquier tecla siempre reengancha.
+      */
+      if (!cuadro) {
+        ultimoInstante = performance.now();
+        cuadro = requestAnimationFrame(avanzar);
+      }
+    };
+
+    const alTeclear = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if ((e.target as HTMLElement)?.closest?.(CAMPOS)) return;
+
+      const esFlecha = e.key === "ArrowRight" || e.key === "ArrowLeft";
+      if (
+        !esFlecha &&
+        e.key !== "PageDown" &&
+        e.key !== "PageUp" &&
+        e.key !== "Home" &&
+        e.key !== "End"
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+      arrancar();
+
+      if (esFlecha) {
+        const direccion = e.key === "ArrowRight" ? 1 : -1;
+        /* La repetición del sistema NO suma impulso: de eso se encarga
+           `VELOCIDAD` mientras la tecla siga apretada. Sumar aquí sería volver
+           al atropello de antes. */
+        if (!e.repeat) meta = acotar(meta + direccion * IMPULSO);
+        apretadas.add(direccion);
+      } else if (e.key === "PageDown") {
+        meta = acotar(meta + el.clientWidth * 0.9);
+      } else if (e.key === "PageUp") {
+        meta = acotar(meta - el.clientWidth * 0.9);
+      } else if (e.key === "Home") {
+        meta = 0;
+      } else {
+        meta = tope();
+      }
+
+      /* Quien pidió que nada se mueva solo llega de un salto. */
+      if (sinMovimiento) {
+        el.scrollLeft = meta;
+        ultimoAplicado = el.scrollLeft;
+      }
+    };
+
+    const alSoltarTecla = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") apretadas.delete(1);
+      if (e.key === "ArrowLeft") apretadas.delete(-1);
+    };
+
+    /* Si la ventana pierde el foco con la tecla apretada, el `keyup` nunca
+       llega y el riel se quedaría corriendo solo para siempre. */
+    const alPerderFoco = () => apretadas.clear();
+
+    el.addEventListener("pointerdown", alApretar);
+    el.addEventListener("pointermove", alMover);
+    el.addEventListener("pointerup", alSoltar);
+    el.addEventListener("pointercancel", alSoltar);
+    window.addEventListener("keydown", alTeclear);
+    window.addEventListener("keyup", alSoltarTecla);
+    window.addEventListener("blur", alPerderFoco);
+
+    return () => {
+      parar();
+      el.removeEventListener("pointerdown", alApretar);
+      el.removeEventListener("pointermove", alMover);
+      el.removeEventListener("pointerup", alSoltar);
+      el.removeEventListener("pointercancel", alSoltar);
+      window.removeEventListener("keydown", alTeclear);
+      window.removeEventListener("keyup", alSoltarTecla);
+      window.removeEventListener("blur", alPerderFoco);
+      window.removeEventListener("click", matarElClic, { capture: true });
+    };
+  }, []);
+
+  /*
+    EL EMPUJONCITO (7-ago-2026): al llegar, el riel se asoma solo un poco a la
+    derecha y regresa.
+
+    EL PROBLEMA QUE RESUELVE: en teléfono nadie adivinaba que esta página se
+    recorre de lado. Un letrero de "desliza →" lo diría, pero mete un elemento
+    de interfaz en la única página del sitio que no tiene ninguno; moverlo lo
+    ENSEÑA en vez de explicarlo, y no deja nada dibujado. La rayita de abajo
+    (`components/pistaDelRiel.tsx`) es la otra mitad de la respuesta: el
+    empujón enseña el gesto una vez, la rayita se queda de referencia.
+
+    CUATRO CANDADOS, y cada uno tapa una forma distinta de quedar mal:
+
+    1. SI YA ESTÁ TOCANDO, NO SE MUEVE NADA. Cualquier gesto —dedo, rueda,
+       teclado— cancela el empujón, incluso a media animación. Que la página se
+       mueva sola contra la mano de alguien se siente descompuesto, no
+       simpático. Los eventos van en `window` para agarrar el gesto venga de
+       donde venga, no solo del riel.
+    2. SOLO DESDE EL PRINCIPIO. Si el navegador restauró una posición previa
+       (volver con el botón de atrás), el empujón la pisaría y lo devolvería a
+       la entrada.
+    3. SOLO SI HAY A DÓNDE IR. En una pantalla ancha donde todo cabe, no hay
+       recorrido que enseñar.
+    4. RESPETA "REDUCIR MOVIMIENTO". Quien pidió que las cosas no se muevan
+       solas se queda con la rayita, que dice lo mismo sin moverse.
+
+    LA ESPERA NO ES CAPRICHO: la página entra con un fundido de 0.55s
+    (`.entrada` en `globals.css`). Empujar durante el fundido se ve como un
+    salto del render, no como una invitación.
+  */
+  useEffect(() => {
+    const el = riel.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    /*
+      SOLO EN APARATOS TÁCTILES (7-ago-2026, después de verlo en computadora).
+      En teléfono el empujón es la única forma de enseñar el gesto. En
+      computadora sobraba y se sentía raro: ahí ya está el cursor de mano, que
+      dice "esto se jala" sin moverle nada a nadie, y el letrero de abajo con
+      las tres formas. Una página que se mueve sola cuando no la tocaste se lee
+      como un fallo, no como una invitación.
+    */
+    if (!window.matchMedia("(pointer: coarse)").matches) return;
+
+    /*
+      CUÁNTO SE ASOMA.
+
+      AHORA ES EL ÚNICO MOMENTO EN QUE SE VE EL PANEL SIGUIENTE, y por eso subió
+      (7-ago-2026): el panel de entrada pasó a medir la pantalla justa en
+      teléfono, así que ya no hay filo asomado en reposo. Con 56 px fijos el
+      asomo se leía como un temblor; el empujón tiene que ENSEÑAR que detrás hay
+      otro panel, de otro color.
+
+      VA EN PROPORCIÓN A LA PANTALLA y no en píxeles fijos: 56 px son un 14% de
+      un teléfono chico y un 7% de una tableta, o sea el mismo gesto contando
+      dos cosas distintas. Los topes evitan los dos extremos —que en una
+      pantalla diminuta el asomo se coma media portada, y que en una grande no
+      se note.
+    */
+    const ASOMO = Math.min(Math.max(Math.round(el.clientWidth * 0.18), 56), 96);
+    /** Cuánto tarda en arrancar, contado desde que se monta la página. */
+    const ESPERA = 900;
+    /** Cuánto se queda asomado antes de regresar. El scroll suave del navegador
+        se come unos 300 ms de ida, así que esto deja ~350 ms de pausa real. */
+    const PAUSA = 650;
+
+    let cancelado = false;
+    const cancelar = () => {
+      cancelado = true;
+    };
+
+    const gestos = ["pointerdown", "touchstart", "wheel", "keydown"] as const;
+    for (const g of gestos) {
+      window.addEventListener(g, cancelar, { passive: true });
+    }
+
+    let regreso: number | undefined;
+    const salida = window.setTimeout(() => {
+      if (cancelado) return;
+      if (el.scrollLeft !== 0) return;
+      if (el.scrollWidth - el.clientWidth < ASOMO) return;
+
+      el.scrollTo({ left: ASOMO, behavior: "smooth" });
+
+      regreso = window.setTimeout(() => {
+        if (cancelado) return;
+        el.scrollTo({ left: 0, behavior: "smooth" });
+      }, PAUSA);
+    }, ESPERA);
+
+    return () => {
+      window.clearTimeout(salida);
+      window.clearTimeout(regreso);
+      for (const g of gestos) window.removeEventListener(g, cancelar);
+    };
+  }, []);
+
+  /*
     Numeración de las secciones de texto (01, 02, 03…). Se calcula aquí y no en
     `config/about.ts` para que reordenar los bloques no obligue a renumerarlos a
     mano: el número sale del orden real, siempre.
@@ -506,10 +928,18 @@ export default function AboutPage() {
         EL RIEL. Aquí es donde la página se voltea: en vez de apilarse hacia
         abajo, los bloques se ponen en fila y se recorren hacia la derecha.
         `pt-20` es el hueco de la barra fija, que antes era un div vacío.
+
+        `overscroll-x-none` NO ES UN DETALLE (7-ago-2026). Sin eso, al arrastrar
+        más allá del primer panel el teléfono estira el riel —el rebote elástico
+        de siempre— y deja ver una franja del fondo de la página por la
+        izquierda, como si al diseño le faltara un pedazo. No se arregla
+        pintando ese fondo de otro color: el mismo rebote pasa al FINAL del
+        recorrido, y allá el último panel es de otro tono, así que no hay un
+        solo color que sirva en las dos orillas. Se quita el rebote y ya.
       */}
       <main
         ref={riel}
-        className="sin-barra flex flex-1 overflow-x-auto overflow-y-hidden pt-20"
+        className="sin-barra riel-arrastrable flex flex-1 overflow-x-auto overflow-y-hidden overscroll-x-none pt-20"
         style={{ fontFamily: HELVETICA }}
       >
         {/*
@@ -531,7 +961,36 @@ export default function AboutPage() {
         */}
         <div
           data-panel
-          className="flex h-full w-[min(92vw,720px)] shrink-0 flex-col overflow-hidden border-l border-foreground/10 bg-surface first:border-l-0"
+          /*
+            `relative` NO ES ADORNO y le faltaba (7-ago-2026): es lo que hace
+            que el letrero de aquí abajo se mida CONTRA ESTE PANEL. Sin él, un
+            hijo `absolute` se mide contra la página entera, el `overflow` del
+            riel ya no lo recorta y el ancho del DOCUMENTO se estira hasta donde
+            cae este panel dentro del riel — que es exactamente el bug que rompió
+            el sitio en Android. Todos los demás paneles ya lo traían.
+          */
+          /*
+            EN TELÉFONO ESTE PANEL MIDE LA PANTALLA JUSTA (`w-full`), no 92vw
+            como los demás (7-ago-2026).
+
+            POR QUÉ ES DISTINTO AL RESTO: los 92vw dejan asomar un filo del
+            panel siguiente, y ese filo ERA la pista de que la página seguía de
+            lado. Ya no hace falta —para eso están ahora el letrero y el
+            empujoncito— y sí estorbaba: la entrada es la portada, y una portada
+            con una franja de otro color pegada a la orilla se ve como un
+            descuadre, no como una invitación. Los demás paneles conservan su
+            filo: ahí ya se entendió el gesto y el asomo ayuda a seguir.
+
+            VA `w-full` Y NO `100vw` a propósito: el porcentaje se mide contra
+            el riel, así que da EXACTAMENTE lo que se ve. `100vw` incluye el
+            ancho de una barra de desplazamiento que aquí no existe, y habría
+            dejado el panel unos píxeles más ancho que la pantalla — o sea el
+            mismo filo que se está quitando, pero al revés.
+
+            En computadora no cambia nada: los 720px son el ancho de columna
+            diseñado, y ahí se ven varios paneles a la vez a propósito.
+          */
+          className="relative flex h-full w-full shrink-0 flex-col overflow-hidden border-l border-foreground/10 bg-surface first:border-l-0 md:w-[min(92vw,720px)]"
         >
           <CascadaDeLogos
             src={logoDeEntrada}
@@ -561,6 +1020,11 @@ export default function AboutPage() {
           </div>
 
           <CascadaDeLogos src={logoDeEntrada} alt="" />
+
+          {/* EL LETRERO DE CÓMO RECORRER. Va dentro del panel de entrada —no
+              fijo a la pantalla— para que se vaya con él, y encima se apaga
+              antes de que el panel termine de salir. */}
+          <ComoRecorrer riel={riel} />
         </div>
 
         {/*
@@ -667,6 +1131,10 @@ export default function AboutPage() {
           convocatoria. Los enlaces del pie siguen en todas las demás páginas.
         */}
       </main>
+
+      {/* LA RAYITA DE AVANCE. Va FUERA del riel a propósito: adentro viajaría
+          con los paneles y se iría de la pantalla al primer deslizón. */}
+      <PistaDelRiel riel={riel} />
 
       {/* El navbar lleva el botón del carrito, así que el cajón va montado. */}
       <CartDrawer />

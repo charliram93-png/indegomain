@@ -107,6 +107,17 @@ const en = {
     title: "About",
     /** Este SÍ se traduce: es una instrucción, no voz de marca. */
     cta: "SEE DROP #1",
+    /*
+      EL LETRERO DE CÓMO RECORRER (ver `components/comoRecorrer.tsx`). Se elige
+      UNO de los dos según el aparato, no se muestran los dos:
+       · `swipe` en lo que se toca con el dedo;
+       · `drag` + `scroll` en lo que tiene cursor, separados por una barra y
+         rematados con las flechas del teclado (que no se traducen, son
+         símbolos).
+    */
+    swipe: "Swipe",
+    drag: "Drag",
+    scroll: "Scroll",
   },
   /**
    * LA CONVOCATORIA ("nuestros museos están vacíos"), al final del Nosotros.
@@ -277,6 +288,9 @@ const es: typeof en = {
     tag: "Indego Studio",
     title: "Nosotros",
     cta: "VER DROP #1",
+    swipe: "Desliza",
+    drag: "Arrastra",
+    scroll: "Rueda",
   },
   convocatoria: {
     nameLabel: "Tu nombre",

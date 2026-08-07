@@ -395,8 +395,26 @@ body {
     encima de algo que se mueve sin parar — que es exactamente el tipo de cosa
     que ya se sacó de este proyecto por pesada.
   */
-  filter: grayscale(1) brightness(2.4);
+  filter: grayscale(1) brightness(2.4) blur(var(--desenfoque-carrusel));
   opacity: 0.16;
+
+  /*
+    UN DESENFOQUE MUY LIGERO (7-ago-2026).
+
+    Las playeras son FONDO, y en foco competían con la frase por la atención
+    aunque estuvieran al 16% de opacidad: el ojo se enganchaba a un cuello o a
+    una manga y se iba a leerlos. Desenfocadas se leen como lo que son —una
+    textura que pasa por detrás— y la frase se queda con el primer plano.
+
+    ES UN SOLO NÚMERO A PROPÓSITO, y de aquí lo toman el tema claro y el
+    oscuro: si sube o baja, tiene que hacerlo en los dos o las bandas dejarían
+    de parecerse.
+
+    NO CUESTA CUADROS aunque la tira no pare de moverse: el filtro se aplica a
+    la tira, el navegador la dibuja desenfocada UNA VEZ y a partir de ahí solo
+    la desliza con `transform`. Lo caro sería animar el propio desenfoque.
+  */
+  --desenfoque-carrusel: 2px;
 }
 
 /*
@@ -420,9 +438,11 @@ body {
 /*
   En OSCURO la banda es CREMA y las playeras oscuras resaltan solas: no hace
   falta aclararlas, al contrario, aclararlas las borraría.
+
+  Se quita el aclarado pero NO el desenfoque: ese es igual en los dos temas.
 */
 .dark .carrusel {
-  filter: none;
+  filter: blur(var(--desenfoque-carrusel));
   opacity: 0.14;
 }
 
@@ -454,10 +474,13 @@ body {
   `scrollbar-width` es la estándar (Firefox y Chrome nuevo) y el
   `::-webkit-scrollbar` cubre a Safari y a los Chrome viejos.
 
-  OJO SI SE TOCA: al esconderla también se esconde la ÚNICA pista visual de que
-  la página se recorre de lado. Hoy se aguanta porque los paneles quedan
-  cortados a la orilla y eso ya invita a seguir; si se acomodan para que quepan
-  justos, hay que poner otra pista en su lugar.
+  LA PISTA QUE ESTA BARRA SE LLEVÓ YA TIENE REEMPLAZO (7-ago-2026). Aquí decía
+  que esconderla dejaba la página sin ninguna señal de que se recorre de lado, y
+  que los paneles cortados a la orilla tendrían que bastar. NO BASTABAN: en
+  teléfono no se entendía. Ahora lo dicen dos cosas hechas a propósito, y las
+  dos viven en `app/about/page.tsx`: el EMPUJONCITO de entrada (el riel se asoma
+  solo y regresa) y la RAYITA de avance (`components/pistaDelRiel.tsx`). Si
+  algún día se quitan, hay que devolver la barra o poner otra cosa en su lugar.
 */
 .sin-barra {
   scrollbar-width: none;
@@ -465,4 +488,68 @@ body {
 
 .sin-barra::-webkit-scrollbar {
   display: none;
+}
+
+/*
+  EL AZUL DEL AUTOCOMPLETADO (7-ago-2026).
+  --------------------------------------------------------------
+  Cuando el navegador rellena un campo guardado, le pinta encima SU fondo —azul
+  claro en Chrome— y el texto en su propio color. En un formulario de recuadros
+  grises casi ni se nota; aquí, donde los campos son transparentes con una sola
+  línea abajo, se ve como si el diseño se hubiera roto (le pasó en la
+  convocatoria).
+
+  ESE FONDO NO SE PUEDE PISAR CON `background-color` a secas: el navegador lo
+  pone con `!important` desde su propia hoja de estilos. Hay que rodearlo, y
+  aquí van las dos formas conocidas juntas, que no se estorban:
+
+   1. `background-clip: text` recorta ese fondo a la silueta de las letras, y
+      `-webkit-text-fill-color` pinta las letras encima. Lo que quedaba de azul
+      queda tapado por el propio texto.
+   2. El navegador ANIMA la llegada de ese fondo, así que un retraso absurdo en
+      la transición de `background-color` hace que no llegue nunca. Los otros
+      dos tiempos están escritos a mano para NO perder la transición del borde
+      al enfocar, que es la que da la sensación de que el campo responde.
+
+  El color sale de la variable del tema, así que funciona igual en claro y en
+  oscuro sin escribir la regla dos veces.
+*/
+:is(input, textarea, select):is(:-webkit-autofill, :autofill) {
+  -webkit-text-fill-color: var(--color-foreground);
+  caret-color: var(--color-foreground);
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition-property: background-color, border-color, color;
+  transition-duration: 0s, 150ms, 150ms;
+  transition-delay: 100000s, 0s, 0s;
+}
+
+/*
+  EL RIEL SE JALA CON EL RATÓN (ver `app/about/page.tsx`).
+  --------------------------------------------------------------
+  El cursor de mano ES LA PISTA de escritorio: dice "esto se arrastra" sin
+  dibujar ningún botón, que es el equivalente de lo que el empujoncito y la
+  rayita hacen en teléfono.
+
+  SOLO DONDE HAY CURSOR DE VERDAD. `pointer: fine` deja fuera las pantallas
+  táctiles, donde un cursor de mano no lo ve nadie y el dedo ya arrastra solo.
+*/
+@media (hover: hover) and (pointer: fine) {
+  .riel-arrastrable {
+    cursor: grab;
+  }
+
+  /* Se pone mientras dura la jalada (lo hace el JavaScript). */
+  .riel-arrastrable.arrastrando {
+    cursor: grabbing;
+  }
+
+  /*
+    LOS CAMPOS DEL FORMULARIO CONSERVAN SU CURSOR DE ESCRITURA. El `cursor` se
+    hereda, así que sin esto la convocatoria se vería como que no se puede
+    escribir en ella. Es la misma lista de sitios donde el arrastre no entra.
+  */
+  .riel-arrastrable :is(input, textarea, select, [contenteditable="true"]) {
+    cursor: auto;
+  }
 }

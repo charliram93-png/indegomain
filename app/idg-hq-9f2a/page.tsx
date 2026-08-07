@@ -7,6 +7,20 @@ import { PANEL_PATH } from "@/lib/adminAuth";
 export default function PanelPage() {
   const handleLogout = async () => {
     await fetch("/api/panel/logout", { method: "POST" });
+    /*
+      RECARGA DE VERDAD, NO `router.push`, Y ES A PROPÓSITO.
+
+      `eslint-config-next` 16.3 trae una regla nueva que pide usar el router de
+      Next para ir a páginas internas. Tiene razón en general —es más rápido,
+      no vuelve a descargar nada— pero esto es un CIERRE DE SESIÓN, y ahí lo
+      que se quiere es exactamente lo contrario: tirar la aplicación entera.
+      Con `router.push` el árbol de React sobrevive, y con él lo que el panel
+      hubiera cargado en memoria; con una navegación dura no queda nada.
+
+      Importa más de lo que parece hoy: el panel apenas tiene enlaces, pero va
+      a mostrar ventas cuando entre Supabase.
+    */
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = `${PANEL_PATH}/login`;
   };
 

@@ -501,6 +501,15 @@ indego/
   el botón de la imagen. Por qué línea y no puntos: los puntos son dos objetos
   sueltos que hay que contar; la línea es un solo trazo que se lee de reojo y se
   puede arrastrar, que es justo el gesto que se quiere enseñar.
+- **`pistaDelRiel.tsx`** — **La rayita del Nosotros** (7-ago-2026): el mismo
+  trazo, pero de avance del riel entero en vez de saltar entre fotos. Fija abajo
+  al centro, con un halo del color de la página para que se lea sobre la cascada
+  negra y sobre la banda invertida. No usa estado de React. El detalle completo
+  está en la sección del riel de `/about`.
+- **`comoRecorrer.tsx`** — **El letrero de cómo recorrer** (7-ago-2026), abajo
+  del panel de entrada del Nosotros, sobre vidrio esmerilado, que se desvanece
+  al avanzar. Dice "Desliza →" en lo táctil y "Arrastra | Rueda | ←→" en lo que
+  tiene cursor. Tampoco usa estado de React. Detalle en la sección del riel.
 - **`cartDrawer.tsx`** — Carrito lateral: lista de productos, cantidades,
   subtotal y botón para pagar. Va **al mismo estilo minimalista del modal**:
   sin recuadro en la cantidad y con el botón de pagar en puro texto. Mientras
@@ -745,6 +754,189 @@ cosas para que no se sienta secuestrado:
 3. el detector va con `passive: false`, que es obligatorio para poder cancelar
    el gesto. Sin eso la página pelea consigo misma.
 
+**HAY CUATRO FORMAS DE MOVERLO, no una** (las dos últimas son del 7-ago-2026):
+
+| Forma | Para quién |
+|---|---|
+| **El dedo** | Teléfono y tabletas. El navegador lo hace solo. |
+| **La rueda** | Ratón *y también mousepad*: como el giro vertical se traduce a avance horizontal, dos dedos hacia abajo en un trackpad ya mueve el riel — no hace falta saber el gesto lateral. |
+| **Arrastrar con el ratón** | Quien no tiene rueda, y como **pista visual**: el cursor se vuelve una mano (`.riel-arrastrable`), y eso dice "esto se jala" sin dibujar ningún botón. |
+| **El teclado** | ←/→, Re Pág/Av Pág e Inicio/Fin. Va en `window`, no en el riel, para que funcione sin tener que picar la página primero — que es justo lo que no se le ocurre a nadie. **No es un `scrollTo` suave**, ver abajo. |
+
+Y **dos avisos** de que hay que moverla, uno por aparato: el **letrero** de cómo
+recorrer (los dos) y el **empujoncito** de entrada (solo táctiles). Los dos
+tienen su apartado más abajo.
+
+> **POR QUÉ HICIERON FALTA LAS DOS ÚLTIMAS.** Esta página no tiene barra de
+> desplazamiento ni ningún control a la vista. En teléfono eso ya lo resuelven
+> el empujoncito y la rayita; en computadora no había nada equivalente.
+
+Detalles del arrastre y del teclado que **no hay que romper**:
+
+- **El arrastre es SOLO con ratón** (`pointerType === "mouse"`). En pantalla
+  táctil el dedo ya arrastra solo, y meterse en medio nos costaría el
+  desplazamiento con inercia del sistema, que es mejor que cualquier cosa que
+  escribamos nosotros.
+- **Hay un umbral de 6 px** antes de considerarlo arrastre. Sin ese margen, un
+  clic con la mano poco firme movería la página y además se comería el clic.
+- **EL CLIC QUE VIENE DETRÁS DEL ARRASTRE SE MATA.** Si no, soltar encima de la
+  banda del cierre —que es un enlace del tamaño del panel— te manda al catálogo
+  cuando lo único que querías era recorrer. Va en fase de captura, con `once`, y
+  con un `setTimeout` que lo retira por si se soltó donde no había nada que
+  recibiera clic (si no, se quedaría esperando para comerse un clic legítimo).
+- **NI EL ARRASTRE NI EL TECLADO ENTRAN EN LOS CAMPOS DEL FORMULARIO**
+  (`input, textarea, select, [contenteditable]`). En la convocatoria hay que
+  poder seleccionar texto con el ratón, y las flechas e Inicio/Fin tienen que
+  mover el cursor de escritura. La misma lista está en el CSS, para que esos
+  campos conserven su cursor de escritura en vez de heredar la mano.
+- **El teclado NO toma arriba y abajo**, solo izquierda y derecha: el panel del
+  formulario se recorre hacia abajo por dentro, y quitarle sus flechas lo
+  volvería imposible de llenar con el teclado.
+
+#### El teclado NO usa `scrollTo({behavior:"smooth"})`, y es una corrección
+
+La primera versión lanzaba un desplazamiento suave por cada flechazo. **Se
+sentía lento y trabado**, y con razón: al mantener la flecha el sistema repite
+la tecla unas treinta veces por segundo, y cada repetición **arrancaba una
+animación nueva que pisaba la anterior** antes de terminar. Salía un tirón por
+repetición en vez de un movimiento, y mientras más rápido tecleabas, peor.
+
+Lo que hay ahora es **un solo bucle con dos números**: una META y la posición
+real, que se acerca a la meta un pedacito por cuadro. Nada reinicia nada.
+
+| | |
+|---|---|
+| `IMPULSO` 200 px | lo que avanza un toque suelto |
+| `VELOCIDAD` 1100 px/s | a qué ritmo corre la meta mientras la tecla sigue apretada |
+| `SUAVIZADO` 0.16 | qué fracción de lo que falta se recorre por cuadro de 60 Hz |
+
+La repetición del sistema **no** suma impulso: de eso se encarga `VELOCIDAD`.
+Sumarlo sería volver al atropello. Medido: un toque da 200 px exactos; mantenida
+medio segundo da 750, que es `200 + 0.5 × 1100`.
+
+> **DOS TRAMPAS QUE YA COSTARON Y ESTÁN TAPADAS:**
+>
+> 1. **El último tramo se da de una vez.** Acercarse por fracciones hace el paso
+>    cada vez más chico; en cuanto baja del píxel el navegador lo redondea a
+>    CERO, el riel deja de moverse pero la meta sigue lejos, así que la
+>    condición de "ya llegamos" **no se cumple nunca y el bucle gira para
+>    siempre** pidiendo cuadros sin mover nada. Se detectó midiendo: "Fin" se
+>    quedaba 3 px antes del tope e "Inicio" no llegaba a 0. Cuando el paso ya no
+>    alcanza un píxel, se salta lo que falte de golpe.
+> 2. **`arrancar()` pregunta por el cuadro pendiente, no solo por `corriendo`.**
+>    Son dos cosas distintas —"el teclado manda" y "hay un cuadro en camino"— y
+>    confundirlas dejaba un agujero: marcado como corriendo pero sin cuadro, el
+>    bucle quedaba muerto y **ninguna tecla lo revivía**.
+>
+> Comprobado después del arreglo: 200 exactos, tope exacto, 0 exacto, no se pasa
+> por la izquierda, y **0 cuadros pedidos con la página quieta** — el bucle sí
+> se apaga.
+
+#### El letrero de cómo recorrer (`components/comoRecorrer.tsx`)
+
+Un renglón chico abajo del panel de entrada, sobre vidrio esmerilado, que **se
+desvanece conforme se avanza**: a la mitad del panel ya está en cero y se apaga
+con `visibility` (a opacidad 0 el `backdrop-filter` se seguiría calculando en
+cada cuadro, y es de lo más caro que hay).
+
+Dice **una cosa distinta según el aparato**, y por eso es un componente y no un
+texto suelto:
+
+- donde se toca con el dedo → **"Desliza →"**;
+- donde hay cursor → **"Arrastra | Rueda | ←→"**, que son las tres formas que de
+  verdad funcionan ahí.
+
+Mostrar las dos a la vez sería ruido: leer instrucciones que no aplican hace
+dudar de las que sí. La detección es `pointer: coarse` **y no** `pointer: fine`
+— pregunta por la precisión del apuntador, no por el ancho: un teléfono en
+horizontal y una laptop chica miden casi lo mismo. En una laptop táctil, que
+responde a las dos, **gana el cursor**.
+
+**NACE EN LA ESQUINA Y SE DISUELVE** (7-ago-2026). No es una pastilla flotando
+en el panel: es un pedazo de la esquina de abajo a la izquierda que está
+esmerilado, pegado a los dos bordes, sin esquinas redondeadas. Se difumina hacia
+sus dos lados libres —arriba y a la derecha— para que no se lea el rectángulo
+antes que el texto.
+
+- **El vidrio va en SU PROPIA CAPA, debajo del texto.** Es lo que permite
+  enmascararlo sin borrar las letras: el difuminado se come el desenfoque y el
+  tinte por las orillas, pero el texto es hermano suyo y va encima entero.
+- **La máscara va en el MISMO elemento que el `backdrop-filter`, nunca en un
+  padre**: un padre con máscara crearía una "raíz de fondo" y el desenfoque se
+  quedaría sin nada que desenfocar.
+- **Son DOS degradados rectos multiplicados** (`mask-composite: intersect`), no
+  uno radial desde la esquina. El radial fue el primer intento y **se descartó
+  midiendo**: este letrero es un renglón ancho y bajo, y una caída circular
+  llega al final del texto mucho antes que al borde de la caja — la máscara
+  valía 0.61 justo bajo las últimas letras, o sea que ahí el tinte caía a 0.49 y
+  volvía el problema de contraste ya resuelto. Taparlo pedía una caja de casi
+  500 px, más ancha que un teléfono. Con dos degradados cada eje se ajusta por
+  separado, que es justo lo que hacía falta.
+- **El relleno de arriba y de la derecha es MUCHO mayor que el de abajo y la
+  izquierda**, y no es por gusto: ahí es donde el vidrio tiene que
+  desvanecerse. Sin ese aire el degradado empezaría encima de las letras.
+- **Los dos degradados terminan en 100%**, o sea en el borde de la caja. Si
+  acabaran antes, el vidrio se cortaría a filo dentro del recuadro — que es
+  exactamente lo que se está quitando.
+- **EL RECUADRO NO CAMBIA DE TAMAÑO AL CAMBIAR DE IDIOMA.** Se dibujan TODOS los
+  idiomas uno encima de otro en la misma celda de una retícula y solo se ve el
+  activo; los demás van con `invisible` (`visibility: hidden`), que **no se ve
+  pero sigue ocupando su sitio**. Así la celda mide lo que el más ancho —hoy el
+  español— y el recuadro se queda quieto. Antes se encogía en inglés, y un
+  elemento que se estira al tocar un botón que no tiene nada que ver se lee como
+  un fallo.
+  > Ojo: con `hidden` de Tailwind (`display: none`) NO ocuparían sitio y
+  > volvería el problema. Y **sale del diccionario en vez de un `min-width` a
+  > mano**: así una corrección de traducción o un idioma nuevo lo reajustan
+  > solos. Los invisibles llevan `aria-hidden` para que un lector de pantalla no
+  > lea el aviso en todos los idiomas.
+- **El relleno de abajo es el más chico de todos**, a propósito: el renglón se
+  veía trepado. La mitad de abajo del recuadro es la parte del vidrio que va
+  maciza, así que el texto se centra **en esa mitad** y no en la caja entera,
+  que incluye todo el aire del desvanecido.
+
+> **EL TINTE DEL VIDRIO (80%) ESTÁ MEDIDO Y ES EL MÍNIMO.** Empezó en 50% con el
+> texto atenuado y sobre una letra maciza de la cascada el contraste caía a
+> 3.9:1, corto para diez píxeles. Componiendo los colores reales salieron dos
+> cosas: el texto tiene que ir a **fuerza completa** (es lo que más aporta y lo
+> que menos cuesta), y **los dos temas fallan por lados opuestos** —en claro la
+> cascada es negra y aclara el texto contra ella; en oscuro es blanca y aclara
+> la pastilla bajo el texto—, así que el tinte que arreglaba uno dejaba corto el
+> otro. 0.80 es el primero que pasa 4.5:1 en AMBOS (claro 5.83, oscuro 4.81).
+> **Si se toca, hay que medir sobre la CASCADA en LOS DOS temas**, nunca sobre
+> el fondo del panel: ahí da 8:1 y engaña. Y **los primeros números de los dos
+> degradados son parte de esa medición**: marcan hasta dónde el vidrio va
+> macizo, y ahí es donde vive el texto. Comprobado: la máscara vale 1.000 bajo
+> todo el renglón y 0.000 en los dos bordes libres.
+
+#### El empujoncito quedó SOLO para táctiles (7-ago-2026)
+
+En computadora sobraba y se sentía raro: ahí ya están el cursor de mano y el
+letrero. **Una página que se mueve sola cuando no la tocaste se lee como un
+fallo, no como una invitación.**
+
+#### EN TELÉFONO, EL PANEL DE ENTRADA MIDE LA PANTALLA JUSTA (7-ago-2026)
+
+Es el único panel distinto: `w-full` en teléfono, `md:w-[min(92vw,720px)]` de
+ahí para arriba. Los 92vw de los demás dejan asomar un filo del panel siguiente,
+y ese filo **era** la pista de que la página seguía de lado. Ya no hace falta
+—para eso están el letrero y el empujoncito— y sí estorbaba: la entrada es la
+portada, y una portada con una franja de otro color pegada a la orilla se ve
+como un descuadre. **Los demás paneles conservan su filo**: ahí ya se entendió
+el gesto y el asomo ayuda a seguir.
+
+> **VA `w-full` Y NO `100vw`, a propósito.** El porcentaje se mide contra el
+> riel, así que da exactamente lo que se ve; `100vw` incluye el ancho de una
+> barra de desplazamiento que aquí no existe y habría dejado el panel unos
+> píxeles más ancho que la pantalla — o sea el mismo filo que se está quitando,
+> pero al revés. Comprobado: `w-full` cae clavado en el ancho del riel.
+
+Como consecuencia, **el empujoncito es ahora el único momento en que se ve el
+panel siguiente**, así que su asomo subió y pasó a medirse **en proporción a la
+pantalla** (18%, con topes en 56 y 96 px). Con 56 px fijos el asomo se leía como
+un temblor: 56 px son un 14% de un teléfono chico y un 7% de una tableta, o sea
+el mismo gesto contando dos cosas distintas.
+
 **Lo que cambió de paso:**
 
 - **Las líneas separadoras giraron 90°**: eran `border-t` entre franjas, ahora
@@ -762,10 +954,72 @@ cosas para que no se sienta secuestrado:
   `lib/useScrollLock.ts`), y la del riel se esconde con la clase `.sin-barra`
   de `globals.css`. **Se sigue recorriendo igual**, con el dedo, la rueda o el
   teclado; lo único que no está es la barra gris cruzada abajo.
-  > OJO: esa barra era la única pista visual de que la página va de lado. Hoy
-  > se aguanta porque los paneles quedan cortados en la orilla y eso invita a
-  > seguir; si algún día se acomodan para que quepan justos, hay que poner otra
-  > pista en su lugar.
+  > Esa barra era la única pista visual de que la página va de lado, y aquí
+  > decía que los paneles cortados en la orilla bastarían. **No bastaban**: en
+  > teléfono no se entendía (7-ago-2026). El reemplazo son las dos cosas del
+  > punto siguiente. Si algún día se quitan, hay que devolver la barra.
+- **CÓMO SE AVISA QUE LA PÁGINA VA DE LADO** (7-ago-2026). Dos piezas que
+  trabajan juntas, porque cada una sola se queda corta:
+  1. **El empujoncito.** Al llegar, el riel se asoma solo 56 px a la derecha y
+     regresa, una sola vez (el `useEffect` del empujón en `app/about/page.tsx`).
+     Enseña el gesto haciéndolo, en vez de explicarlo con un letrero — que es lo
+     que se quería evitar, porque esta es la única página del sitio sin ningún
+     elemento de interfaz. Lleva cuatro candados: **cualquier gesto lo cancela**
+     (dedo, rueda o teclado, incluso a media animación — que la página se mueva
+     contra la mano se siente descompuesto); **solo arranca desde el principio**
+     (si el navegador restauró una posición al volver con "atrás", no la pisa);
+     **solo si hay a dónde ir**; y **respeta "reducir movimiento"**. Espera
+     900 ms porque la página entra con un fundido de 0.55s y empujar durante el
+     fundido se ve como un salto del render.
+  2. **La rayita de avance** (`components/pistaDelRiel.tsx`), fija abajo al
+     centro. **En teléfono NO está desde el principio** (7-ago-2026): en la
+     primera pantalla ya vive el letrero, que ocupa media anchura justo abajo, y
+     la rayita cae centrada encima de él — dos avisos apretados en la misma
+     esquina se estorban y no se lee ninguno. Se reparten el trabajo **en el
+     tiempo, no en el espacio**: el letrero manda en la primera pantalla y se
+     apaga a la mitad del panel; la rayita entra justo ahí y llega entera al
+     final del panel, o sea cuando aparece el manifiesto. En computadora se
+     queda visible siempre, porque ahí el letrero está metido en la esquina de
+     una pantalla ancha y la rayita ni lo roza.
+     > **El relevo se mide contra el PRIMER PANEL, no contra el recorrido
+     > completo.** Tiene que pasar cuando la entrada se va, y ese momento
+     > depende del ancho del panel, no de cuántos bloques traiga hoy
+     > `config/about.ts`. Con un porcentaje del total, agregar una sección
+     > movería el punto de entrada sin que nadie lo pidiera. Es **la misma rayita del catálogo** a propósito: en
+     `swipeHint.tsx` ya significa "hay más de este lado", así que repetir el
+     trazo es enseñar un vocabulario y no inventar otro adorno. No usa estado de
+     React —mueve el nodo directo desde el `scroll`— porque con estado cada
+     cuadro de scroll redibujaría los diez paneles para correr una barra de dos
+     píxeles.
+     > **EL HALO NO ES ADORNO.** La rayita va fija sobre un riel donde por
+     > debajo pasa el crema de la página, la cascada de logos NEGRA de la
+     > entrada y la banda del cierre INVERTIDA. Una línea de un solo color se
+     > borra en alguno de esos. Lleva un `drop-shadow` del color de la página
+     > alrededor de un trazo del color de la tinta: sobre el crema manda el
+     > trazo y el halo no se ve; sobre lo oscuro el trazo se pierde y el halo
+     > toma su lugar. Se resuelve solo en los dos temas porque los dos colores
+     > son variables. **NO es `mix-blend-mode`**, que es justo lo que este
+     > proyecto le quitó al grano por rendimiento.
+- **TODOS LOS PANELES DEL RIEL VAN `relative`, INCLUIDO EL DE ENTRADA.** Al
+  entrada le FALTABA y se corrigió el 7-ago-2026, al meterle el letrero. Es lo
+  que hace que un hijo `absolute` se mida contra su panel; sin eso se mide
+  contra la página entera, el `overflow` del riel ya no lo recorta y el ancho
+  del DOCUMENTO se estira hasta donde cae ese panel — que es **exactamente** el
+  bug que rompió el sitio en Android. Si agregas un panel, ponle `relative`
+  aunque hoy no lleve nada posicionado adentro.
+- **LAS PLAYERAS DEL CARRUSEL VAN LIGERAMENTE DESENFOCADAS** (7-ago-2026,
+  `--desenfoque-carrusel` en `globals.css`). En foco competían con la frase por
+  la atención aunque estuvieran al 16% de opacidad: el ojo se enganchaba a un
+  cuello o una manga y se iba a leerlos. Es **un solo número** del que tiran el
+  tema claro y el oscuro, para que las dos bandas se parezcan. No cuesta
+  cuadros: el filtro se aplica a la tira, el navegador la dibuja desenfocada una
+  vez y de ahí solo la desliza. Lo caro sería animar el desenfoque.
+- **EL REBOTE DEL RIEL ESTÁ APAGADO** (`overscroll-x-none`, 7-ago-2026). Al
+  arrastrar más allá del primer panel, el teléfono estiraba el riel y dejaba ver
+  una franja del fondo de la página por la izquierda, como si al diseño le
+  faltara un pedazo. **No se arregla pintando ese fondo**: el mismo rebote pasa
+  al final del recorrido y allá el último panel es de otro tono, así que no hay
+  un solo color que sirva en las dos orillas.
 - **EL FONDO DE LOS PANELES SE ALTERNA, uno y uno**: uno lleva el color de la
   página y el siguiente el mismo de la entrada (`bg-surface`). Marca el ritmo
   del recorrido y hace que se note dónde termina un panel y empieza el otro sin
@@ -800,12 +1054,18 @@ cosas para que no se sienta secuestrado:
   porque una columna de texto ancha se lee mal, y los de ver van anchos
   (1000 px).
 
-**PENDIENTE: el teléfono.** Está hecho y funciona, pero **todavía no se ha
-revisado en un celular de verdad** — se dejó para después a propósito, primero
-había que ver la forma. Lo que hay que mirar ahí: si los paneles de 92vw se
-sienten bien al deslizar, si el panel del formulario se puede llenar sin pelear
-con el riel, y si conviene poner algún aviso de que la página se recorre de
-lado (la barra de desplazamiento se esconde, ver arriba).
+**PENDIENTE: el teléfono.** Lo que hay que mirar ahí: si los paneles de 92vw se
+sienten bien al deslizar y si el panel del formulario se puede llenar sin pelear
+con el riel.
+
+> **EL EMPUJONCITO NO SE PUDO PROBAR AQUÍ** (7-ago-2026). La ventana de Chrome
+> automatizada congela `requestAnimationFrame`, y un scroll suave depende justo
+> de esos cuadros: el empujón no llegó a moverse ni una vez en la prueba, y al
+> insistir se cayó la extensión. **Lo que sí quedó verificado**: los cuatro
+> candados se cumplen (hay 3651 px que recorrer en teléfono, arranca en 0,
+> "reducir movimiento" apagado), `overscroll-behavior-x` sale en `none`, y la
+> rayita se lee sobre la banda invertida — medido en pixeles: 151 el relleno,
+> 201 la línea, 222 el fondo. **Falta verlo en un celular de verdad.**
 
 ### Llenar la página de Nosotros (`/about`)
 
@@ -1574,24 +1834,43 @@ agrega y persiste, y no sale ni un aviso de hidratación en la consola.
 #### 11. Lo que queda pendiente de esta auditoría
 
 - **El idioma** (punto 3), por la vía de rutas `/es` y `/en`.
-- **`npm audit`: quedan 3 altas, y las tres piden `next@16.3.0`.** Se cerró la
-  cuarta (`lodash`, inyección de código por `_.template`) con un `npm update
-  lodash` — 4.17.23 → 4.18.1, dentro del rango que ya pedía `cloudinary`, sin
-  tocar nada más.
-  **Las otras tres NO se subieron, y es una decisión, no un olvido.** Se revisó
-  una por una si aplican a este sitio:
-
-  | Aviso | ¿Aplica aquí? |
-  |---|---|
-  | Contrabando de peticiones HTTP en *rewrites* de Next | **No.** El proyecto no usa ni un `rewrite`: `next.config.ts` no los define y `proxy.ts` solo hace `redirect` y `next()`. |
-  | Crecimiento sin tope del caché en disco de `next/image` | **No.** Es cosa de quien se auto-hospeda; en Vercel el disco lo maneja Vercel. |
-  | `sharp`/libvips | **De refilón.** `sharp` solo procesa lo que permite `remotePatterns`, y ahí está únicamente `res.cloudinary.com`, o sea assets propios. Lo que sube la gente por la convocatoria **no pasa por `sharp`**: va directo a Cloudinary. |
-
-  O sea: ninguna es alcanzable de forma peligrosa con esta configuración. Subir
-  de versión menor el sitio de una tienda **el día que se despliega y sin nadie
-  que lo pruebe a mano después** pesa más que el riesgo que cierra. Cuando haya
-  un rato con calma: `npm audit fix --force`, y probar a mano el catálogo, el
-  carrito y el pago.
+- ~~**`npm audit`: quedan 3 altas, y las tres piden `next@16.3.0`.**~~
+  **HECHO el 7-ago-2026: `npm audit` da 0.** Se subió a `next@16.3.0` y
+  `eslint-config-next@16.3.0` (desde 16.1.6), y con eso se cerraron las tres
+  altas de Next —las que este manual había decidido no tocar el 6-ago porque
+  ninguna era alcanzable con esta configuración (no hay `rewrites`, el disco lo
+  maneja Vercel, y `sharp` solo toca assets propios de Cloudinary). La decisión
+  de aquel día fue "no el día del despliegue, sin nadie que lo pruebe"; se
+  esperó y se hizo con calma.
+  Los avisos que quedaban después de subir **no eran de Next**: `brace-expansion`,
+  `flatted`, `js-yaml`, `picomatch` y `@babel/core`, todos del andamio de ESLint
+  y Babel, o sea **dependencias de desarrollo que no llegan al navegador**. Se
+  cerraron con `npm audit fix` a secas (sin `--force`, sin cambios de mayor).
+  > **Falta probar a mano** el catálogo, el carrito y el pago sobre esta
+  > versión. El `npm run build` pasa limpio y `npx eslint .` no da nada, pero
+  > eso no es lo mismo que una compra de prueba.
+  > **Regla nueva de la 16.3** que salió al subir:
+  > `no-location-assign-relative-destination`. Marcó el
+  > `window.location.href` del cierre de sesión del panel
+  > (`app/idg-hq-9f2a/page.tsx`). **Se dejó como estaba, con un
+  > `eslint-disable` explicado**: ahí la navegación dura es justo lo que se
+  > quiere, porque tira el árbol de React y con él lo que el panel tuviera en
+  > memoria. Importará más cuando el panel muestre ventas.
+  > **`next dev` de la 16.3 escribe solo un `AGENTS.md` y un `CLAUDE.md`** en la
+  > raíz, con instrucciones para agentes de IA. **Están en el `.gitignore`**: no
+  > son del proyecto y se regeneran cada vez que se levanta el servidor, así que
+  > trackearlas solo ensuciaría el historial. La documentación de este proyecto
+  > es este manual.
+- **EL AZUL DEL AUTOCOMPLETADO YA NO SE VE** (7-ago-2026, `globals.css`). Cuando
+  el navegador rellenaba un campo guardado le pintaba encima SU fondo —azul
+  claro en Chrome— y en un formulario de campos transparentes con una línea
+  abajo se veía como si el diseño se hubiera roto. **Ese fondo no se puede pisar
+  con `background-color`**: el navegador lo pone con `!important` desde su hoja.
+  Hay que rodearlo, y van las dos formas conocidas juntas: `background-clip:
+  text` lo recorta a la silueta de las letras, y un retraso absurdo en la
+  transición de `background-color` hace que no llegue nunca. Los otros dos
+  tiempos de la transición están escritos a mano **para no perder la del borde
+  al enfocar**, que es la que da la sensación de que el campo responde.
 - **Dos `<img>` a pelo en `components/dropIntro.tsx`**, con su
   `eslint-disable`. Ya está explicado en el propio archivo: se miden en `cqw`
   contra el lienzo del video y `next/image` necesita el tamaño de antemano.
